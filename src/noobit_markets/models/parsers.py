@@ -1,18 +1,10 @@
 import typing
 
 from frozendict import frozendict
-from pydantic import BaseModel, PositiveInt
+from pydantic import PositiveInt
 
 from noobit_markets.const import basetypes
-
-
-
-class FrozenBaseModel(BaseModel):
-
-
-    class Config:
-        allow_mutation = False
-
+from noobit_markets.models.base import FrozenBaseModel
 
 # ============================================================
 # REQUEST PARSER MODEL

@@ -1,10 +1,11 @@
-from types import MappingProxyType
+# from types import MappingProxyType
+from noobit_markets.models import endpoints
 
 
-#TODO define pydantic Model ==> maybe organize in a better way, similar to parsers
-EXCHANGES = MappingProxyType({
-    "KRAKEN": {
-        "REST": {
+
+EXCHANGES = endpoints.RootMapping(
+    rest={
+        "KRAKEN": {
             "public": {
                 "url": "https://api.kraken.com/0/public/",
 
@@ -38,13 +39,11 @@ EXCHANGES = MappingProxyType({
                     "trades_info": "QueryTrades",
                     "ledger_info": "QueryLedgers",
                     "volume": "TradeVolume",
-                    "place_order": "AddOrder",
-                    "cancel_order": "CancelOrder",
+                    "add_order": "AddOrder",
+                    "remove_order": "CancelOrder",
                     "ws_token": "GetWebSocketsToken"
                 }
             }
         }
     }
-
-
-})
+)

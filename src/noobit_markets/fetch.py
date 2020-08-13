@@ -1,8 +1,6 @@
 from noobit_markets.rest.request import make_httpx_get_request, send_public_request
-from noobit_markets.rest.request.parsers import kraken as kraken_req
-from noobit_markets.rest.response.parsers import kraken as kraken_resp
 from noobit_markets.rest import PARSERS
-from noobit_markets.const import basetypes
+from noobit_markets.const import basetypes, endpoints
 
 import json
 import asyncio
@@ -45,28 +43,33 @@ def print_response(
     logger_func(parser)
 
     parsed = parser(symbol, symbol_to_exchange)
-    logger_func(parsed)
+    logger_func("parse", parsed)
 
     #TODO we need to be able to pass ticker
     make_req = make_httpx_get_request(base_url, "Ticker", {}, parsed)
-    logger_func(make_req)
+    logger_func("make reauest", make_req)
 
     resp = asyncio.run(send_public_request(client, make_req))
-    logger_func(resp)
+    logger_func("raw response", resp)
 
+    #TODO abstract this part into function ==> get error content
     if not resp["status_code"] == 200:
         return json.loads(resp["_content"])["error"]
 
+    #TODO abstract this part into function ==> get result content
     result = json.loads(resp["_content"])["result"]
-    logger_func(result)
+    logger_func("result content", result)
 
     validate_symbol = get_parser_from_args("response", "verify_symbol", exchange)
 
     valid = validate_symbol(result, symbol, symbol_from_exchange)
 
+    #FIXME watchout as the result_content we want is indexed on the symbol
+    result_content = result["XXBTZUSD"]
+
     if valid:
-        parsed = get_parser_from_args("response", "instrument", exchange)(result, "XBT-USD")
-        logger_func(parsed)
+        parsed = get_parser_from_args("response", "instrument", exchange)(result_content, "XBT-USD")
+        logger_func("parsed result content", parsed)
 
 if __name__ == "__main__":
 
@@ -78,5 +81,5 @@ if __name__ == "__main__":
         symbol_to_exchange,
         # and here too
         symbol_from_exchange,
-        lambda x: print("====@", x)
+        lambda *args: print("====@", *args)
     )
