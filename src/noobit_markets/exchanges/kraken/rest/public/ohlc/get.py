@@ -19,12 +19,14 @@ async def get_ohlc_kraken(
         endpoint=endpoints.KRAKEN_ENDPOINTS.public.endpoints.ohlc,
     ) -> NoobitResponseOhlc:
 
+    # FIXME catch and return ValidationError directly
     valid_req = validate_request_ohlc(symbol, symbol_to_exchange, timeframe)
     logger_func("valid raw req // ", valid_req)
 
     parsed_req = parse_request_ohlc(symbol, symbol_to_exchange, timeframe)
     logger_func("parsed req // ", parsed_req)
 
+    # FIXME catch and return ValidationError directly
     validated_model = validate_parsed_request_ohlc(parsed_req)
     logger_func("validated req // ", validated_model)
 
@@ -51,9 +53,11 @@ async def get_ohlc_kraken(
 
     result_content_ohlc = get_result_content_ohlc(resp)
 
+    # FIXME how do we catch ValidationErrors
     valid_result_content = validate_raw_response_content_ohlc(result_content_ohlc, symbol, symbol_to_exchange)
     # logger_func("validated resp result content", valid_result_content)
 
+    # FIXME catch error if False
     valid_symbol = verify_symbol_ohlc(result_content_ohlc, symbol, symbol_to_exchange)
     logger_func("valid symbol // ", valid_symbol)
 
@@ -62,5 +66,6 @@ async def get_ohlc_kraken(
 
     parsed_result_data = parse_result_data_ohlc(result_data_ohlc, symbol)
 
+    # FIXME how do we catch ValidationErrors
     valid_parsed_response_data = validate_parsed_result_data_ohlc(parsed_result_data)
     logger_func("validated & parsed result data // ", valid_parsed_response_data)

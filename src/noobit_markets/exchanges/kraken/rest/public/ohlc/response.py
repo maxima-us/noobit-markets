@@ -64,6 +64,7 @@ def get_response_status_code(response_json: frozendict) -> bool:
 
 
 # TODO should be put at a higher level, since this is the same for all kraken responses
+# FIXME incorrect return type
 def get_error_content(response_json: frozendict) -> frozendict:
     error_content = json.loads(response_json["_content"])["error"]
     return error_content
@@ -140,8 +141,9 @@ def _single_candle(
 # ============================================================
 
 
-def validate_raw_response_content_ohlc(
-        response_content: frozendict,
+# TODO not entirely sure how to properly type hint
+def validate_raw_result_content_ohlc(
+        result_content: frozendict,
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
     ):
@@ -159,8 +161,9 @@ def validate_raw_response_content_ohlc(
         # )
 
         validated = KrakenResponseOhlc(**{
-            symbol_mapping[symbol]: response_content[symbol_mapping[symbol]],
-            "last": response_content["last"]
+            symbol_mapping[symbol]: result_content[symbol_mapping[symbol]],
+            #FIXME we also need to parse the timestamp (ms)
+            "last": result_content["last"]
         })
         return validated
 
