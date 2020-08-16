@@ -2,9 +2,24 @@ import typing
 from urllib.parse import urljoin
 import json
 
+from typing_extensions import Literal
 from frozendict import frozendict
 import httpx
 
+from noobit_markets.base import ntypes
+from noobit_markets.base.models.frozenbase import FrozenBaseModel
+
+
+
+
+#? Do we still need this
+# def endpoint_to_exchange(
+#         exchange: basetypes.EXCHANGE,
+#         public: Literal["public", "private"],
+#         endpoint: str
+#     ) -> str:
+#     # FIXME make exchange accessible with dot notation
+#     return getattr(endpoints.ENDPOINTS.rest[exchange].public.endpoints, endpoint)
 
 
 # ============================================================
@@ -72,3 +87,11 @@ async def send_private_request(
     response = await client.post(**request_args)
 
     return frozendict(response.___dict__)
+
+
+
+# ============================================================
+# VALIDATE PARSED REQUEST
+# ============================================================
+
+# probably better to not have a general func as we cant type hint it properly

@@ -1,4 +1,4 @@
-from noobit_markets.rest.request import make_httpx_get_request, send_public_request
+from noobit_markets.rest.request import make_httpx_get_request, send_public_request, endpoint_to_exchange
 from noobit_markets.rest import PARSERS
 from noobit_markets.const import basetypes, endpoints
 
@@ -39,16 +39,24 @@ def print_response(
         logger_func: typing.Callable
     ):
 
+    # get request parser function for endpoint from mapping
     parser = get_parser_from_args("request", endpoint, exchange)
     logger_func(parser)
 
+    # parse request into exchange format
     parsed = parser(symbol, symbol_to_exchange)
     logger_func("parse", parsed)
 
-    #TODO we need to be able to pass ticker
-    make_req = make_httpx_get_request(base_url, "Ticker", {}, parsed)
-    logger_func("make reauest", make_req)
+    # get endpoint name in exchange format
+    endpoint = endpoint_to_exchange(exchange, "public", endpoint)
+    logger_func("endppoint to exchange", endpoint)
 
+    # we need to be able to pass ticker ==> FIXED
+    # make the request dict
+    make_req = make_httpx_get_request(base_url, endpoint, {}, parsed)
+    logger_func("make request", make_req)
+
+    # actually send the request to url
     resp = asyncio.run(send_public_request(client, make_req))
     logger_func("raw response", resp)
 
@@ -60,8 +68,11 @@ def print_response(
     result = json.loads(resp["_content"])["result"]
     logger_func("result content", result)
 
+    # get validator func from parser mapping
     validate_symbol = get_parser_from_args("response", "verify_symbol", exchange)
 
+    # check if symbol we received is same as the one we requests
+    # ! only valid if the key is the pair
     valid = validate_symbol(result, symbol, symbol_from_exchange)
 
     #FIXME watchout as the result_content we want is indexed on the symbol
@@ -74,7 +85,7 @@ def print_response(
 if __name__ == "__main__":
 
     parsed_resp = print_response(
-        "instrument",
+        "ohlc",
         "KRAKEN",
         "XBT-USD",
         # we could actually pass a func here

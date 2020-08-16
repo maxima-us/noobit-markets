@@ -3,9 +3,8 @@ from noobit_markets.models import endpoints
 
 
 
-EXCHANGES = endpoints.RootMapping(
+ENDPOINTS = endpoints.RootMapping(
     rest={
-        "KRAKEN": {
             "public": {
                 "url": "https://api.kraken.com/0/public/",
 
@@ -14,7 +13,7 @@ EXCHANGES = endpoints.RootMapping(
                     "assets": "Assets",
                     "symbols": "AssetPairs",
                     "instrument": "Ticker",
-                    "ohlc": "Ohlc",
+                    "ohlc": "OHLC",
                     "orderbook": "Depth",
                     "trades": "Trades",
                     "spread": "Spread"
