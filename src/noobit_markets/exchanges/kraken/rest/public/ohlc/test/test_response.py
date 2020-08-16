@@ -12,9 +12,13 @@ stackprinter.set_excepthook(style="darkbg2")
 from noobit_markets.exchanges.kraken.rest.public.ohlc.response import *
 
 
+#============================================================
+# CONSTS
+#============================================================
+
+
 symbol = "XBT-USD"
 symbol_to_exchange = {"XBT-USD": "XXBTZUSD"}
-
 
 
 #============================================================

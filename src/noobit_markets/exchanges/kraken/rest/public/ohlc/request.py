@@ -10,8 +10,6 @@ from noobit_markets.base.models.rest.request import NoobitRequestOhlc
 
 
 
-
-
 # ============================================================
 # KRAKEN MODEL
 # ============================================================
