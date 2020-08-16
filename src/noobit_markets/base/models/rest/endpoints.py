@@ -7,7 +7,7 @@ from noobit_markets.base import ntypes
 
 
 
-class PublicEndpoints(FrozenBaseModel):
+class _PublicEndpoints(FrozenBaseModel):
 
     time: str
     assets: str
@@ -19,13 +19,13 @@ class PublicEndpoints(FrozenBaseModel):
     spread: str
 
 
-class PublicInterface(FrozenBaseModel):
+class _PublicInterface(FrozenBaseModel):
 
     url: AnyHttpUrl
-    endpoints: PublicEndpoints
+    endpoints: _PublicEndpoints
 
 
-class PrivateEndpoints(FrozenBaseModel):
+class _PrivateEndpoints(FrozenBaseModel):
 
     balance: str
     account_balance: str
@@ -45,16 +45,16 @@ class PrivateEndpoints(FrozenBaseModel):
     ws_token: str
 
 
-class PrivateInterface(FrozenBaseModel):
+class _PrivateInterface(FrozenBaseModel):
 
     url: AnyHttpUrl
-    endpoints: PrivateEndpoints
+    endpoints: _PrivateEndpoints
 
 
 class RESTEndpoints(FrozenBaseModel):
 
-    public: PublicInterface
-    private: PrivateInterface
+    public: _PublicInterface
+    private: _PrivateInterface
 
 
 class RootMapping(FrozenBaseModel):

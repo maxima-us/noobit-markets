@@ -31,7 +31,7 @@ def make_kraken_model_ohlc(
 
     kwargs = {
         symbol_mapping[symbol]: (
-            #TODO list should also be of len 720: look up how we can type check
+            #TODO list should always be of len 720: look up how we can type check
             # tuple : timestamp, open, high, low, close, vwap, volume, count
             typing.List[
                 typing.Tuple[
@@ -57,6 +57,19 @@ def make_kraken_model_ohlc(
 #============================================================
 
 
+# TODO should be put at a higher level, since this is the same for all kraken responses
+def get_response_status_code(response_json: frozendict) -> bool:
+    result_content = response_json["status_code"]
+    return result_content == 200
+
+
+# TODO should be put at a higher level, since this is the same for all kraken responses
+def get_error_content(response_json: frozendict) -> frozendict:
+    error_content = json.loads(response_json["_content"])["error"]
+    return error_content
+
+
+# TODO should be put at a higher level, since this is the same for all kraken responses
 def get_result_content_ohlc(response_json: frozendict) -> frozendict:
 
     result_content = json.loads(response_json["_content"])["result"]
@@ -67,7 +80,11 @@ def get_result_data_ohlc(
         result_content: frozendict,
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
-    ) -> tuple:
+    ) -> typing.Tuple[tuple]:
+
+    # expected output example
+    #    [[1567039620, '8746.4', '8751.5', '8745.7', '8745.7', '8749.3', '0.09663298', 8],
+    #     [1567039680, '8745.7', '8747.3', '8745.7', '8747.3', '8747.3', '0.00929540', 1]]
 
     result_data = result_content[symbol_mapping[symbol]]
     return tuple(result_data)

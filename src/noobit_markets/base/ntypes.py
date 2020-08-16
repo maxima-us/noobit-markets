@@ -1,6 +1,7 @@
 import typing
 from typing_extensions import Literal
 
+import httpx
 from pydantic import conint, constr
 from frozendict import frozendict
 
@@ -27,3 +28,7 @@ EXCHANGE = Literal[
 SYMBOL_FROM_EXCHANGE = typing.Dict[str, SYMBOL]
 
 SYMBOL_TO_EXCHANGE = typing.Dict[SYMBOL, str]
+
+CLIENT = Literal[
+    httpx.AsyncClient
+]
