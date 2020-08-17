@@ -95,10 +95,15 @@ def verify_symbol_ohlc(
         result_content: frozendict,
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
-    ) -> bool:
+    ) -> Result[ntypes.SYMBOL, ValueError]:
 
+    exch_symbol = symbol_mapping[symbol]
     key = list(result_content.keys())[0]
-    return symbol_mapping[symbol] == key
+
+    valid = exch_symbol == key
+    err_msg = f"Requested : {symbol_mapping[symbol]}, got : {key}"
+
+    return Ok(exch_symbol) if valid else Err(ValueError(err_msg))
 
 
 #============================================================

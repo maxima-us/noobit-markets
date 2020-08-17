@@ -20,7 +20,6 @@ async def get_ohlc_kraken(
         endpoint=endpoints.KRAKEN_ENDPOINTS.public.endpoints.ohlc,
     ) -> Result[NoobitResponseOhlc, Exception]:
 
-    # FIXME catch and return ValidationError directly
     valid_req = validate_request_ohlc(symbol, symbol_to_exchange, timeframe)
     logger_func("valid raw req // ", valid_req)
     if valid_req.is_err():
@@ -33,7 +32,6 @@ async def get_ohlc_kraken(
     logger_func("parsed req // ", parsed_req)
 
 
-    # FIXME catch and return ValidationError directly
     validated_model = validate_parsed_request_ohlc(parsed_req)
     logger_func("validated req // ", validated_model)
     if validated_model.is_err():
@@ -66,7 +64,6 @@ async def get_ohlc_kraken(
     result_content_ohlc = get_result_content_ohlc(resp)
 
 
-    # FIXME how do we catch ValidationErrors
     valid_result_content = validate_raw_result_content_ohlc(result_content_ohlc, symbol, symbol_to_exchange)
     # logger_func("validated resp result content", valid_result_content)
     if valid_result_content.is_err():
@@ -75,19 +72,24 @@ async def get_ohlc_kraken(
         valid_result_content = valid_result_content.value
 
 
-    # FIXME catch error if False
+    #FIXMEreturn value should be Result[NoobitResponseOhlc, ValidationError]
     valid_symbol = verify_symbol_ohlc(result_content_ohlc, symbol, symbol_to_exchange)
     logger_func("valid symbol // ", valid_symbol)
+    if valid_symbol.is_err():
+        return valid_symbol
 
     result_data_ohlc = get_result_data_ohlc(valid_result_content.dict(), symbol, symbol_to_exchange)
     # logger_func("resp result data", result_data_ohlc)
 
     parsed_result_data = parse_result_data_ohlc(result_data_ohlc, symbol)
 
-    # FIXME how do we catch ValidationErrors
     valid_parsed_response_data = validate_parsed_result_data_ohlc(parsed_result_data)
     logger_func("validated & parsed result data // ", valid_parsed_response_data)
     if valid_parsed_response_data.is_err():
         return valid_parsed_response_data
     else:
         valid_parsed_response_data = valid_parsed_response_data.value
+
+    #! IMPORTANT v
+    #FIXMEreturn value should be Result[NoobitResponseOhlc, ValidationError]
+    #   ==> do not return Ok.value but Ok object
