@@ -7,4 +7,4 @@ install:
   - python setup.py install
 # command to run tests
 script:
-  - pytest src/noobit_market/exchanges
+  - pytest src/noobit_markets/exchanges
