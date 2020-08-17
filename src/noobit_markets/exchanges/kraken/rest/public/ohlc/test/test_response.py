@@ -8,8 +8,10 @@ from frozendict import frozendict
 import stackprinter
 stackprinter.set_excepthook(style="darkbg2")
 
-
 from noobit_markets.exchanges.kraken.rest.public.ohlc.response import *
+
+from noobit_markets.base.models.result import Ok, Err, Result
+from noobit_markets.base.models.rest.response import NoobitResponseOhlc
 
 
 #============================================================
@@ -90,11 +92,13 @@ validated_result_data = [
 ]
 
 
+KrakenResponseOhlc = make_kraken_model_ohlc(symbol, symbol_to_exchange)
+
 # Neds to be of same format as KrakenResponseOhlc
-validated_result_content = {
+validated_result_content = KrakenResponseOhlc(**{
     "XXBTZUSD": validated_result_data,
     'last': 1597406700
-}
+})
 
 
 parsed_ohlc_result_data = [
@@ -120,7 +124,7 @@ parsed_ohlc_result_data = [
     }),
 ]
 
-validated_parsed_result_data = [
+validated_parsed_result_data = NoobitResponseOhlc(data=[
     {
         "symbol": "XBT-USD",
         "utcTime": 1597406520*10**3,
@@ -141,7 +145,7 @@ validated_parsed_result_data = [
         "volume": Decimal('0.33496956'),
         "trdCount": 7
     }
-]
+])
 
 ohlc_resp_json = mock_response_json(ohlc_result_content)
 
@@ -221,36 +225,35 @@ def test_parse_result_data_ohlc():
 
 def test_validate_raw_result_content_ohlc():
 
-    return_model = validate_raw_result_content_ohlc(ohlc_result_content, symbol, symbol_to_exchange)
-    return_dict = return_model.dict()
+    returned = validate_raw_result_content_ohlc(ohlc_result_content, symbol, symbol_to_exchange)
     expected = validated_result_content
 
-
-    assert isinstance(return_dict, dict)
-    assert len(return_dict.keys()) == 2
-    assert isinstance(return_dict["XXBTZUSD"], list)
-    assert isinstance(return_dict["XXBTZUSD"][0], tuple)
-
-    assert isinstance(expected["XXBTZUSD"], list)
-    assert isinstance(expected["XXBTZUSD"][0], tuple)
-
-    assert type(return_dict) == type(expected)
-    assert return_dict.keys() == expected.keys()
+    assert isinstance(returned, Ok)
+    assert hasattr(returned, "value")
+    assert isinstance(returned.value, FrozenBaseModel)
+    assert hasattr(expected, "__fields_set__")
+    assert hasattr(returned.value, "__fields_set__")
+    assert expected.__fields_set__ == returned.value.__fields_set__ == {"XXBTZUSD", "last"}
+    assert returned.value == expected
 
 
-    assert return_dict == expected
+def validate_parsed_result_data_ohlc():
 
-
-def test_validate_parsed_result_data_ohlc():
-
-    return_obj = validate_parsed_result_data_ohlc(parsed_ohlc_result_data)
-    return_dict = return_obj.dict()
+    returned = validate_parsed_result_data_ohlc(parsed_ohlc_result_data)
+    # return_dict = return_obj.dict()
 
     expected = validated_parsed_result_data
 
-    assert len(return_dict.keys()) == 1
-    assert list(return_dict.keys()) == ["data"]
-    assert isinstance(return_dict["data"][0], dict)
-    assert list(return_dict["data"][0].keys()) == ["symbol", "utcTime", "open", "high", "low", "close", "volume", "trdCount"]
+    # assert len(return_dict.keys()) == 1
+    # assert list(return_dict.keys()) == ["data"]
+    # assert isinstance(return_dict["data"][0], dict)
+    # assert list(return_dict["data"][0].keys()) == ["symbol", "utcTime", "open", "high", "low", "close", "volume", "trdCount"]
 
-    assert return_dict["data"] == expected
+    # assert return_dict["data"] == expected
+
+    assert isinstance(returned, Ok)
+    assert hasattr(returned, 'value')
+    assert isinstance(returned.value, FrozenBaseModel)
+    assert hasattr(expected, "__fields_set__")
+    assert hasattr(returned.value, "__fields_set__")
+    assert expected.__fiedlds_set__ == returned.value.__fields_set__ == {"symbol", "utcTime", "open", "high", "low", "close", "volume", "trdCoun"}

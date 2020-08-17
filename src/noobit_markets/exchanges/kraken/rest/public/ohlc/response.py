@@ -14,7 +14,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.response import NoobitResponseOhlc
 
 
-
+from noobit_markets.base.models.result import Ok, Err, Result
 
 
 #============================================================
@@ -64,7 +64,7 @@ def get_response_status_code(response_json: frozendict) -> bool:
 
 
 # TODO should be put at a higher level, since this is the same for all kraken responses
-# FIXME incorrect return type
+# FIXME incorrect return type => not frozendict anymore, usually its a list
 def get_error_content(response_json: frozendict) -> frozendict:
     error_content = json.loads(response_json["_content"])["error"]
     return error_content
@@ -146,7 +146,7 @@ def validate_raw_result_content_ohlc(
         result_content: frozendict,
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
-    ):
+    ) -> Result[make_kraken_model_ohlc, ValidationError]:
 
     KrakenResponseOhlc = make_kraken_model_ohlc(symbol, symbol_mapping)
 
@@ -165,10 +165,10 @@ def validate_raw_result_content_ohlc(
             #FIXME we also need to parse the timestamp (ms)
             "last": result_content["last"]
         })
-        return validated
+        return Ok(validated)
 
     except ValidationError as e:
-        return e
+        return Err(e)
 
     except Exception as e:
         raise e
@@ -176,16 +176,16 @@ def validate_raw_result_content_ohlc(
 
 def validate_parsed_result_data_ohlc(
         parsed_result_data: typing.Tuple[dict],
-    ) -> typing.Union[NoobitResponseOhlc, ValidationError]:
+    ) -> Result[NoobitResponseOhlc, ValidationError]:
 
     try:
         validated = NoobitResponseOhlc(
             data=parsed_result_data
         )
-        return validated
+        return Ok(validated)
 
     except ValidationError as e:
-        return e
+        return Err(e)
 
     except Exception as e:
         raise e

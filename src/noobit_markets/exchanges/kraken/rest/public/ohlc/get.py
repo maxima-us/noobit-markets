@@ -7,6 +7,7 @@ from noobit_markets.base.models.rest.response import NoobitResponseOhlc
 from noobit_markets.exchanges.kraken import endpoints
 
 
+# TODO implement some way of retrying if it fails
 async def get_ohlc_kraken(
         loop,
         client,
@@ -17,18 +18,29 @@ async def get_ohlc_kraken(
         logger_func=None,
         base_url=endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint=endpoints.KRAKEN_ENDPOINTS.public.endpoints.ohlc,
-    ) -> NoobitResponseOhlc:
+    ) -> Result[NoobitResponseOhlc, Exception]:
 
     # FIXME catch and return ValidationError directly
     valid_req = validate_request_ohlc(symbol, symbol_to_exchange, timeframe)
     logger_func("valid raw req // ", valid_req)
+    if valid_req.is_err():
+        return valid_req
+    else:
+        valid_req = valid_req.value
+
 
     parsed_req = parse_request_ohlc(symbol, symbol_to_exchange, timeframe)
     logger_func("parsed req // ", parsed_req)
 
+
     # FIXME catch and return ValidationError directly
     validated_model = validate_parsed_request_ohlc(parsed_req)
     logger_func("validated req // ", validated_model)
+    if validated_model.is_err():
+        return validated_model
+    else:
+        validated_model = validated_model.value
+
 
     make_req = make_httpx_get_request(base_url, endpoint, {}, validated_model.dict())
     logger_func("make req // ", make_req)
@@ -53,9 +65,15 @@ async def get_ohlc_kraken(
 
     result_content_ohlc = get_result_content_ohlc(resp)
 
+
     # FIXME how do we catch ValidationErrors
-    valid_result_content = validate_raw_response_content_ohlc(result_content_ohlc, symbol, symbol_to_exchange)
+    valid_result_content = validate_raw_result_content_ohlc(result_content_ohlc, symbol, symbol_to_exchange)
     # logger_func("validated resp result content", valid_result_content)
+    if valid_result_content.is_err():
+        return valid_result_content
+    else:
+        valid_result_content = valid_result_content.value
+
 
     # FIXME catch error if False
     valid_symbol = verify_symbol_ohlc(result_content_ohlc, symbol, symbol_to_exchange)
@@ -69,3 +87,7 @@ async def get_ohlc_kraken(
     # FIXME how do we catch ValidationErrors
     valid_parsed_response_data = validate_parsed_result_data_ohlc(parsed_result_data)
     logger_func("validated & parsed result data // ", valid_parsed_response_data)
+    if valid_parsed_response_data.is_err():
+        return valid_parsed_response_data
+    else:
+        valid_parsed_response_data = valid_parsed_response_data.value

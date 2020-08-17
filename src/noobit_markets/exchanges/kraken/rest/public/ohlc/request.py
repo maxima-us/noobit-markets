@@ -8,6 +8,7 @@ from noobit_markets.base import ntypes, mappings
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.request import NoobitRequestOhlc
 
+from noobit_markets.base.models.result import Ok, Err, Result
 
 
 # ============================================================
@@ -56,7 +57,7 @@ def validate_request_ohlc(
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
         timeframe: ntypes.TIMEFRAME
-    ) -> typing.Union[NoobitRequestOhlc, ValidationError]:
+    ) -> Result[NoobitRequestOhlc, ValidationError]:
 
     try:
         valid_req = NoobitRequestOhlc(
@@ -64,10 +65,10 @@ def validate_request_ohlc(
             symbol_mapping=symbol_mapping,
             timeframe=timeframe
         )
-        return valid_req
+        return Ok(valid_req)
 
     except ValidationError as e:
-        return e
+        return Err(e)
 
     except Exception as e:
         raise e
@@ -75,16 +76,16 @@ def validate_request_ohlc(
 
 def validate_parsed_request_ohlc(
         parsed_request: frozendict
-    ) -> typing.Union[KrakenRequestOhlc, ValidationError]:
+    ) -> Result[KrakenRequestOhlc, ValidationError]:
 
     try:
         validated = KrakenRequestOhlc(
             **parsed_request
         )
-        return validated
+        return Ok(validated)
 
     except ValidationError as e:
-        return e
+        return Err(e)
 
     except Exception as e:
         raise e
