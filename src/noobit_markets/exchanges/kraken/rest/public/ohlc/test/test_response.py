@@ -14,6 +14,9 @@ from noobit_markets.base.models.result import Ok, Err, Result
 from noobit_markets.base.models.rest.response import NoobitResponseOhlc
 
 
+from noobit_markets.base.models.result import Ok, Err, Result
+
+
 #============================================================
 # CONSTS
 #============================================================
@@ -200,7 +203,7 @@ def test_get_result_data_ohlc():
 
 def test_verify_symbol_ohlc():
     returned = verify_symbol_ohlc(ohlc_result_content, symbol, symbol_to_exchange)
-    expected = True
+    expected = Ok("XXBTZUSD")
 
     assert type(returned) == type(expected)
     assert returned == expected
