@@ -4,9 +4,7 @@ import typing
 from decimal import Decimal
 
 import httpx
-from frozendict import frozendict
-import stackprinter
-stackprinter.set_excepthook(style="darkbg2")
+from pyrsistent import pmap
 
 from noobit_markets.exchanges.kraken.rest.public.ohlc.response import *
 
@@ -106,7 +104,7 @@ validated_result_content = KrakenResponseOhlc(**{
 
 
 parsed_ohlc_result_data = [
-    frozendict({
+    pmap({
         "symbol": "XBT-USD",
         "utcTime": 1597406520*10**3,
         "open": '11754.3',
@@ -116,7 +114,7 @@ parsed_ohlc_result_data = [
         "volume": '0.33496956',
         "trdCount": 7
     }),
-    frozendict({
+    pmap({
         "symbol": "XBT-USD",
         "utcTime": 1597406520*10**3,
         "open": '11754.3',
@@ -170,7 +168,7 @@ def test_get_response_status_code_ohlc():
 
 def test_get_result_content_ohlc():
     returned = get_result_content_ohlc(ohlc_resp_json)
-    expected = frozendict(ohlc_result_content)
+    expected = pmap(ohlc_result_content)
 
     assert type(returned) == type(expected)
     assert returned == expected

@@ -2,8 +2,9 @@ import typing
 from decimal import Decimal
 import time
 import json
+import copy
 
-from frozendict import frozendict
+from pyrsistent import pmap
 from pydantic import PositiveInt, create_model, ValidationError
 
 # types
@@ -58,27 +59,27 @@ def make_kraken_model_ohlc(
 
 
 # TODO should be put at a higher level, since this is the same for all kraken responses
-def get_response_status_code(response_json: frozendict) -> bool:
+def get_response_status_code(response_json: pmap) -> bool:
     result_content = response_json["status_code"]
     return result_content == 200
 
 
 # TODO should be put at a higher level, since this is the same for all kraken responses
 # FIXME incorrect return type => not frozendict anymore, usually its a list
-def get_error_content(response_json: frozendict) -> frozendict:
+def get_error_content(response_json: pmap) -> pmap:
     error_content = json.loads(response_json["_content"])["error"]
     return error_content
 
 
 # TODO should be put at a higher level, since this is the same for all kraken responses
-def get_result_content_ohlc(response_json: frozendict) -> frozendict:
+def get_result_content_ohlc(response_json: pmap) -> pmap:
 
     result_content = json.loads(response_json["_content"])["result"]
-    return frozendict(result_content)
+    return pmap(result_content)
 
 
 def get_result_data_ohlc(
-        result_content: frozendict,
+        result_content: pmap,
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
     ) -> typing.Tuple[tuple]:
@@ -92,13 +93,17 @@ def get_result_data_ohlc(
 
 
 def verify_symbol_ohlc(
-        result_content: frozendict,
+        result_content: pmap,
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
     ) -> Result[ntypes.SYMBOL, ValueError]:
 
     exch_symbol = symbol_mapping[symbol]
-    key = list(result_content.keys())[0]
+    keys = list(result_content.keys())
+
+    kc = copy.deepcopy(keys)
+    kc.remove("last")
+    [key] = kc
 
     valid = exch_symbol == key
     err_msg = f"Requested : {symbol_mapping[symbol]}, got : {key}"
@@ -125,7 +130,7 @@ def _single_candle(
         # should we have a model for kraken OHLC data ?
         data: tuple,
         symbol: ntypes.SYMBOL
-    ) -> frozendict:
+    ) -> pmap:
 
     parsed = {
         "symbol": symbol,
@@ -138,7 +143,7 @@ def _single_candle(
         "trdCount": data[7]
     }
 
-    return frozendict(parsed)
+    return pmap(parsed)
 
 
 # ============================================================
@@ -148,7 +153,7 @@ def _single_candle(
 
 # TODO not entirely sure how to properly type hint
 def validate_raw_result_content_ohlc(
-        result_content: frozendict,
+        result_content: pmap,
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
     ) -> Result[make_kraken_model_ohlc, ValidationError]:

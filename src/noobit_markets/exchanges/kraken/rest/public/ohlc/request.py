@@ -1,6 +1,6 @@
 import typing
 
-from frozendict import frozendict
+from pyrsistent import pmap
 from pydantic import BaseModel, PositiveInt, ValidationError
 from typing_extensions import Literal
 
@@ -37,7 +37,7 @@ def parse_request_ohlc(
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
         timeframe: ntypes.TIMEFRAME
-    ) -> frozendict:
+    ) -> pmap:
 
 
     payload = {
@@ -45,7 +45,7 @@ def parse_request_ohlc(
         "interval": mappings.TIMEFRAME[timeframe]
     }
 
-    return frozendict(payload)
+    return pmap(payload)
 
 
 # ============================================================
@@ -75,7 +75,7 @@ def validate_request_ohlc(
 
 
 def validate_parsed_request_ohlc(
-        parsed_request: frozendict
+        parsed_request: pmap
     ) -> Result[KrakenRequestOhlc, ValidationError]:
 
     try:

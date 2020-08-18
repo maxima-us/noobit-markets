@@ -1,6 +1,6 @@
-frozendict==1.2
 httpx==0.14.1
 pydantic==1.6.1
+pyrsistent==0.16.0
 pytest-asyncio==0.14.0
 stackprinter==0.2.4
 typing_extensions==3.7.4.2

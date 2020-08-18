@@ -1,6 +1,6 @@
 import typing
 
-from frozendict import frozendict
+from pyrsistent import pmap, PMap
 
 from noobit_markets.exchanges.kraken.rest.public.ohlc.request import *
 from noobit_markets.base.models.rest.request import NoobitRequestOhlc
@@ -24,7 +24,7 @@ timeframe = "1H"
 #============================================================
 
 
-parsed_request_data_ohlc = frozendict({
+parsed_request_data_ohlc = pmap({
     "pair": "XXBTZUSD",
     "interval": 60
 })
@@ -45,7 +45,7 @@ def test_parse_request_ohlc():
     returned = parse_request_ohlc(symbol, symbol_to_exchange, timeframe)
     expected = parsed_request_data_ohlc
 
-    assert isinstance(returned, frozendict)
+    assert isinstance(returned, PMap)
     assert len(returned.keys()) == 2
     assert type(returned) == type(expected)
     assert returned == expected

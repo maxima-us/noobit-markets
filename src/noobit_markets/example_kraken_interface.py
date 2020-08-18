@@ -7,7 +7,7 @@ stackprinter.set_excepthook(style='darkbg2')
 from noobit_markets.exchanges.kraken import interface
 from noobit_markets.exchanges.kraken.rest.public.symbols.get import load_symbol_to_exchange
 
-# print ohlc 
+# print ohlc
 # func = interface.KRAKEN.rest.public.ohlc
 
 # asyncio.run(

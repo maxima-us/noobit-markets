@@ -3,7 +3,7 @@ from urllib.parse import urljoin
 import json
 
 from typing_extensions import Literal
-from frozendict import frozendict
+from pyrsistent import pmap
 import httpx
 
 from noobit_markets.base import ntypes
@@ -30,37 +30,39 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 def make_httpx_get_request(
         base_url: str,
         endpoint: str,
+        # FIXME wrong type hint for headers
         headers: typing.Optional[str],
-        payload: frozendict
-    ) -> frozendict:
+        payload: pmap
+    ) -> pmap:
 
     full_url = urljoin(base_url, endpoint)
 
-    req_dict = frozendict({
+    req_dict = {
         "url": full_url,
         "headers": headers,
         "params": payload
-    })
+    }
 
-    return req_dict
+    return pmap(req_dict)
 
 
 def make_httpx_post_request(
         base_url: str,
         endpoint: str,
+        # FIXME wrong type hint for headers
         headers: str,
-        payload: frozendict
-    ) -> frozendict:
+        payload: pmap
+    ) -> pmap:
 
     full_url = urljoin(base_url, endpoint)
 
-    req_dict = frozendict({
+    req_dict = {
         "url": full_url,
         "headers": headers,
         "data": payload
-    })
+    }
 
-    return req_dict
+    return pmap(req_dict)
 
 
 # ============================================================
@@ -70,23 +72,23 @@ def make_httpx_post_request(
 
 async def send_public_request(
         client: httpx.AsyncClient,
-        request_args: frozendict
-    ) -> frozendict:
+        request_args: pmap
+    ) -> pmap:
 
     response = await client.get(**request_args)
 
     # return frozendict(response.json())
-    return frozendict(response.__dict__)
+    return pmap(response.__dict__)
 
 
 async def send_private_request(
         client: httpx.AsyncClient,
-        request_args: frozendict
-    ) -> frozendict:
+        request_args: pmap
+    ) -> pmap:
 
     response = await client.post(**request_args)
 
-    return frozendict(response.___dict__)
+    return pmap(response.___dict__)
 
 
 
