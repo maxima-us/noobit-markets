@@ -3,7 +3,6 @@ from typing_extensions import Literal
 
 import httpx
 from pydantic import conint, constr
-from frozendict import frozendict
 
 
 
