@@ -97,6 +97,7 @@ validated_result_data = [
 
 KrakenResponseOhlc = make_kraken_model_ohlc(symbol, symbol_to_exchange)
 
+
 # Neds to be of same format as KrakenResponseOhlc
 validated_result_content = KrakenResponseOhlc(**{
     "XXBTZUSD": validated_result_data,

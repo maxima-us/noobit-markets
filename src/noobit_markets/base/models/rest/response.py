@@ -8,7 +8,7 @@ from noobit_markets.base import ntypes
 
 
 
-class NoobitItemOhlc(FrozenBaseModel):
+class NoobitResponseItemOhlc(FrozenBaseModel):
 
     symbol: ntypes.SYMBOL
     utcTime: PositiveInt
@@ -24,4 +24,23 @@ class NoobitItemOhlc(FrozenBaseModel):
 
 class NoobitResponseOhlc(FrozenBaseModel):
 
-    data: typing.List[NoobitItemOhlc]
+    data: typing.List[NoobitResponseItemOhlc]
+
+
+
+
+class NoobitResponseItemSymbols(FrozenBaseModel):
+
+    exchange_name: str
+    ws_name: str
+    base: str
+    quote: str
+    volume_decimals: int
+    price_decimals: int
+    leverage_available: typing.Tuple[int, ...]
+    order_min: Decimal
+
+
+class NoobitResponseSymbols(FrozenBaseModel):
+
+    data: typing.Dict[ntypes.SYMBOL, NoobitResponseItemSymbols]
