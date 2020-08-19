@@ -7,15 +7,15 @@ import copy
 from pyrsistent import pmap
 from pydantic import PositiveInt, create_model, ValidationError
 
-# types
+# noobit base
 from noobit_markets.base import ntypes
-
-# models
+from noobit_markets.base.errors import BaseError
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.response import NoobitResponseOhlc
-
-
 from noobit_markets.base.models.result import Ok, Err, Result
+
+# noobit kraken
+from noobit_markets.exchanges.kraken.errors import ERRORS_FROM_EXCHANGE
 
 
 #============================================================
@@ -63,6 +63,11 @@ def get_response_status_code(response_json: pmap) -> Result[PositiveInt, str]:
     status_code = response_json["status_code"]
     err_msg = f"HTTP Status Error: {status_code}"
     return Ok(status_code) if status_code == 200 else Err(err_msg)
+
+
+#! NEW
+def get_sent_request(response_json: pmap) -> str:
+    return response_json["request"]
 
 
 # TODO should be put at a higher level, since this is the same for all kraken responses
@@ -169,9 +174,13 @@ def _single_candle(
     return pmap(parsed)
 
 
-def parse_error_content(error_content: tuple) -> Exception:
-    pass
+def parse_error_content(
+        error_content: tuple,
+        sent_request: get_sent_request
+    ) -> Err[typing.Tuple[BaseError]]:
 
+    tupled = tuple([ERRORS_FROM_EXCHANGE[error](error_content, sent_request) for error in error_content])
+    return Err(tupled)
 
 # ============================================================
 # VALIDATE

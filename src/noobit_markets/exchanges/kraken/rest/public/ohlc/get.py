@@ -55,13 +55,12 @@ async def get_ohlc_kraken(
     if valid_status.is_err():
         return valid_status
 
-    # TODO parse kraken errors to noobit errors
     # input: pmap // output: tuple
     err_content = get_error_content(resp)
     if  err_content:
-        # TODO call parse_error_content_ohlc(err_content) function and return result
-        print(err_content)
-        return
+        # input: tuple // output: Err[typing.Tuple[BaseError]]
+        parsed_err_content = parse_error_content(err_content, get_sent_request(resp))
+        return parsed_err_content
 
 
     # input: pmap // output: pmap
