@@ -79,7 +79,7 @@ ohlc_result_content = {
 #   e.g typing.List[typing.Tuple[
 #       Decimal, Decimal, Decimal, Decimal, Decimal, Decimal, Decimal, PositiveInt
 # ]]
-validated_result_data = [
+validated_result_data = tuple([
     tuple([
         Decimal(candle[0]),
         Decimal(candle[1]),
@@ -90,7 +90,7 @@ validated_result_data = [
         Decimal(candle[6]),
         candle[7]
     ]) for candle in ohlc_result_data
-]
+])
 
 
 KrakenResponseOhlc = make_kraken_model_ohlc(symbol, symbol_to_exchange)
@@ -160,7 +160,7 @@ ohlc_resp_json = mock_response_json(ohlc_result_content)
 
 def test_get_response_status_code_ohlc():
     returned = get_response_status_code(ohlc_resp_json)
-    expected = True
+    expected = Ok(200)
 
     assert type(returned) == type(expected)
     assert returned == expected
@@ -176,7 +176,7 @@ def test_get_result_content_ohlc():
 
 def test_get_err_content_ohlc():
     returned = get_error_content(ohlc_resp_json)
-    expected = []
+    expected = tuple([])
 
     assert type(returned) == type(expected)
     assert returned == expected
@@ -184,8 +184,8 @@ def test_get_err_content_ohlc():
 
 def test_get_result_data_ohlc():
     # FIXME fails because func tries to return a frozendict when data is a tuple
-    returned = get_result_data_ohlc(ohlc_result_content, symbol, symbol_to_exchange)
-    expected = tuple(ohlc_result_data)
+    returned = get_result_data_ohlc(validated_result_content, symbol, symbol_to_exchange)
+    expected = validated_result_data
 
     assert type(returned) == type(expected)
     assert len(returned) == len(expected)

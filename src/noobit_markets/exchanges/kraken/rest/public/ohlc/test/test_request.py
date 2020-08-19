@@ -24,6 +24,13 @@ timeframe = "1H"
 #============================================================
 
 
+valid_noobit_req = NoobitRequestOhlc(**{
+    "symbol": symbol,
+    "symbol_mapping": symbol_to_exchange,
+    "timeframe": timeframe
+})
+
+
 parsed_request_data_ohlc = pmap({
     "pair": "XXBTZUSD",
     "interval": 60
@@ -42,7 +49,7 @@ validated_parsed_request_data = KrakenRequestOhlc(
 
 
 def test_parse_request_ohlc():
-    returned = parse_request_ohlc(symbol, symbol_to_exchange, timeframe)
+    returned = parse_request_ohlc(valid_noobit_req)
     expected = parsed_request_data_ohlc
 
     assert isinstance(returned, PMap)
