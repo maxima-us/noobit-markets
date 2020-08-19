@@ -1,7 +1,7 @@
 import typing
 
 from pyrsistent import pmap
-from pydantic import BaseModel, PositiveInt, ValidationError
+from pydantic import BaseModel, PositiveInt, ValidationError, constr
 from typing_extensions import Literal
 
 from noobit_markets.base import ntypes, mappings
@@ -23,9 +23,10 @@ class KrakenRequestOhlc(FrozenBaseModel):
     #       1(default), 5, 15, 30, 60, 240, 1440, 10080, 21600
     #   since = return commited OHLC data since given id (optional)
 
-    pair: str
+    pair: constr(regex=r'[A-Z]+')
     interval: Literal[1, 5, 15, 30, 60, 240, 1440, 10080, 21600]
-    since: typing.Optional[PositiveInt] #FIXME could be Decimal ?
+    # ? timestamp could be Decimal ?
+    since: typing.Optional[PositiveInt]
 
 
 # ============================================================
@@ -34,16 +35,23 @@ class KrakenRequestOhlc(FrozenBaseModel):
 
 
 def parse_request_ohlc(
-        symbol: ntypes.SYMBOL,
-        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
-        timeframe: ntypes.TIMEFRAME
+        # symbol: ntypes.SYMBOL,
+        # symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
+        # timeframe: ntypes.TIMEFRAME
+        valid_request: NoobitRequestOhlc
     ) -> pmap:
 
 
+    # payload = {
+    #     "pair": symbol_mapping[symbol],
+    #     "interval": mappings.TIMEFRAME[timeframe]
+    # }
+
     payload = {
-        "pair": symbol_mapping[symbol],
-        "interval": mappings.TIMEFRAME[timeframe]
+        "pair": valid_request.symbol_mapping[valid_request.symbol],
+        "interval": mappings.TIMEFRAME[valid_request.timeframe]
     }
+
 
     return pmap(payload)
 

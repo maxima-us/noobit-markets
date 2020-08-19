@@ -32,7 +32,7 @@ def make_httpx_get_request(
         endpoint: str,
         # FIXME wrong type hint for headers
         headers: typing.Optional[str],
-        payload: pmap
+        valid_request_model: FrozenBaseModel
     ) -> pmap:
 
     full_url = urljoin(base_url, endpoint)
@@ -40,7 +40,7 @@ def make_httpx_get_request(
     req_dict = {
         "url": full_url,
         "headers": headers,
-        "params": payload
+        "params": valid_request_model.dict()
     }
 
     return pmap(req_dict)
@@ -51,7 +51,7 @@ def make_httpx_post_request(
         endpoint: str,
         # FIXME wrong type hint for headers
         headers: str,
-        payload: pmap
+        valid_request_model: FrozenBaseModel
     ) -> pmap:
 
     full_url = urljoin(base_url, endpoint)
@@ -59,7 +59,7 @@ def make_httpx_post_request(
     req_dict = {
         "url": full_url,
         "headers": headers,
-        "data": payload
+        "data": valid_request_model.dict()
     }
 
     return pmap(req_dict)

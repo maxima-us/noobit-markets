@@ -4,7 +4,7 @@ import time
 import json
 
 import stackprinter
-from pyrsistent import pmap
+from pyrsistent import pmap, PMap
 from pydantic import PositiveInt, conint, create_model, ValidationError
 
 # types
@@ -87,10 +87,10 @@ def filter_result_content_symbols(
 
 
 def get_result_data_symbols(
-        valid_result_content: typing.Dict[str, KrakenResponseItemSymbols],
+        valid_result_content: KrakenResponseSymbols,
         # symbol: ntypes.SYMBOL,
         # symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
-    ) -> pmap:
+    ) -> typing.Mapping[str, KrakenResponseItemSymbols]:
     """Get result data from result content. Result content needs to have been validated.
 
     Args:
@@ -122,8 +122,8 @@ def get_result_data_symbols(
     #   "ordermin":"50"
     # }
 
-    #! REPV2 is only non darkpool pair that doesnt follow our format
-    result_data = {k: v for k, v in valid_result_content.items() if "REPV2" not in k}
+    #! REPV2 is only non darkpool pair that doesnt follow noobit symbol format
+    result_data = {k: v for k, v in valid_result_content.data.items() if "REPV2" not in k}
     return pmap(result_data)
 
 
@@ -136,11 +136,9 @@ def get_result_data_symbols(
 def parse_result_data_symbols(
         result_data: typing.Dict[str, KrakenResponseItemSymbols],
         # symbol: ntypes.SYMBOL
-    ) -> pmap:
+    ) -> typing.Mapping[ntypes.SYMBOL, pmap]:
 
     parsed_symbols = {data.wsname.replace("/", "-"): _single_pair(data, exch_symbol) for exch_symbol, data in result_data.items()}
-
-    # FIXME problem with frozenkey is we can not call .keys()
     return pmap(parsed_symbols)
 
 

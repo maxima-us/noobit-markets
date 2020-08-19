@@ -20,75 +20,80 @@ async def get_ohlc_kraken(
         endpoint=endpoints.KRAKEN_ENDPOINTS.public.endpoints.ohlc,
     ) -> Result[NoobitResponseOhlc, Exception]:
 
+
+    # output: Result[NoobitRequestOhlc, ValidationError]
     valid_req = validate_request_ohlc(symbol, symbol_to_exchange, timeframe)
     logger_func("valid raw req // ", valid_req)
     if valid_req.is_err():
         return valid_req
-    else:
-        valid_req = valid_req.value
 
 
-    parsed_req = parse_request_ohlc(symbol, symbol_to_exchange, timeframe)
+    # output: pmap
+    parsed_req = parse_request_ohlc(valid_req.value)
     logger_func("parsed req // ", parsed_req)
 
 
+    # output: Result[NoobitRequestOhlc, ValidationError]
     validated_model = validate_parsed_request_ohlc(parsed_req)
     logger_func("validated req // ", validated_model)
     if validated_model.is_err():
         return validated_model
-    else:
-        validated_model = validated_model.value
 
 
-    make_req = make_httpx_get_request(base_url, endpoint, {}, validated_model.dict())
+    # input: valid_request_model must be FrozenBaseModel !!! not dict !! // output: pmap
+    make_req = make_httpx_get_request(base_url, endpoint, {}, validated_model.value)
     logger_func("make req // ", make_req)
 
+
+    # input: pmap // output: pmap
     resp = await send_public_request(client, make_req)
     # logger_func("raw resp", resp)
 
+    # TODO wrap error msg (str) in Exception
+    # input: pmap // output: Result[PositiveInt, str]
     valid_status = get_response_status_code(resp)
+    if valid_status.is_err():
+        return valid_status
 
-    if not valid_status:
-        # FIXME we want to print the status code, we might not be able to access the error
-        print(get_error_content(resp))
-        return
-
-    # it is possible to get an error even with 200 status code
-    # for example if we passed a symbol that does not exist in kraken
     # TODO parse kraken errors to noobit errors
+    # input: pmap // output: tuple
     err_content = get_error_content(resp)
     if  err_content:
+        # TODO call parse_error_content_ohlc(err_content) function and return result
         print(err_content)
         return
 
+
+    # input: pmap // output: pmap
     result_content_ohlc = get_result_content_ohlc(resp)
 
-
-    valid_result_content = validate_raw_result_content_ohlc(result_content_ohlc, symbol, symbol_to_exchange)
-    # logger_func("validated resp result content", valid_result_content)
-    if valid_result_content.is_err():
-        return valid_result_content
-    else:
-        valid_result_content = valid_result_content.value
-
-
-    #FIXMEreturn value should be Result[NoobitResponseOhlc, ValidationError]
+    # input: pmap // Result[ntypes.SYMBOL, ValueError]
     valid_symbol = verify_symbol_ohlc(result_content_ohlc, symbol, symbol_to_exchange)
     logger_func("valid symbol // ", valid_symbol)
     if valid_symbol.is_err():
         return valid_symbol
 
-    result_data_ohlc = get_result_data_ohlc(valid_result_content.dict(), symbol, symbol_to_exchange)
+    # input: pmap // output: Result[KrakenResponseOhlc, ValidationError]
+    valid_result_content = validate_raw_result_content_ohlc(result_content_ohlc, symbol, symbol_to_exchange)
+    # logger_func("validated resp result content", valid_result_content)
+    if valid_result_content.is_err():
+        return valid_result_content
+
+
+    # input: KrakenResponseOhlc // output: typing.Tuple[tuple]
+    result_data_ohlc = get_result_data_ohlc(valid_result_content.value, symbol, symbol_to_exchange)
     # logger_func("resp result data", result_data_ohlc)
 
+    # input: typing.Tuple[tuple] // output: typing.Tuple[pmap]
     parsed_result_data = parse_result_data_ohlc(result_data_ohlc, symbol)
 
+    # input: typing.Tuple[pmap] //  output: Result[NoobitResponseOhlc, ValidationError]
     valid_parsed_response_data = validate_parsed_result_data_ohlc(parsed_result_data)
     logger_func("validated & parsed result data // ", valid_parsed_response_data)
-    if valid_parsed_response_data.is_err():
-        return valid_parsed_response_data
-    else:
-        valid_parsed_response_data = valid_parsed_response_data.value
+    # if valid_parsed_response_data.is_err():
+        # return valid_parsed_response_data
+    return valid_parsed_response_data
+
 
     #! IMPORTANT v
     #FIXMEreturn value should be Result[NoobitResponseOhlc, ValidationError]

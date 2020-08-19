@@ -59,16 +59,17 @@ def make_kraken_model_ohlc(
 
 
 # TODO should be put at a higher level, since this is the same for all kraken responses
-def get_response_status_code(response_json: pmap) -> bool:
-    result_content = response_json["status_code"]
-    return result_content == 200
+def get_response_status_code(response_json: pmap) -> Result[PositiveInt, str]:
+    status_code = response_json["status_code"]
+    err_msg = f"HTTP Status Error: {status_code}"
+    return Ok(status_code) if status_code == 200 else Err(err_msg)
 
 
 # TODO should be put at a higher level, since this is the same for all kraken responses
 # FIXME incorrect return type => not frozendict anymore, usually its a list
-def get_error_content(response_json: pmap) -> pmap:
+def get_error_content(response_json: pmap) -> tuple:
     error_content = json.loads(response_json["_content"])["error"]
-    return error_content
+    return tuple(error_content)
 
 
 # TODO should be put at a higher level, since this is the same for all kraken responses
@@ -79,17 +80,29 @@ def get_result_content_ohlc(response_json: pmap) -> pmap:
 
 
 def get_result_data_ohlc(
-        result_content: pmap,
+        valid_result_content: make_kraken_model_ohlc,
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
     ) -> typing.Tuple[tuple]:
+    """Get result data from result content. Result content needs to have been validated.
+
+    Args:
+        result_content : mapping of `exchange format symbol` to `KrakenResponseItemSymbols`
+
+    Returns:
+        typing.Tuple[tuple]: result data
+    """
+
+    # input example
+    #   KrakenResponseOhlc(XXBTZUSD=typing.Tuple(tuple), last=int)
 
     # expected output example
     #    [[1567039620, '8746.4', '8751.5', '8745.7', '8745.7', '8749.3', '0.09663298', 8],
     #     [1567039680, '8745.7', '8747.3', '8745.7', '8747.3', '8747.3', '0.00929540', 1]]
 
-    result_data = result_content[symbol_mapping[symbol]]
-    return tuple(result_data)
+    result_data = getattr(valid_result_content, symbol_mapping[symbol])
+    tupled = [tuple(list_item) for list_item in result_data]
+    return tuple(tupled)
 
 
 def verify_symbol_ohlc(
@@ -97,6 +110,16 @@ def verify_symbol_ohlc(
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
     ) -> Result[ntypes.SYMBOL, ValueError]:
+    """Check if symbol we requested is the same as the key containing result data.
+
+    Args:
+        result_content (pmap): unvalidated result content received from exchange
+        symbol (ntypes.SYMBOL): [description]
+        symbol_mapping (ntypes.SYMBOL_TO_EXCHANGE): [description]
+
+    Returns:
+        Result[ntypes.SYMBOL, ValueError]: [description]
+    """
 
     exch_symbol = symbol_mapping[symbol]
     keys = list(result_content.keys())
@@ -117,9 +140,9 @@ def verify_symbol_ohlc(
 
 
 def parse_result_data_ohlc(
-        result_data: tuple,
+        result_data: typing.Tuple[tuple],
         symbol: ntypes.SYMBOL
-    ) -> tuple:
+    ) -> typing.Tuple[pmap]:
 
     parsed_ohlc = [_single_candle(data, symbol) for data in result_data]
 
@@ -144,6 +167,10 @@ def _single_candle(
     }
 
     return pmap(parsed)
+
+
+def parse_error_content(error_content: tuple) -> Exception:
+    pass
 
 
 # ============================================================
@@ -185,7 +212,7 @@ def validate_raw_result_content_ohlc(
 
 
 def validate_parsed_result_data_ohlc(
-        parsed_result_data: typing.Tuple[dict],
+        parsed_result_data: typing.Tuple[pmap],
     ) -> Result[NoobitResponseOhlc, ValidationError]:
 
     try:
