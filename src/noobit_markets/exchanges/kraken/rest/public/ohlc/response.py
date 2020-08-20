@@ -3,9 +3,10 @@ from decimal import Decimal
 import time
 import json
 import copy
+from datetime import date
 
 from pyrsistent import pmap
-from pydantic import PositiveInt, create_model, ValidationError
+from pydantic import PositiveInt, create_model, ValidationError, validator
 
 # noobit base
 from noobit_markets.base import ntypes
@@ -23,8 +24,21 @@ from noobit_markets.exchanges.kraken.errors import ERRORS_FROM_EXCHANGE
 #============================================================
 
 
+class FrozenKrakenBase(FrozenBaseModel):
+    last: PositiveInt
+
+    @validator('last')
+    def check_year_from_timestamp(cls, v):
+        y = date.fromtimestamp(v).year
+        if not y > 2009 and y < 2050:
+            raise ValueError('must contain a space')
+        return v * 10**3
+
+
+
 # validate incoming data, before any processing
 # useful to check for API changes on exchanges side
+# needs to be create dynamically since pair changes according to request
 def make_kraken_model_ohlc(
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
@@ -32,7 +46,6 @@ def make_kraken_model_ohlc(
 
     kwargs = {
         symbol_mapping[symbol]: (
-            #TODO list should always be of len 720: look up how we can type check
             # tuple : timestamp, open, high, low, close, vwap, volume, count
             typing.List[
                 typing.Tuple[
@@ -41,8 +54,7 @@ def make_kraken_model_ohlc(
             ],
             ...
         ),
-        "last": (Decimal, ...),
-        "__base__": FrozenBaseModel
+        "__base__": FrozenKrakenBase
     }
 
     model = create_model(
@@ -56,32 +68,6 @@ def make_kraken_model_ohlc(
 #============================================================
 # UTILS
 #============================================================
-
-
-# TODO should be put at a higher level, since this is the same for all kraken responses
-def get_response_status_code(response_json: pmap) -> Result[PositiveInt, str]:
-    status_code = response_json["status_code"]
-    err_msg = f"HTTP Status Error: {status_code}"
-    return Ok(status_code) if status_code == 200 else Err(err_msg)
-
-
-#! NEW
-def get_sent_request(response_json: pmap) -> str:
-    return response_json["request"]
-
-
-# TODO should be put at a higher level, since this is the same for all kraken responses
-# FIXME incorrect return type => not frozendict anymore, usually its a list
-def get_error_content(response_json: pmap) -> tuple:
-    error_content = json.loads(response_json["_content"])["error"]
-    return tuple(error_content)
-
-
-# TODO should be put at a higher level, since this is the same for all kraken responses
-def get_result_content_ohlc(response_json: pmap) -> pmap:
-
-    result_content = json.loads(response_json["_content"])["result"]
-    return pmap(result_content)
 
 
 def get_result_data_ohlc(
@@ -174,20 +160,12 @@ def _single_candle(
     return pmap(parsed)
 
 
-def parse_error_content(
-        error_content: tuple,
-        sent_request: get_sent_request
-    ) -> Err[typing.Tuple[BaseError]]:
-
-    tupled = tuple([ERRORS_FROM_EXCHANGE[error](error_content, sent_request) for error in error_content])
-    return Err(tupled)
-
 # ============================================================
 # VALIDATE
 # ============================================================
 
 
-# TODO not entirely sure how to properly type hint
+# FIXME not entirely sure how to properly type hint
 def validate_raw_result_content_ohlc(
         result_content: pmap,
         symbol: ntypes.SYMBOL,
@@ -208,7 +186,6 @@ def validate_raw_result_content_ohlc(
 
         validated = KrakenResponseOhlc(**{
             symbol_mapping[symbol]: result_content[symbol_mapping[symbol]],
-            #FIXME we also need to parse the timestamp (ms)
             "last": result_content["last"]
         })
         return Ok(validated)

@@ -14,10 +14,11 @@ from .response import *
 from noobit_markets.base.request import *
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
-from noobit_markets.exchanges.kraken import endpoints
 
 from noobit_markets.base.models.result import Ok, Err, Result
 
+from noobit_markets.exchanges.kraken.rest.base import *
+from noobit_markets.exchanges.kraken import endpoints
 
 
 async def load_symbol_to_exchange(
@@ -36,23 +37,22 @@ async def load_symbol_to_exchange(
     # input: pmap // output: pmap
     resp = await send_public_request(client, make_req)
 
-    # TODO: return Result[PositiveInt, str] instead
-    # input: pmap // output: bool
-    valid_status = get_response_status_code(resp)
-    if not valid_status:
-        logger_func("status error // ", get_error_content(resp))
-        return
 
-    # TODO parse error kraken errors to noobit errors
-    # input: pmap // typing.Optional[frozenset]
+    # input: pmap // output: Result[PositiveInt, str]
+    valid_status = get_response_status_code(resp)
+    if valid_status.err():
+        logger_func("status error // ", get_error_content(resp))
+        return valid_status
+
+    # input: pmap // output: frozenset
     err_content = get_error_content(resp)
     if err_content:
-        logger_func("error response // ", err_content)
-        return
+        parsed_err_content = parse_error_content(err_content, get_sent_request(resp))
+        return parsed_err_content
 
 
     # input: pmap // output : pmap
-    result_content_symbols = get_result_content_symbols(resp)
+    result_content_symbols = get_result_content(resp)
 
     # input: pmap// output: pmap
     filtered_result_content = filter_result_content_symbols(result_content_symbols)
@@ -81,6 +81,3 @@ async def load_symbol_to_exchange(
     # if valid_parsed_result_data.is_err():
     #     return valid_parsed_result_data
     return valid_parsed_result_data
-
-
-

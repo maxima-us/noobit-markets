@@ -5,6 +5,7 @@ import json
 from typing_extensions import Literal
 from pyrsistent import pmap
 import httpx
+from pydantic import AnyHttpUrl
 
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
@@ -28,10 +29,9 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 
 def make_httpx_get_request(
-        base_url: str,
+        base_url: AnyHttpUrl,
         endpoint: str,
-        # FIXME wrong type hint for headers
-        headers: typing.Optional[str],
+        headers: typing.Optional[httpx.Headers],
         valid_request_model: FrozenBaseModel
     ) -> pmap:
 
@@ -47,10 +47,9 @@ def make_httpx_get_request(
 
 
 def make_httpx_post_request(
-        base_url: str,
+        base_url: AnyHttpUrl,
         endpoint: str,
-        # FIXME wrong type hint for headers
-        headers: str,
+        headers: typing.Optional[httpx.Headers],
         valid_request_model: FrozenBaseModel
     ) -> pmap:
 

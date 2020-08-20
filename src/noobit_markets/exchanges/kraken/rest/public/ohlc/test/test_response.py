@@ -6,13 +6,15 @@ from decimal import Decimal
 import httpx
 from pyrsistent import pmap
 
-from noobit_markets.exchanges.kraken.rest.public.ohlc.response import *
 
+# Noobit Models
 from noobit_markets.base.models.result import Ok, Err, Result
 from noobit_markets.base.models.rest.response import NoobitResponseOhlc
-
-
 from noobit_markets.base.models.result import Ok, Err, Result
+
+# Noobit Kraken
+from noobit_markets.exchanges.kraken.rest.base import *
+from noobit_markets.exchanges.kraken.rest.public.ohlc.response import *
 
 
 #============================================================
@@ -167,7 +169,7 @@ def test_get_response_status_code_ohlc():
 
 
 def test_get_result_content_ohlc():
-    returned = get_result_content_ohlc(ohlc_resp_json)
+    returned = get_result_content(ohlc_resp_json)
     expected = pmap(ohlc_result_content)
 
     assert type(returned) == type(expected)

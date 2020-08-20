@@ -11,6 +11,7 @@ from pydantic import PositiveInt, conint, create_model, ValidationError
 from noobit_markets.base import ntypes
 
 # models
+from noobit_markets.base.errors import BaseError
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.response import NoobitResponseSymbols
 
@@ -56,25 +57,6 @@ class KrakenResponseSymbols(FrozenBaseModel):
 
 # ? SHOULD WE ALSO MODEL A HTTPX RESPONSE
 # ?     then we call ==> response_json.status_code
-
-# TODO should be put at a higher level, since this is the same for all kraken responses
-def get_response_status_code(response_json: pmap) -> bool:
-    result_content = response_json["status_code"]
-    return result_content == 200
-
-
-# TODO should be put at a higher level, since this is the same for all kraken responses
-# FIXME incorrect return type => not frozendict anymore, usually its a list
-def get_error_content(response_json: pmap) -> typing.Optional[pmap]:
-    error_content = json.loads(response_json["_content"])["error"]
-    return frozenset(error_content)
-
-
-# TODO should be put at a higher level, since this is the same for all kraken responses
-def get_result_content_symbols(response_json: pmap) -> pmap:
-
-    result_content = json.loads(response_json["_content"])["result"]
-    return pmap(result_content)
 
 
 def filter_result_content_symbols(

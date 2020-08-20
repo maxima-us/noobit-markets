@@ -5,6 +5,7 @@ from noobit_markets.base.request import *
 from noobit_markets.base.models.rest.response import NoobitResponseOhlc
 
 from noobit_markets.exchanges.kraken import endpoints
+from noobit_markets.exchanges.kraken.rest.base import *
 
 
 # TODO implement some way of retrying if it fails
@@ -23,7 +24,7 @@ async def get_ohlc_kraken(
 
     # output: Result[NoobitRequestOhlc, ValidationError]
     valid_req = validate_request_ohlc(symbol, symbol_to_exchange, timeframe)
-    logger_func("valid raw req // ", valid_req)
+    #  logger_func("valid raw req // ", valid_req)
     if valid_req.is_err():
         return valid_req
 
@@ -55,7 +56,7 @@ async def get_ohlc_kraken(
     if valid_status.is_err():
         return valid_status
 
-    # input: pmap // output: tuple
+    # input: pmap // output: frozenset
     err_content = get_error_content(resp)
     if  err_content:
         # input: tuple // output: Err[typing.Tuple[BaseError]]
@@ -64,7 +65,7 @@ async def get_ohlc_kraken(
 
 
     # input: pmap // output: pmap
-    result_content_ohlc = get_result_content_ohlc(resp)
+    result_content_ohlc = get_result_content(resp)
 
     # input: pmap // Result[ntypes.SYMBOL, ValueError]
     valid_symbol = verify_symbol_ohlc(result_content_ohlc, symbol, symbol_to_exchange)
@@ -77,7 +78,7 @@ async def get_ohlc_kraken(
     # logger_func("validated resp result content", valid_result_content)
     if valid_result_content.is_err():
         return valid_result_content
-
+    logger_func("valid result_content // ", valid_result_content)
 
     # input: KrakenResponseOhlc // output: typing.Tuple[tuple]
     result_data_ohlc = get_result_data_ohlc(valid_result_content.value, symbol, symbol_to_exchange)
@@ -88,12 +89,7 @@ async def get_ohlc_kraken(
 
     # input: typing.Tuple[pmap] //  output: Result[NoobitResponseOhlc, ValidationError]
     valid_parsed_response_data = validate_parsed_result_data_ohlc(parsed_result_data)
-    logger_func("validated & parsed result data // ", valid_parsed_response_data)
+    # ? logger_func("validated & parsed result data // ", valid_parsed_response_data)
     # if valid_parsed_response_data.is_err():
         # return valid_parsed_response_data
     return valid_parsed_response_data
-
-
-    #! IMPORTANT v
-    #FIXMEreturn value should be Result[NoobitResponseOhlc, ValidationError]
-    #   ==> do not return Ok.value but Ok object
