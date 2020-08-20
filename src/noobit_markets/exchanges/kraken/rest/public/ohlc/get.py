@@ -9,6 +9,8 @@ from noobit_markets.exchanges.kraken.rest.base import *
 
 
 # TODO implement some way of retrying if it fails
+
+@retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_ohlc_kraken(
         loop,
         client,
@@ -61,6 +63,7 @@ async def get_ohlc_kraken(
     if  err_content:
         # input: tuple // output: Err[typing.Tuple[BaseError]]
         parsed_err_content = parse_error_content(err_content, get_sent_request(resp))
+        print("//////", parsed_err_content.value[0].accept)
         return parsed_err_content
 
 

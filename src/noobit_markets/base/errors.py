@@ -58,8 +58,6 @@ class BaseError(Exception):
         self.raw_error = raw_error
         self.exception = self.__class__.__name__
         self.sent_request = sent_request
-        self.accept = True
-        self.sleep = None
         self.status_code = status.BAD_REQUEST
 
         msg = f"EXCEPTION:{self.exception}\n{14*' '}Raw Error: {self.raw_error}\n{14*' '}Request: {self.sent_request}"
@@ -98,9 +96,11 @@ class BadRequest(ExchangeError):
     status_code = status.BAD_REQUEST
 
 
+#!!!!!!! TEST
+# FIXME change back to accept = True
 class BadSymbol(BadRequest):
-    accept = True
-    sleep = 10
+    accept = False
+    sleep = 5
 
 
 class BadResponse(ExchangeError):

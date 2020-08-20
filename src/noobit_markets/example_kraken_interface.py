@@ -34,11 +34,11 @@ ohlc = asyncio.run(
         loop=None,
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
-        # symbol_to_exchange={"XBT-USD": "XXBTRUSD"},
-        symbol_to_exchange=symbol_mapping,
+        symbol_to_exchange={"XBT-USD": "XXBTRUSD"},
+        # symbol_to_exchange=symbol_mapping,
         symbol_from_exchange={},
         timeframe="1H",
         logger_func= lambda *args: print("=====> ", *args, "\n\n")
     )
 )
-# print(ohlc)
+print(ohlc)

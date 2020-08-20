@@ -1,15 +1,20 @@
 import typing
+import types
 from urllib.parse import urljoin
 import json
+import asyncio
+from functools import wraps
 
 from typing_extensions import Literal
 from pyrsistent import pmap
 import httpx
-from pydantic import AnyHttpUrl
+from pydantic import AnyHttpUrl, PositiveInt
 
 from noobit_markets.base import ntypes
+from noobit_markets.base.errors import BaseError
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
+from noobit_markets.base.models.result import Ok, Err, Result
 
 
 
@@ -88,6 +93,42 @@ async def send_private_request(
     response = await client.post(**request_args)
 
     return pmap(response.___dict__)
+
+
+# ============================================================
+# RETRY REQUEST
+# ============================================================
+
+
+#TODO make more explicit model (ie FrozenNoobitResponse)
+def retry_request(
+        retries: PositiveInt,
+        logger: typing.Callable,
+    ) -> Result[FrozenBaseModel, BaseError]:
+
+    def decorator(func: types.CoroutineType):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            retried = 0
+            while retried < retries:
+                result = await func(*args, **kwargs)
+                if result.is_ok():
+                    return result
+                elif result.is_err():
+                    #! returns a tuple of errors
+                    if result.value[0].accept:
+                        return result
+                    else:
+                        logger(f"Retrying in {result.value[0].sleep} seconds - Retry Attempts: {retried}")
+                        #! returns a tuple of errors
+                        await asyncio.sleep(result.value[0].sleep)
+                        retried += 1
+            else:
+                return result
+
+        return wrapper
+    return decorator
+
 
 
 

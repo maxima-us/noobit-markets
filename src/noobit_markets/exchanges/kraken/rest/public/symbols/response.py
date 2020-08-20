@@ -140,7 +140,6 @@ def _single_pair(
         "order_min": data.ordermin
     }
 
-    # FIXME problem with frozenkey is we can not call .keys()
     return pmap(parsed)
 
 
