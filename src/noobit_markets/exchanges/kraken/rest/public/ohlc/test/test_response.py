@@ -178,7 +178,7 @@ def test_get_result_content_ohlc():
 
 def test_get_err_content_ohlc():
     returned = get_error_content(ohlc_resp_json)
-    expected = tuple([])
+    expected = frozenset([])
 
     assert type(returned) == type(expected)
     assert returned == expected
