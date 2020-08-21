@@ -28,6 +28,13 @@ from noobit_markets.base.models.result import Ok, Err, Result
 #     return getattr(endpoints.ENDPOINTS.rest[exchange].public.endpoints, endpoint)
 
 
+# ? needs custom validators for headers apparently
+# class FrozenBasePublicReq(FrozenBaseModel):
+#     url: AnyHttpUrl
+#     headers: httpx.Headers
+#     params: typing.Mapping[str, str]
+
+
 # ============================================================
 # MAKE REQUEST
 # ============================================================
@@ -42,6 +49,7 @@ def make_httpx_get_request(
 
     full_url = urljoin(base_url, endpoint)
 
+    # ? MODEL ??
     req_dict = {
         "url": full_url,
         "headers": headers,
@@ -55,6 +63,7 @@ def make_httpx_post_request(
         base_url: AnyHttpUrl,
         endpoint: str,
         headers: typing.Optional[httpx.Headers],
+        # TODO define FrozenBaseRequest that contains nonce param
         valid_request_model: FrozenBaseModel
     ) -> pmap:
 
@@ -63,7 +72,9 @@ def make_httpx_post_request(
     req_dict = {
         "url": full_url,
         "headers": headers,
-        "data": valid_request_model.dict()
+        # "data": valid_request_model.dict()
+        # FIXME this is just to test private req
+        "data": valid_request_model
     }
 
     return pmap(req_dict)
@@ -92,7 +103,9 @@ async def send_private_request(
 
     response = await client.post(**request_args)
 
-    return pmap(response.___dict__)
+    # return pmap(response.___dict__)
+    # FIXME this is just for testing purposes
+    return pmap(response.__dict__)
 
 
 # ============================================================
@@ -115,6 +128,9 @@ def retry_request(
                 if result.is_ok():
                     return result
                 elif result.is_err():
+                    # FIXME return without retries if len>1
+                    if len(result.is_err() > 1):
+                        return result
                     #! returns a tuple of errors
                     if result.value[0].accept:
                         return result

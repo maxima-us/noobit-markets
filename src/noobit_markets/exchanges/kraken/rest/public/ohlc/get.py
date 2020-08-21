@@ -36,7 +36,7 @@ async def get_ohlc_kraken(
     logger_func("parsed req // ", parsed_req)
 
 
-    # output: Result[NoobitRequestOhlc, ValidationError]
+    # output: Result[KrakenRequestOhlc, ValidationError]
     validated_model = validate_parsed_request_ohlc(parsed_req)
     logger_func("validated req // ", validated_model)
     if validated_model.is_err():
