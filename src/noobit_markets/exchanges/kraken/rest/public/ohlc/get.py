@@ -87,10 +87,14 @@ async def get_ohlc_kraken(
     # logger_func("resp result data", result_data_ohlc)
 
     # input: typing.Tuple[tuple] // output: typing.Tuple[pmap]
-    parsed_result_data = parse_result_data_ohlc(result_data_ohlc, symbol)
+    parsed_result_ohlc = parse_result_data_ohlc(result_data_ohlc, symbol)
+
+
+    result_data_last = get_result_data_last(valid_result_content.value)
+    parsed_result_last = parse_result_data_last(result_data_last)
 
     # input: typing.Tuple[pmap] //  output: Result[NoobitResponseOhlc, ValidationError]
-    valid_parsed_response_data = validate_parsed_result_data_ohlc(parsed_result_data)
+    valid_parsed_response_data = validate_parsed_result_data_ohlc(parsed_result_ohlc, parsed_result_last)
     # ? logger_func("validated & parsed result data // ", valid_parsed_response_data)
     # if valid_parsed_response_data.is_err():
         # return valid_parsed_response_data

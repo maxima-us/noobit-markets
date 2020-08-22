@@ -6,7 +6,7 @@ import copy
 from datetime import date
 
 from pyrsistent import pmap
-from pydantic import PositiveInt, create_model, ValidationError, validator
+from pydantic import PositiveInt, PositiveFloat, create_model, ValidationError, validator
 
 # noobit base
 from noobit_markets.base import ntypes
@@ -33,7 +33,8 @@ class FrozenKrakenBase(FrozenBaseModel):
         if not y > 2009 and y < 2050:
             # FIXME we should raise
             raise ValueError('TimeStamp year not within [2009, 2050]')
-        return v * 10**3
+        # return v * 10**3
+        return v
 
 
 
@@ -96,6 +97,14 @@ def get_result_data_ohlc(
     # return tuple of tuples instead of list of lists
     tupled = [tuple(list_item) for list_item in result_data]
     return tuple(tupled)
+
+
+def get_result_data_last(
+        valid_result_content: make_kraken_model_ohlc,
+    ) -> typing.Union[PositiveInt, PositiveFloat]:
+
+    # we want timestamp in ms
+    return valid_result_content.last
 
 
 def verify_symbol_ohlc(
@@ -161,6 +170,12 @@ def _single_candle(
 
     return pmap(parsed)
 
+def parse_result_data_last(
+        result_data: typing.Union[PositiveInt, PositiveFloat]
+    ) -> PositiveInt:
+
+    return result_data * 10**3
+
 
 # ============================================================
 # VALIDATE
@@ -200,12 +215,14 @@ def validate_raw_result_content_ohlc(
 
 
 def validate_parsed_result_data_ohlc(
-        parsed_result_data: typing.Tuple[pmap],
+        parsed_result_ohlc: typing.Tuple[pmap],
+        parsed_result_last: PositiveFloat
     ) -> Result[NoobitResponseOhlc, ValidationError]:
 
     try:
         validated = NoobitResponseOhlc(
-            data=parsed_result_data
+            ohlc=parsed_result_ohlc,
+            last=parsed_result_last
         )
         return Ok(validated)
 

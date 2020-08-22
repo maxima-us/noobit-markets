@@ -1,7 +1,8 @@
 import typing
 from decimal import Decimal
+from datetime import date
 
-from pydantic import PositiveInt, conint
+from pydantic import PositiveInt, conint, validator
 
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base import ntypes
@@ -24,8 +25,18 @@ class NoobitResponseItemOhlc(FrozenBaseModel):
 
 class NoobitResponseOhlc(FrozenBaseModel):
 
-    data: typing.List[NoobitResponseItemOhlc]
+    ohlc: typing.List[NoobitResponseItemOhlc]
+    last: PositiveInt
 
+    @validator('last')
+    def check_year_from_timestamp(cls, v):
+        # timestamp should be in milliseconds
+        y = date.fromtimestamp(v/1000).year
+        if not y > 2009 and y < 2050:
+            # FIXME we should raise
+            raise ValueError(f'TimeStamp year : {y} not within [2009, 2050]')
+        # return v * 10**3
+        return v
 
 
 
