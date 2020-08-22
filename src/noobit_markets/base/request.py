@@ -8,7 +8,7 @@ from functools import wraps
 from typing_extensions import Literal
 from pyrsistent import pmap
 import httpx
-from pydantic import AnyHttpUrl, PositiveInt
+from pydantic import AnyHttpUrl, PositiveInt, ValidationError
 
 from noobit_markets.base import ntypes
 from noobit_markets.base.errors import BaseError
@@ -128,8 +128,11 @@ def retry_request(
                 if result.is_ok():
                     return result
                 elif result.is_err():
+                    # no retries if we had a validation error
+                    if isinstance(result.value, ValidationError):
+                        return result
                     # FIXME return without retries if len>1
-                    if len(result.is_err() > 1):
+                    if len(result.value) > 1:
                         return result
                     #! returns a tuple of errors
                     if result.value[0].accept:
