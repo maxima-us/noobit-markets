@@ -43,8 +43,8 @@ class NoobitResponseItemSymbols(FrozenBaseModel):
 
 class NoobitResponseSymbols(FrozenBaseModel):
 
-    data: typing.Dict[ntypes.SYMBOL, NoobitResponseItemSymbols]
-
+    asset_pairs: typing.Dict[ntypes.SYMBOL, NoobitResponseItemSymbols]
+    assets: ntypes.ASSET_TO_EXCHANGE
 
 
 class NoobitResponseBalances(FrozenBaseModel):

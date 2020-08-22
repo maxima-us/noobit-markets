@@ -20,10 +20,12 @@ try:
 except Exception as e:
     raise e
 
+print(symbol_to_exch)
+
 # !!!! this returns an dict of Models ==> get_ohlc(symbol_mappping) is expecting a plain dict(str, str)
 # !!!!  ==> works but we need to pass in return_value.dict()
 # print(symbol_to_exch.value.dict())
-symbol_mapping = {k: v.exchange_name for k, v in symbol_to_exch.value.data.items()}
+symbol_mapping = {k: v.exchange_name for k, v in symbol_to_exch.value.asset_pairs.items()}
 # print("MAPPING : ", symbol_mapping)
 
 # print ohlc
@@ -34,7 +36,7 @@ ohlc = asyncio.run(
         loop=None,
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
-        symbol_to_exchange={"XBT-USD": "XXBTRUSD"},
+        symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
         # symbol_to_exchange=symbol_mapping,
         symbol_from_exchange={},
         timeframe="1H",

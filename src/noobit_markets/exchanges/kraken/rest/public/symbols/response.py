@@ -116,15 +116,27 @@ def get_result_data_symbols(
 
 
 def parse_result_data_symbols(
+        result_data: typing.Dict[str, KrakenResponseItemSymbols]
+    ) -> pmap:
+
+    parsed = {
+        "asset_pairs": parse_result_data_assetpairs(result_data),
+        "assets": parse_result_data_assets(result_data)
+    }
+
+    return pmap(parsed)
+
+
+def parse_result_data_assetpairs(
         result_data: typing.Dict[str, KrakenResponseItemSymbols],
         # symbol: ntypes.SYMBOL
     ) -> typing.Mapping[ntypes.SYMBOL, pmap]:
 
-    parsed_symbols = {data.wsname.replace("/", "-"): _single_pair(data, exch_symbol) for exch_symbol, data in result_data.items()}
-    return pmap(parsed_symbols)
+    parsed_assetpairs = {data.wsname.replace("/", "-"): _single_assetpair(data, exch_symbol) for exch_symbol, data in result_data.items()}
+    return pmap(parsed_assetpairs)
 
 
-def _single_pair(
+def _single_assetpair(
     data: pmap,
     exchange_symbol: str
 ) -> pmap:
@@ -141,6 +153,22 @@ def _single_pair(
     }
 
     return pmap(parsed)
+
+
+def parse_result_data_assets(
+        result_data: typing.Dict[str, KrakenResponseItemSymbols]
+    ) -> ntypes.ASSET_TO_EXCHANGE:
+
+    asset_to_exchange = {}
+    for _, v in result_data.items():
+        kbase = v.base
+        kquote = v.quote
+        nbase, nquote = v.wsname.split("/")
+
+        asset_to_exchange[nbase] = kbase
+        asset_to_exchange[nquote] = kquote
+
+    return pmap(asset_to_exchange)
 
 
 # ============================================================
@@ -170,7 +198,7 @@ def validate_parsed_result_data_symbols(
     ) -> Result[NoobitResponseSymbols, ValidationError]:
 
     try:
-        validated = NoobitResponseSymbols(data=parsed_result_data)
+        validated = NoobitResponseSymbols(**parsed_result_data)
         return Ok(validated)
 
     except ValidationError as e:

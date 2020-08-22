@@ -6,8 +6,8 @@ from pydantic import conint, constr
 
 
 
-
-ASSET = constr(regex=r'[A-Z]{3,4}')
+# for Kraken: shortest : SC // longest: WAVES
+ASSET = constr(regex=r'[A-Z]{2,5}')
 
 SYMBOL = constr(regex=r'[A-Z]+-[A-Z]+')
 
