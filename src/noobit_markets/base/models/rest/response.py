@@ -44,3 +44,9 @@ class NoobitResponseItemSymbols(FrozenBaseModel):
 class NoobitResponseSymbols(FrozenBaseModel):
 
     data: typing.Dict[ntypes.SYMBOL, NoobitResponseItemSymbols]
+
+
+
+class NoobitResponseBalances(FrozenBaseModel):
+
+    data: typing.Dict[ntypes.ASSET, Decimal]

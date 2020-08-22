@@ -6,6 +6,9 @@ from pydantic import conint, constr
 
 
 
+
+ASSET = constr(regex=r'[A-Z]{3,4}')
+
 SYMBOL = constr(regex=r'[A-Z]+-[A-Z]+')
 
 TIMEFRAME = Literal[
@@ -31,3 +34,8 @@ SYMBOL_TO_EXCHANGE = typing.Dict[SYMBOL, str]
 CLIENT = Literal[
     httpx.AsyncClient
 ]
+
+
+ASSET_TO_EXCHANGE = typing.Mapping[ASSET, str]
+
+ASSET_FROM_EXCHANGE = typing.Mapping[str, ASSET]

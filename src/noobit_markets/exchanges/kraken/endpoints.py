@@ -23,7 +23,7 @@ KRAKEN_ENDPOINTS = endpoints.RESTEndpoints(**{
         "url": "https://api/kraken/com/0/private/",
 
         "endpoints": {
-            'balance': "Balance",
+            'balances': "Balance",
             "account_balance": "Balance",
             "exposure": "TradeBalance",
             "open_positions": "OpenPositions",

@@ -8,7 +8,6 @@ from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import *
 
 
-# TODO implement some way of retrying if it fails
 
 @retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_ohlc_kraken(

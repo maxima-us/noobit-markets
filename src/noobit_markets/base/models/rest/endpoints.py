@@ -27,7 +27,7 @@ class _PublicInterface(FrozenBaseModel):
 
 class _PrivateEndpoints(FrozenBaseModel):
 
-    balance: str
+    balances: str
     account_balance: str
     exposure: str
     open_positions: str

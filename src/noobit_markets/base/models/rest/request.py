@@ -7,6 +7,13 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base import ntypes
 
 
+# KrakenRequestTradeBalance will have to subclass this
+class ExchangePrivateRequest(FrozenBaseModel):
+
+    nonce: PositiveInt
+
+
+
 
 class NoobitRequestOhlc(FrozenBaseModel):
 
