@@ -31,7 +31,8 @@ class FrozenKrakenBase(FrozenBaseModel):
     def check_year_from_timestamp(cls, v):
         y = date.fromtimestamp(v).year
         if not y > 2009 and y < 2050:
-            raise ValueError('must contain a space')
+            # FIXME we should raise
+            raise ValueError('TimeStamp year not within [2009, 2050]')
         return v * 10**3
 
 
@@ -92,6 +93,7 @@ def get_result_data_ohlc(
     #     [1567039680, '8745.7', '8747.3', '8745.7', '8747.3', '8747.3', '0.00929540', 1]]
 
     result_data = getattr(valid_result_content, symbol_mapping[symbol])
+    # return tuple of tuples instead of list of lists
     tupled = [tuple(list_item) for list_item in result_data]
     return tuple(tupled)
 

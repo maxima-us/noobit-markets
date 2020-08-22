@@ -1,7 +1,8 @@
 import typing
+from datetime import date
 
 from pyrsistent import pmap
-from pydantic import BaseModel, PositiveInt, ValidationError, constr
+from pydantic import BaseModel, PositiveInt, ValidationError, constr, validator
 from typing_extensions import Literal
 
 from noobit_markets.base import ntypes, mappings
@@ -25,9 +26,16 @@ class KrakenRequestOhlc(FrozenBaseModel):
 
     pair: constr(regex=r'[A-Z]+')
     interval: Literal[1, 5, 15, 30, 60, 240, 1440, 10080, 21600]
-    # ? timestamp could be Decimal ?
+    # needs to be in ms
     since: typing.Optional[PositiveInt]
 
+    @validator('since')
+    def check_year_from_timestamp(cls, v):
+        y = date.fromtimestamp(v).year
+        if not y > 2009 and y < 2050:
+            # FIXME we should raise
+            raise ValueError('TimeStamp year not within [2009, 2050]')
+        return y
 
 # ============================================================
 # PARSE
