@@ -36,9 +36,9 @@ class KrakenResponseBalances(FrozenBaseModel):
 
 
 def get_result_data_balances(
-    #FIXME should we pass in model or pmap ??
-    valid_result_content: KrakenResponseBalances,
-) -> typing.Mapping[str, Decimal]:
+        #FIXME should we pass in model or pmap ??
+        valid_result_content: KrakenResponseBalances,
+    ) -> typing.Mapping[str, Decimal]:
 
     result_data = valid_result_content.data
     return result_data
@@ -52,12 +52,12 @@ def get_result_data_balances(
 def parse_result_data_balances(
         result_data: typing.Mapping[str, Decimal],
         # FIXME commented out just for testing
-        # asset_mapping: ntypes.ASSET_TO_EXCHANGE
+        asset_mapping: ntypes.ASSET_FROM_EXCHANGE
     ) -> typing.Mapping[ntypes.ASSET, Decimal]:
 
     # FIXME commented out just for testing
-    # parsed = {asset_mapping[asset]: amount for asset, amount in result_data.items()}
-    parsed = {asset: amount for asset, amount in result_data.items()}
+    parsed = {asset_mapping[asset]: amount for asset, amount in result_data.items() if not asset == "KFEE" and amount > Decimal(0)}
+    # parsed = {asset: amount for asset, amount in result_data.items()}
 
 
     return pmap(parsed)

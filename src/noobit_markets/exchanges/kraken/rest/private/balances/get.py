@@ -67,7 +67,7 @@ async def get_balances_kraken(
     result_data_balances = get_result_data_balances(valid_result_content.value)
 
     # step 12: parse result data ==> output: pmap
-    parsed_result_data = parse_result_data_balances(result_data_balances)
+    parsed_result_data = parse_result_data_balances(result_data_balances, asset_to_exchange)
 
     # step 13: validate parsed result data ==> output: Result[NoobitResponseTradeBalance, ValidationError]
     valid_parsed_result_data = validate_parsed_result_data_balances(parsed_result_data)
