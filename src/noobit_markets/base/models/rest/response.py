@@ -1,12 +1,19 @@
 import typing
 from decimal import Decimal
 from datetime import date
+from datetime import datetime
 
 from pydantic import PositiveInt, conint, validator
 
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base import ntypes
 
+
+
+
+# ============================================================
+# OHLC
+# ============================================================
 
 
 class NoobitResponseItemOhlc(FrozenBaseModel):
@@ -39,6 +46,10 @@ class NoobitResponseOhlc(FrozenBaseModel):
         return v
 
 
+# ============================================================
+# SYMBOLS
+# ============================================================
+
 
 class NoobitResponseItemSymbols(FrozenBaseModel):
 
@@ -54,10 +65,29 @@ class NoobitResponseItemSymbols(FrozenBaseModel):
 
 class NoobitResponseSymbols(FrozenBaseModel):
 
-    asset_pairs: typing.Dict[ntypes.SYMBOL, NoobitResponseItemSymbols]
+    asset_pairs: typing.Mapping[ntypes.SYMBOL, NoobitResponseItemSymbols]
     assets: ntypes.ASSET_TO_EXCHANGE
+
+
+# ============================================================
+# BALANCES
+# ============================================================
 
 
 class NoobitResponseBalances(FrozenBaseModel):
 
-    data: typing.Dict[ntypes.ASSET, Decimal]
+    data: typing.Mapping[ntypes.ASSET, Decimal]
+
+
+
+
+# ============================================================
+# OHLC
+# ============================================================
+
+class NoobitResponseOrderBook(FrozenBaseModel):
+
+    utcTime: ntypes.TIMESTAMP
+    symbol: ntypes.SYMBOL
+    asks: ntypes.ASKS
+    bids: ntypes.BIDS
