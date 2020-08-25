@@ -41,6 +41,9 @@ async def get_ohlc_kraken(
     if validated_model.is_err():
         return validated_model
 
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # FIXME compose !
+    # only variable args are base_url, endpoint, validate_mode, client and resp
 
     # input: valid_request_model must be FrozenBaseModel !!! not dict !! // output: pmap
     make_req = make_httpx_get_request(base_url, endpoint, {}, validated_model.value)
@@ -68,6 +71,10 @@ async def get_ohlc_kraken(
 
     # input: pmap // output: pmap
     result_content_ohlc = get_result_content(resp)
+
+    # FIXME compose !!
+    #! between here and above red line ==> always same code ==> should be put in a bigger func
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # input: pmap // Result[ntypes.SYMBOL, ValueError]
     valid_symbol = verify_symbol_ohlc(result_content_ohlc, symbol, symbol_to_exchange)

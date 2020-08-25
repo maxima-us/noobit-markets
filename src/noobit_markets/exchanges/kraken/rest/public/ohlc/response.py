@@ -24,7 +24,7 @@ from noobit_markets.exchanges.kraken.errors import ERRORS_FROM_EXCHANGE
 #============================================================
 
 
-class FrozenKrakenBase(FrozenBaseModel):
+class FrozenBaseOhlc(FrozenBaseModel):
     last: PositiveInt
 
     @validator('last')
@@ -56,7 +56,7 @@ def make_kraken_model_ohlc(
             ],
             ...
         ),
-        "__base__": FrozenKrakenBase
+        "__base__": FrozenBaseOhlc
     }
 
     model = create_model(
@@ -77,7 +77,8 @@ def get_result_data_ohlc(
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
     ) -> typing.Tuple[tuple]:
-    """Get result data from result content. Result content needs to have been validated.
+    """Get result data from result content (ie only candle data without <last>).
+    Result content needs to have been validated.
 
     Args:
         result_content : mapping of `exchange format symbol` to `KrakenResponseItemSymbols`

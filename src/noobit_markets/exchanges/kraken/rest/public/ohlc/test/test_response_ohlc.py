@@ -10,7 +10,6 @@ from pyrsistent import pmap
 # Noobit Models
 from noobit_markets.base.models.result import Ok, Err, Result
 from noobit_markets.base.models.rest.response import NoobitResponseOhlc
-from noobit_markets.base.models.result import Ok, Err, Result
 
 # Noobit Kraken
 from noobit_markets.exchanges.kraken.rest.base import *
@@ -74,7 +73,8 @@ ohlc_result_data = [
 # raw result data from response["_content"]["result"]
 ohlc_result_content = {
     'XXBTZUSD': ohlc_result_data,
-    'last': 1597406700
+    'last': 1597406520
+
 }
 
 # Needs to be of same type as KrakenResponseOhlc.XXBTZUSD
@@ -101,7 +101,7 @@ KrakenResponseOhlc = make_kraken_model_ohlc(symbol, symbol_to_exchange)
 # Neds to be of same format as KrakenResponseOhlc
 validated_result_content = KrakenResponseOhlc(**{
     "XXBTZUSD": validated_result_data,
-    'last': 1597406700
+    'last': 1597406520
 })
 
 
@@ -128,28 +128,31 @@ parsed_ohlc_result_data = [
     }),
 ]
 
-validated_parsed_result_data = NoobitResponseOhlc(data=[
-    {
-        "symbol": "XBT-USD",
-        "utcTime": 1597406520*10**3,
-        "open": Decimal('11754.3'),
-        "high": Decimal('11754.3'),
-        "low": Decimal('11750.5'),
-        "close": Decimal('11750.6'),
-        "volume": Decimal('0.33496956'),
-        "trdCount": 7
-    },
-    {
-        "symbol": "XBT-USD",
-        "utcTime": 1597406520*10**3,
-        "open": Decimal('11754.3'),
-        "high": Decimal('11754.3'),
-        "low": Decimal('11750.5'),
-        "close": Decimal('11750.6'),
-        "volume": Decimal('0.33496956'),
-        "trdCount": 7
-    }
-])
+validated_parsed_result_data = NoobitResponseOhlc(
+    ohlc=[
+        {
+            "symbol": "XBT-USD",
+            "utcTime": 1597406520*10**3,
+            "open": Decimal('11754.3'),
+            "high": Decimal('11754.3'),
+            "low": Decimal('11750.5'),
+            "close": Decimal('11750.6'),
+            "volume": Decimal('0.33496956'),
+            "trdCount": 7
+        },
+        {
+            "symbol": "XBT-USD",
+            "utcTime": 1597406520*10**3,
+            "open": Decimal('11754.3'),
+            "high": Decimal('11754.3'),
+            "low": Decimal('11750.5'),
+            "close": Decimal('11750.6'),
+            "volume": Decimal('0.33496956'),
+            "trdCount": 7
+        }
+    ],
+    last=1597406520*10**3
+)
 
 ohlc_resp_json = mock_response_json(ohlc_result_content)
 
@@ -232,12 +235,19 @@ def test_validate_raw_result_content_ohlc():
     returned = validate_raw_result_content_ohlc(ohlc_result_content, symbol, symbol_to_exchange)
     expected = validated_result_content
 
+    exch_symbol = symbol_to_exchange[symbol]
+
     assert isinstance(returned, Ok)
     assert hasattr(returned, "value")
     assert isinstance(returned.value, FrozenBaseModel)
     assert hasattr(expected, "__fields_set__")
     assert hasattr(returned.value, "__fields_set__")
     assert expected.__fields_set__ == returned.value.__fields_set__ == {"XXBTZUSD", "last"}
+    assert len(getattr(returned.value, exch_symbol)) == len(getattr(expected, exch_symbol))
+
+    for i in range(len(getattr(expected, exch_symbol))):
+        assert getattr(expected, exch_symbol)[i] == getattr(returned.value, exch_symbol)[i]
+
     assert returned.value == expected
 
 

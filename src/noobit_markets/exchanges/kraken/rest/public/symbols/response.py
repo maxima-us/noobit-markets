@@ -39,7 +39,8 @@ class KrakenResponseItemSymbols(FrozenBaseModel):
     lot_multiplier: conint(ge=0)
     leverage_buy: typing.Tuple[int, ...]
     leverage_sell: typing.Tuple[int, ...]
-    fees: typing.Tuple[typing.Tuple[Decimal, int], ...]
+    fees: typing.Tuple[typing.Tuple[Decimal, Decimal], ...]
+    fees_maker: typing.Tuple[typing.Tuple[Decimal, Decimal], ...]
     fee_volume_currency: str
     margin_call: PositiveInt
     margin_stop: PositiveInt
@@ -48,7 +49,7 @@ class KrakenResponseItemSymbols(FrozenBaseModel):
 
 class KrakenResponseSymbols(FrozenBaseModel):
 
-    data: typing.Dict[str, KrakenResponseItemSymbols]
+    data: typing.Mapping[str, KrakenResponseItemSymbols]
 
 
 #============================================================
