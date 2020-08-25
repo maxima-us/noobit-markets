@@ -20,7 +20,7 @@ KRAKEN_ENDPOINTS = endpoints.RESTEndpoints(**{
     },
 
     "private": {
-        "url": "https://api/kraken/com/0/private/",
+        "url": "https://api.kraken.com/0/private/",
 
         "endpoints": {
             'balances': "Balance",
