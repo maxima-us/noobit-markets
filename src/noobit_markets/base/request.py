@@ -72,9 +72,9 @@ def make_httpx_post_request(
     req_dict = {
         "url": full_url,
         "headers": headers,
-        # "data": valid_request_model.dict()
+        "data": valid_request_model.dict()
         # FIXME this is just to test private req
-        "data": valid_request_model
+        # "data": valid_request_model
     }
 
     return pmap(req_dict)
@@ -113,7 +113,7 @@ async def send_private_request(
 # ============================================================
 
 
-#TODO make more explicit model (ie FrozenNoobitResponse)
+#TODO make more explicit model (ie FrozenNoobitResponse) ==> for return value ?
 def retry_request(
         retries: PositiveInt,
         logger: typing.Callable,
@@ -138,7 +138,8 @@ def retry_request(
                     if result.value[0].accept:
                         return result
                     else:
-                        logger(f"Retrying in {result.value[0].sleep} seconds - Retry Attempts: {retried}")
+                        msg = f"Retrying in {result.value[0].sleep} seconds - Retry Attempts: {retried}"
+                        logger(msg)
                         #! returns a tuple of errors
                         await asyncio.sleep(result.value[0].sleep)
                         retried += 1

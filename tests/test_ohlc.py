@@ -29,7 +29,6 @@ async def test_ohlc():
             client,
             "XBT-USD",
             symbol_mapping["asset_pairs"],
-            None,
             "1H",
             lambda *args: print("=====>", *args)
         )

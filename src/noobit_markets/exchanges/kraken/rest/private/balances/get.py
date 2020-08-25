@@ -1,65 +1,62 @@
+import asyncio
+
+import pydantic
+
 from .request import *
 from .response import *
 
-from noobit_markets.base.request import *
+
+# Base
 from noobit_markets.base import ntypes
+from noobit_markets.base.request import retry_request
 from noobit_markets.base.models.rest.response import NoobitResponseBalances
 
+# Kraken
+from noobit_markets.exchanges.kraken.rest.auth import KrakenAuth
 from noobit_markets.exchanges.kraken import endpoints
-from noobit_markets.exchanges.kraken.rest.base import *
-
-from noobit_markets.exchanges.kraken.rest import auth
+from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_private_req
 
 
 
-@retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
+
+# @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_balances_kraken(
-        loop,
-        client,
+        loop: asyncio.BaseEventLoop,
+        client: ntypes.CLIENT,
         asset_to_exchange: ntypes.ASSET_TO_EXCHANGE,
         logger_func,
-        auth=auth.KrakenAuth(),
+        auth=KrakenAuth(),
         # FIXME get from endpoint dict
-        base_url="https://api.kraken.com/0/private/",
-        endpoint="Balance"
+        base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
+        endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.balances
     ) -> Result[NoobitResponseBalances, Exception]:
 
     # step 1: validate base request ==> output: Result[NoobitRequestTradeBalance, ValidationError]
     # step 2: parse valid base req ==> output: pmap
     # step 3: validate parsed request ==> output: Result[KrakenRequestTradeBalance, ValidationError]
 
-
     # get nonce right away since there is noother param
     data = {"nonce": auth.nonce}
 
-    #! we do not need to validate, as there are no params
+    #! we do not need to validate, as there are no param
     #!      and type checking a nonce is useless
     #!      if invalid nonce: error_content will inform us
-    # step 4: make actual request to be sent ==> output: pmap
-    make_req = make_httpx_post_request(base_url, endpoint, auth.headers(endpoint, data), data)
 
-    # step 5: send request and retrieve resp ==> output: pmap
-    resp = await send_private_request(client, make_req)
+    try:
+        valid_kraken_req = Ok(KrakenRequestBalances(**data))
+    except ValidationError as e:
+        return Err(e)
 
-    # step 6: check if we received an error HTTP code
-    valid_status = get_response_status_code(resp)
-    if valid_status.is_err():
-        return valid_status
+    headers = auth.headers(endpoint, data)
 
-    # step 7: check if we received an error result
-    err_content = get_error_content(resp)
-    if err_content:
-        parsed_err_content = (err_content, get_sent_request(resp))
-        return parsed_err_content
-
-
-    # setp 8: get result content ==> output: pmap
-    result_content_balances = get_result_content(resp)
+    result_content = await get_result_content_from_private_req(client, valid_kraken_req.value, headers, base_url, endpoint)
+    if result_content.is_err():
+        return result_content
 
     # step 9: compare received symbol to passed symbol (!!!!! Not Applicable)
 
     # step 10: validate result content ==> output: Result[KrakenResponseBalances, ValidationError]
-    valid_result_content = validate_raw_result_content_balances(result_content_balances)
+    valid_result_content = validate_raw_result_content_balances(result_content.value)
     if valid_result_content.is_err():
         return valid_result_content
 
