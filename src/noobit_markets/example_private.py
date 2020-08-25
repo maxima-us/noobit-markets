@@ -5,11 +5,11 @@ import stackprinter
 stackprinter.set_excepthook(style='darkbg2')
 
 from noobit_markets.exchanges.kraken.rest.private.balances.get import get_balances_kraken
-from noobit_markets.exchanges.kraken.rest.public.symbols.get import load_symbol_to_exchange
+from noobit_markets.exchanges.kraken.rest.public.symbols.get import get_symbols
 
 
 # print symbol_mapping
-func_symbols = load_symbol_to_exchange
+func_symbols = get_symbols
 try:
     symbol_to_exch = asyncio.run(
         func_symbols(
@@ -34,6 +34,7 @@ try:
             logger_func= lambda *args: print("========> ", *args, "\n\n")
         )
     )
-    print("Balances : ", balances)
+    print("Balances : ", balances.value)
+    print("Is Exception : ", isinstance(balances.value, Exception))
 except Exception as e:
     raise e

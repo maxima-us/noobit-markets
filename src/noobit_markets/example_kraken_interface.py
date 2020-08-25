@@ -5,10 +5,10 @@ stackprinter.set_excepthook(style='darkbg2')
 
 
 from noobit_markets.exchanges.kraken import interface
-from noobit_markets.exchanges.kraken.rest.public.symbols.get import load_symbol_to_exchange
+from noobit_markets.exchanges.kraken.rest.public.symbols.get import get_symbols
 
 # print symbol_mapping
-func_symbols = load_symbol_to_exchange
+func_symbols = get_symbols
 try:
     symbol_to_exch = asyncio.run(
         func_symbols(

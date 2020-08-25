@@ -1,7 +1,7 @@
 import asyncio
 import httpx
 
-from noobit_markets.exchanges.kraken.rest.public.ohlc import get_ohlc_kraken
+from noobit_markets.exchanges.kraken.rest.public.ohlc.get import get_ohlc_kraken
 from noobit_markets.exchanges.kraken.endpoints import KRAKEN_ENDPOINTS
 
 
