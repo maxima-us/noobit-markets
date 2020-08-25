@@ -91,3 +91,35 @@ class NoobitResponseOrderBook(FrozenBaseModel):
     symbol: ntypes.SYMBOL
     asks: ntypes.ASKS
     bids: ntypes.BIDS
+
+
+# ============================================================
+# EXPOSURE
+# ============================================================
+
+class NoobitResponseExposure(FrozenBaseModel):
+
+     # FIX Definition: https://www.onixs.biz/fix-dictionary/4.4/tagNum_900.html
+    # (Total value of assets + positions + unrealized)
+    totalNetValue: Decimal
+
+    # FIX Definition: https://www.onixs.biz/fix-dictionary/4.4/tagNum_901.html
+    # (Available cash after deducting margin)
+    cashOutstanding: typing.Optional[Decimal]
+
+    # FIX Definition: https://www.onixs.biz/fix-dictionary/4.4/tagNum_899.html
+    #   Excess margin amount (deficit if value is negative)
+    # (Available margin)
+    marginExcess: Decimal
+
+    # FIX Definition:
+    #   The fraction of the cash consideration that must be collateralized, expressed as a percent.
+    #   A MarginRatio of 02% indicates that the value of the collateral (after deducting for "haircut")
+    #   must exceed the cash consideration by 2%.
+    # (marginRatio = 1/leverage)
+    # (total margin exposure on account)
+    marginRatio: Decimal = 0
+
+    marginAmt: Decimal = 0
+
+    unrealisedPnL: Decimal = 0

@@ -14,7 +14,8 @@ from noobit_markets.base.models.rest.response import (
     NoobitResponseOhlc,
     NoobitResponseOrderBook,
     NoobitResponseSymbols,
-    NoobitResponseBalances
+    NoobitResponseBalances,
+    NoobitResponseExposure
 )
 
 
@@ -86,6 +87,22 @@ class _PrivateInterface(FrozenBaseModel):
         # return type
         # FIXME should be result
         NoobitResponseBalances
+    ]
+
+    exposure: typing.Callable[
+        #argument types
+        [
+            asyncio.BaseEventLoop,
+            ntypes.CLIENT,
+            ntypes.SYMBOL_TO_EXCHANGE,
+            Auth,
+            typing.Callable,
+            pydantic.AnyHttpUrl,
+            str
+        ],
+        # return type
+        # FIXME should be result
+        NoobitResponseExposure
     ]
 
 

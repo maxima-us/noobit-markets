@@ -1,5 +1,9 @@
-from noobit_markets.base.models.rest.request import ExchangePrivateRequest
+import typing
 
+from pydantic import validator
+
+from noobit_markets.base import ntypes
+from noobit_markets.base.models.rest.request import ExchangePrivateRequest
 
 
 
@@ -7,9 +11,8 @@ from noobit_markets.base.models.rest.request import ExchangePrivateRequest
 # KRAKEN MODEL
 # ============================================================
 
-class KrakenRequestBalances(ExchangePrivateRequest):
+class KrakenRequestExposure(ExchangePrivateRequest):
     pass
-
 
 
 # ============================================================
