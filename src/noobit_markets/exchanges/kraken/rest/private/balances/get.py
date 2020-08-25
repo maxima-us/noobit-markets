@@ -19,6 +19,7 @@ async def get_balances_kraken(
         asset_to_exchange: ntypes.ASSET_TO_EXCHANGE,
         logger_func,
         auth=auth.KrakenAuth(),
+        # FIXME get from endpoint dict
         base_url="https://api.kraken.com/0/private/",
         endpoint="Balance"
     ) -> Result[NoobitResponseBalances, Exception]:

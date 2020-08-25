@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-# from .request import *
+from .request import *
 from .response import *
 
 from noobit_markets.base.request import *
@@ -16,35 +16,35 @@ async def get_orderbook_kraken(
         client,
         symbol,
         symbol_to_exchange,
-        depth=None,
+        depth,
         logger_func=None,
         base_url=endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint=endpoints.KRAKEN_ENDPOINTS.public.endpoints.orderbook,
     ) -> Result[NoobitResponseOrderBook, Exception]:
 
 
-    # # output: Result[NoobitRequestOhlc, ValidationError]
-    # valid_req = validate_request_orderbook(symbol, symbol_to_exchange, timeframe)
-    # #  logger_func("valid raw req // ", valid_req)
-    # if valid_req.is_err():
-    #     return valid_req
+    # output: Result[NoobitRequestOhlc, ValidationError]
+    valid_req = validate_base_request_orderbook(symbol, symbol_to_exchange, depth)
+    #  logger_func("valid raw req // ", valid_req)
+    if valid_req.is_err():
+        return valid_req
 
 
-    # # output: pmap
-    # parsed_req = parse_request_orderbook(valid_req.value)
-    # logger_func("parsed req // ", parsed_req)
+    # output: pmap
+    parsed_req = parse_request_orderbook(valid_req.value)
+    logger_func("parsed req // ", parsed_req)
 
 
-    # # output: Result[KrakenRequestOhlc, ValidationError]
-    # validated_model = validate_parsed_request_orderbook(parsed_req)
-    # logger_func("validated req // ", validated_model)
-    # if validated_model.is_err():
-    #     return validated_model
+    # output: Result[KrakenRequestOhlc, ValidationError]
+    valid_kraken_req = validate_parsed_request_orderbook(parsed_req)
+    logger_func("validated req // ", valid_kraken_req)
+    if valid_kraken_req.is_err():
+        return valid_kraken_req
 
-    class Temp(BaseModel):
-        pair: str
+    # class Temp(BaseModel):
+    #     pair: str
 
-    req = Temp(pair=symbol_to_exchange[symbol])
+    # req = Temp(pair=symbol_to_exchange[symbol])
 
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -52,7 +52,7 @@ async def get_orderbook_kraken(
     # only variable args are base_url, endpoint, validate_mode, client and resp
 
     # input: valid_request_model must be FrozenBaseModel !!! not dict !! // output: pmap
-    make_req = make_httpx_get_request(base_url, endpoint, {}, req)
+    make_req = make_httpx_get_request(base_url, endpoint, {}, valid_kraken_req.value)
     logger_func("make req // ", make_req)
 
 

@@ -13,7 +13,7 @@ if __name__ == "__main__":
             client,
             "XBT-USD",
             {"XBT-USD": "XXBTZUSD"},
-            None,
+            500,
             lambda *args: print("====>", *args)
         )
     )

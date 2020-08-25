@@ -20,3 +20,10 @@ class NoobitRequestOhlc(FrozenBaseModel):
     symbol: ntypes.SYMBOL
     symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
     timeframe: ntypes.TIMEFRAME
+
+
+class NoobitRequestOrderBook(FrozenBaseModel):
+
+    symbol: ntypes.SYMBOL
+    symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
+    depth: ntypes.DEPTH

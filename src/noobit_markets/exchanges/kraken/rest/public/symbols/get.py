@@ -22,15 +22,14 @@ from noobit_markets.exchanges.kraken import endpoints
 async def get_symbols(
         loop: asyncio.BaseEventLoop,
         client: ntypes.CLIENT,
+        logger_func: typing.Callable = lambda *args: print("====>", *args),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
-        endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.symbols,
-        headers: typing.Optional = None,
-        logger_func: typing.Callable = lambda *args: print("====>", *args)
+        endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.symbols
     ) -> Result[NoobitResponseSymbols, ValidationError]:
 
     # output: pmap
     #! when passing in 0 args to make_httpx_get_req, pass in FrozenBaseModel() instead
-    make_req = make_httpx_get_request(base_url, endpoint, headers, FrozenBaseModel())
+    make_req = make_httpx_get_request(base_url, endpoint, {}, FrozenBaseModel())
 
     # input: pmap // output: pmap
     resp = await send_public_request(client, make_req)
