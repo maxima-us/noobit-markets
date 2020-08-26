@@ -8,13 +8,13 @@ from noobit_markets.exchanges.kraken import interface
 
 
 # print symbol_mapping
-func_symbols = interface.KRAKEN.rest.public.get_symbols
+func_symbols = interface.KRAKEN.rest.public.symbols
 try:
     symbol_to_exch = asyncio.run(
         func_symbols(
             loop=None,
             client=httpx.AsyncClient(),
-            logger_func= lambda *args: print("========> ", *args, "\n\n")
+            logger_func= lambda *args: print("")
         )
     )
 except Exception as e:
@@ -38,7 +38,22 @@ ohlc = asyncio.run(
         symbol="XBT-USD",
         symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
         timeframe="1H",
+        logger_func= lambda *args: print("")
+    )
+)
+
+
+func_trades = interface.KRAKEN.rest.public.trades
+
+trades = asyncio.run(
+    func_trades(
+        loop=None,
+        client=httpx.AsyncClient(),
+        symbol="XBT-USD",
+        symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
+        since=0,
         logger_func= lambda *args: print("=====> ", *args, "\n\n")
     )
 )
-print(ohlc)
+
+print(trades)

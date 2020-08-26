@@ -19,6 +19,9 @@ from noobit_markets.base.models.rest.response import (
 )
 
 
+# ============================================================
+# REST PUBLIC ENDPOINTS
+# ============================================================
 
 class _PublicInterface(FrozenBaseModel):
 
@@ -69,6 +72,27 @@ class _PublicInterface(FrozenBaseModel):
         NoobitResponseSymbols
     ]
 
+    trades: typing.Callable[
+        #argument types
+        [
+            asyncio.BaseEventLoop,
+            ntypes.CLIENT,
+            ntypes.SYMBOL,
+            ntypes.SYMBOL_TO_EXCHANGE,
+            ntypes.SYMBOL_FROM_EXCHANGE,
+            ntypes.TIMESTAMP,
+            typing.Callable,
+            pydantic.AnyHttpUrl,
+            str
+        ],
+        # return type
+        NoobitResponseOhlc
+    ]
+
+
+# ============================================================
+# REST PRIVATE ENDPOINTS
+# ============================================================
 
 
 class _PrivateInterface(FrozenBaseModel):
