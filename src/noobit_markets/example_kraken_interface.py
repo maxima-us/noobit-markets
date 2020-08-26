@@ -56,4 +56,18 @@ trades = asyncio.run(
     )
 )
 
-print(trades)
+
+
+func_instrument = interface.KRAKEN.rest.public.instrument
+
+instrument = asyncio.run(
+    func_instrument(
+        loop=None,
+        client=httpx.AsyncClient(),
+        symbol="XBT-USD",
+        symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
+        logger_func= lambda *args: print("=====> ", *args, "\n\n")
+    )
+)
+
+print(instrument)

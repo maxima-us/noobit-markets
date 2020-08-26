@@ -79,7 +79,7 @@ ASSET_FROM_EXCHANGE = typing.Mapping[str, ASSET]
 DEPTH = PositiveInt
 
 # couter means only last value for a given key will be taken
-ASKS = BIDS = typing.Mapping[Decimal, Decimal]
+ASK = BID = ASKS = BIDS = typing.Mapping[Decimal, Decimal]
 
 # tuple of <best bid>, <best ask>, <timestamp>
 SPREAD = typing.Tuple[Decimal, Decimal, Decimal]

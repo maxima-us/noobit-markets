@@ -52,3 +52,16 @@ class NoobitRequestTrades(FrozenBaseModel):
     symbol: ntypes.SYMBOL
     symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
     since: Literal[ntypes.TIMESTAMP, 0]
+
+
+
+
+# ============================================================
+# Instrument
+# ============================================================
+
+
+class NoobitRequestInstrument(FrozenBaseModel):
+
+    symbol: ntypes.SYMBOL
+    symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE

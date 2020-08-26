@@ -213,3 +213,43 @@ class NoobitResponseTrades(FrozenBaseModel):
 
     trades: typing.Tuple[NoobitResponseItemTrade, ...]
     last: ntypes.TIMESTAMP
+
+
+
+
+# ============================================================
+# EXPOSURE
+# ============================================================
+
+
+class NoobitResponseInstrument(FrozenBaseModel):
+
+    # FIX Definition:
+    #   Ticker symbol. Common, "human understood" representation of the security.
+    #   SecurityID (48) value can be specified if no symbol exists
+    #   (e.g. non-exchange traded Collective Investment Vehicles)
+    #   Use "[N/A]" for products which do not have a symbol.
+    symbol: ntypes.SYMBOL
+
+    # prices
+    low: Decimal
+    high: Decimal
+    vwap: Decimal
+    last: Decimal
+    # specific to derivatives exchanges
+    markPrice: typing.Optional[Decimal]
+
+    # quantities
+    volume: Decimal
+    trdCount: Decimal
+
+    # spread
+    bestAsk: ntypes.ASK
+    bestBid: ntypes.BID
+
+    # stats for previous day
+    prevLow: Decimal
+    prevHigh: Decimal
+    prevVwap: Decimal
+    prevVolume: Decimal
+    prevTrdCount: typing.Optional[Decimal]

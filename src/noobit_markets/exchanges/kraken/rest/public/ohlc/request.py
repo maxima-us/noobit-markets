@@ -19,7 +19,7 @@ from noobit_markets.base.models.result import Ok, Err, Result
 
 class KrakenRequestOhlc(FrozenBaseModel):
     # KRAKEN PAYLOAD
-    #   pair = asset pair to get OHLC data for
+    #   pair = asset pair to get OHLC data for (example XXBTZUSD)
     #   interval = time frame interval in minutes (optional):
     #       1(default), 5, 15, 30, 60, 240, 1440, 10080, 21600
     #   since = return commited OHLC data since given id (optional)

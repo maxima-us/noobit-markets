@@ -10,6 +10,7 @@ from noobit_markets.exchanges.kraken.rest.public.ohlc.get import get_ohlc_kraken
 from noobit_markets.exchanges.kraken.rest.public.symbols.get import get_symbols
 from noobit_markets.exchanges.kraken.rest.public.orderbook.get import get_orderbook_kraken
 from noobit_markets.exchanges.kraken.rest.public.trades.get import get_trades_kraken
+from noobit_markets.exchanges.kraken.rest.public.instrument.get import get_instrument_kraken
 
 
 
@@ -20,7 +21,8 @@ KRAKEN = ExchangeInterface(**{
             "ohlc": get_ohlc_kraken,
             "orderbook": get_orderbook_kraken,
             "symbols": get_symbols,
-            "trades": get_trades_kraken
+            "trades": get_trades_kraken,
+            "instrument": get_instrument_kraken
         },
         "private": {
             "balances": get_balances_kraken,

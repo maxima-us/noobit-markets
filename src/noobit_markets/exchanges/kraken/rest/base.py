@@ -4,6 +4,11 @@ import typing
 from pyrsistent import pmap
 from pydantic import PositiveInt, AnyHttpUrl
 
+import stackprinter
+stackprinter.set_excepthook(style="darkbg2")
+
+
+
 # base
 from noobit_markets.base import ntypes
 from noobit_markets.base.errors import BaseError
@@ -58,7 +63,7 @@ async def get_result_content_from_public_req(
         headers: typing.Mapping,
         base_url: AnyHttpUrl,
         endpoint: str,
-    ) -> pmap:
+    ) -> Result[pmap, typing.Any]:
 
     # input: valid_request_model must be FrozenBaseModel !!! not dict !! // output: pmap
     make_req = make_httpx_get_request(base_url, endpoint, headers, valid_kraken_req)
@@ -82,6 +87,8 @@ async def get_result_content_from_public_req(
 
     # input: pmap // output: pmap
     result_content = get_result_content(resp)
+
+    # print(f"{__file__}", resp)
 
     return Ok(result_content)
 

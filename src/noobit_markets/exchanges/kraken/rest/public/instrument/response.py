@@ -12,7 +12,7 @@ from pydantic import PositiveInt, PositiveFloat, create_model, ValidationError, 
 from noobit_markets.base import ntypes
 from noobit_markets.base.errors import BaseError
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
-from noobit_markets.base.models.rest.response import NoobitResponseOhlc
+from noobit_markets.base.models.rest.response import NoobitResponseInstrument
 from noobit_markets.base.models.result import Ok, Err, Result
 
 # noobit kraken
@@ -23,45 +23,45 @@ from noobit_markets.exchanges.kraken.errors import ERRORS_FROM_EXCHANGE
 # KRAKEN RESPONSE MODEL
 #============================================================
 
-
-class FrozenBaseOhlc(FrozenBaseModel):
-    last: PositiveInt
-
-    @validator('last')
-    def check_year_from_timestamp(cls, v):
-        y = date.fromtimestamp(v).year
-        if not y > 2009 and y < 2050:
-            # FIXME we should raise
-            raise ValueError('TimeStamp year not within [2009, 2050]')
-        # return v * 10**3
-        return v
+# <pair_name> = pair name
+#     a = ask array(<price>, <whole lot volume>, <lot volume>),
+#     b = bid array(<price>, <whole lot volume>, <lot volume>),
+#     c = last trade closed array(<price>, <lot volume>),
+#     v = volume array(<today>, <last 24 hours>),
+#     p = volume weighted average price array(<today>, <last 24 hours>),
+#     t = number of trades array(<today>, <last 24 hours>),
+#     l = low array(<today>, <last 24 hours>),
+#     h = high array(<today>, <last 24 hours>),
+#     o = today's opening price
 
 
+class KrakenInstrumentData(FrozenBaseModel):
+
+    a: typing.Tuple[Decimal, Decimal, Decimal]
+    b: typing.Tuple[Decimal, Decimal, Decimal]
+    c: typing.Tuple[Decimal, Decimal]
+    v: typing.Tuple[Decimal, Decimal]
+    p: typing.Tuple[Decimal, Decimal]
+    t: typing.Tuple[Decimal, Decimal]
+    l: typing.Tuple[Decimal, Decimal]
+    h: typing.Tuple[Decimal, Decimal]
+    o: Decimal
 
 # validate incoming data, before any processing
 # useful to check for API changes on exchanges side
 # needs to be create dynamically since pair changes according to request
-def make_kraken_model_ohlc(
+def make_kraken_model_instrument(
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
     ) -> FrozenBaseModel:
 
     kwargs = {
-        symbol_mapping[symbol]: (
-            # tuple : timestamp, open, high, low, close, vwap, volume, count
-            typing.Tuple[
-                typing.Tuple[
-                    Decimal, Decimal, Decimal, Decimal, Decimal, Decimal, Decimal, PositiveInt
-                ],
-                ...
-            ],
-            ...
-        ),
-        "__base__": FrozenBaseOhlc
+        symbol_mapping[symbol]: (KrakenInstrumentData, ...),
+        "__base__": FrozenBaseModel
     }
 
     model = create_model(
-        'KrakenResponseOhlc',
+        'KrakenResponseInstrument',
         **kwargs
     )
 
@@ -73,11 +73,11 @@ def make_kraken_model_ohlc(
 #============================================================
 
 
-def get_result_data_ohlc(
-        valid_result_content: make_kraken_model_ohlc,
+def get_result_data_instrument(
+        valid_result_content: make_kraken_model_instrument,
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
-    ) -> typing.Tuple[tuple]:
+    ) -> pmap:
     """Get result data from result content (ie only candle data without <last>).
     Result content needs to have been validated.
 
@@ -88,28 +88,14 @@ def get_result_data_ohlc(
         typing.Tuple[tuple]: result data
     """
 
-    # input example
-    #   KrakenResponseOhlc(XXBTZUSD=typing.Tuple(tuple), last=int)
 
-    # expected output example
-    #    [[1567039620, '8746.4', '8751.5', '8745.7', '8745.7', '8749.3', '0.09663298', 8],
-    #     [1567039680, '8745.7', '8747.3', '8745.7', '8747.3', '8747.3', '0.00929540', 1]]
-
+    # valid_result_content.XXBTZUSD will return a pydantic Model
     result_data = getattr(valid_result_content, symbol_mapping[symbol])
-    # return tuple of tuples instead of list of lists
-    tupled = [tuple(list_item) for list_item in result_data]
-    return tuple(tupled)
+    return pmap(result_data)
 
 
-def get_result_data_last(
-        valid_result_content: make_kraken_model_ohlc,
-    ) -> typing.Union[PositiveInt, PositiveFloat]:
 
-    # we want timestamp in ms
-    return valid_result_content.last
-
-
-def verify_symbol_ohlc(
+def verify_symbol_instrument(
         result_content: pmap,
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
@@ -126,11 +112,14 @@ def verify_symbol_ohlc(
     """
 
     exch_symbol = symbol_mapping[symbol]
+
+    # only one key in result dict (pair) ==> we should make sure somehow
     keys = list(result_content.keys())
 
-    kc = copy.deepcopy(keys)
-    kc.remove("last")
-    [key] = kc
+    if len(keys) > 1:
+        return Err(ValueError("More than one pair was queried"))
+
+    key = keys[0]
 
     valid = exch_symbol == key
     err_msg = f"Requested : {symbol_mapping[symbol]}, got : {key}"
@@ -143,41 +132,29 @@ def verify_symbol_ohlc(
 #============================================================
 
 
-def parse_result_data_ohlc(
+def parse_result_data_instrument(
         result_data: typing.Tuple[tuple],
-        symbol: ntypes.SYMBOL
-    ) -> typing.Tuple[pmap]:
-
-    parsed_ohlc = [_single_candle(data, symbol) for data in result_data]
-
-    return tuple(parsed_ohlc)
-
-
-def _single_candle(
-        # should we have a model for kraken OHLC data ?
-        data: tuple,
         symbol: ntypes.SYMBOL
     ) -> pmap:
 
-    parsed = {
-        "symbol": symbol,
-        "utcTime": data[0]*10**3,
-        "open": data[1],
-        "high": data[2],
-        "low": data[3],
-        "close": data[4],
-        "volume": data[6],
-        "trdCount": data[7]
+    parsed_instrument = {
+            "symbol": symbol,
+            "low": result_data["l"][0],
+            "high": result_data["h"][0],
+            "vwap": result_data["p"][0],
+            "last": result_data["c"][0],
+            "volume": result_data["v"][0],
+            "trdCount": result_data["t"][0],
+            "bestAsk": {result_data["a"][0]: result_data["a"][2]},
+            "bestBid": {result_data["b"][0]: result_data["b"][2]},
+            "prevLow": result_data["l"][1],
+            "prevHigh": result_data["h"][1],
+            "prevVwap": result_data["p"][1],
+            "prevVolume": result_data["v"][1],
+            "prevTrdCount": result_data["t"][1]
     }
+    return pmap(parsed_instrument)
 
-    return pmap(parsed)
-
-def parse_result_data_last(
-        result_data: typing.Union[PositiveInt, PositiveFloat]
-    ) -> PositiveInt:
-
-    # FIXME no need to parse this shit
-    return result_data * 10**3
 
 
 # ============================================================
@@ -186,13 +163,13 @@ def parse_result_data_last(
 
 
 # FIXME not entirely sure how to properly type hint
-def validate_raw_result_content_ohlc(
+def validate_base_result_content_instrument(
         result_content: pmap,
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
-    ) -> Result[make_kraken_model_ohlc, ValidationError]:
+    ) -> Result[make_kraken_model_instrument, ValidationError]:
 
-    KrakenResponseOhlc = make_kraken_model_ohlc(symbol, symbol_mapping)
+    KrakenResponseInstrument = make_kraken_model_instrument(symbol, symbol_mapping)
 
     try:
         # validated = type(
@@ -204,10 +181,7 @@ def validate_raw_result_content_ohlc(
         #     }
         # )
 
-        validated = KrakenResponseOhlc(**{
-            symbol_mapping[symbol]: result_content[symbol_mapping[symbol]],
-            "last": result_content["last"]
-        })
+        validated = KrakenResponseInstrument(**result_content)
         return Ok(validated)
 
     except ValidationError as e:
@@ -217,16 +191,12 @@ def validate_raw_result_content_ohlc(
         raise e
 
 
-def validate_parsed_result_data_ohlc(
-        parsed_result_ohlc: typing.Tuple[pmap],
-        parsed_result_last: PositiveFloat
-    ) -> Result[NoobitResponseOhlc, ValidationError]:
+def validate_parsed_result_data_instrument(
+        parsed_result_data: typing.Tuple[pmap],
+    ) -> Result[NoobitResponseInstrument, ValidationError]:
 
     try:
-        validated = NoobitResponseOhlc(
-            ohlc=parsed_result_ohlc,
-            last=parsed_result_last
-        )
+        validated = NoobitResponseInstrument(**parsed_result_data)
         return Ok(validated)
 
     except ValidationError as e:
