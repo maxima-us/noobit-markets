@@ -70,4 +70,17 @@ instrument = asyncio.run(
     )
 )
 
-print(instrument)
+
+func_spread = interface.KRAKEN.rest.public.spread
+spread = asyncio.run(
+    func_spread(
+        loop=None,
+        client=httpx.AsyncClient(),
+        symbol="XBT-USD",
+        symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
+        since=0,
+        logger_func= lambda *args: print("=====> ", *args, "\n\n")
+    )
+)
+
+print(spread)

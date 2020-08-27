@@ -12,7 +12,7 @@ from pydantic import PositiveInt, PositiveFloat, create_model, ValidationError, 
 from noobit_markets.base import ntypes
 from noobit_markets.base.errors import BaseError
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
-from noobit_markets.base.models.rest.response import NoobitResponseOhlc
+from noobit_markets.base.models.rest.response import NoobitResponseSpread
 from noobit_markets.base.models.result import Ok, Err, Result
 
 # noobit kraken
@@ -23,8 +23,20 @@ from noobit_markets.exchanges.kraken.errors import ERRORS_FROM_EXCHANGE
 # KRAKEN RESPONSE MODEL
 #============================================================
 
+# https://api.kraken.com/0/public/Spread?pair=XXBTZUSD
 
-class FrozenBaseOhlc(FrozenBaseModel):
+# <pair_name> = pair name
+#     a = ask array(<price>, <whole lot volume>, <lot volume>),
+#     b = bid array(<price>, <whole lot volume>, <lot volume>),
+#     c = last trade closed array(<price>, <lot volume>),
+#     v = volume array(<today>, <last 24 hours>),
+#     p = volume weighted average price array(<today>, <last 24 hours>),
+#     t = number of trades array(<today>, <last 24 hours>),
+#     l = low array(<today>, <last 24 hours>),
+#     h = high array(<today>, <last 24 hours>),
+#     o = today's opening price
+
+class FrozenBaseSpread(FrozenBaseModel):
     last: PositiveInt
 
     @validator('last')
@@ -37,32 +49,23 @@ class FrozenBaseOhlc(FrozenBaseModel):
         # return v * 10**3
         return v
 
-
-
 # validate incoming data, before any processing
 # useful to check for API changes on exchanges side
 # needs to be create dynamically since pair changes according to request
-def make_kraken_model_ohlc(
+def make_kraken_model_spread(
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
     ) -> FrozenBaseModel:
 
     kwargs = {
-        symbol_mapping[symbol]: (
-            # tuple : timestamp, open, high, low, close, vwap, volume, count
-            typing.Tuple[
-                typing.Tuple[
-                    Decimal, Decimal, Decimal, Decimal, Decimal, Decimal, Decimal, PositiveInt
-                ],
-                ...
-            ],
-            ...
-        ),
-        "__base__": FrozenBaseOhlc
+        # tuple of time, bid, ask
+        #! time is timestamp in s
+        symbol_mapping[symbol]: (typing.Tuple[typing.Tuple[Decimal, Decimal, Decimal], ...], ...),
+        "__base__": FrozenBaseSpread
     }
 
     model = create_model(
-        'KrakenResponseOhlc',
+        'KrakenResponseSpread',
         **kwargs
     )
 
@@ -74,28 +77,17 @@ def make_kraken_model_ohlc(
 #============================================================
 
 
-def get_result_data_ohlc(
-        valid_result_content: make_kraken_model_ohlc,
+def get_result_data_spread(
+        valid_result_content: make_kraken_model_spread,
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
     ) -> typing.Tuple[tuple]:
     """Get result data from result content (ie only candle data without <last>).
     Result content needs to have been validated.
-
-    Args:
-        result_content : mapping of `exchange format symbol` to `KrakenResponseItemSymbols`
-
-    Returns:
-        typing.Tuple[tuple]: result data
     """
 
-    # input example
-    #   KrakenResponseOhlc(XXBTZUSD=typing.Tuple(tuple), last=int)
 
-    # expected output example
-    #    [[1567039620, '8746.4', '8751.5', '8745.7', '8745.7', '8749.3', '0.09663298', 8],
-    #     [1567039680, '8745.7', '8747.3', '8745.7', '8747.3', '8747.3', '0.00929540', 1]]
-
+    # valid_result_content.XXBTZUSD will return a pydantic Model
     result_data = getattr(valid_result_content, symbol_mapping[symbol])
     # return tuple of tuples instead of list of lists
     tupled = [tuple(list_item) for list_item in result_data]
@@ -103,14 +95,14 @@ def get_result_data_ohlc(
 
 
 def get_result_data_last(
-        valid_result_content: make_kraken_model_ohlc,
+        valid_result_content: make_kraken_model_spread,
     ) -> typing.Union[PositiveInt, PositiveFloat]:
 
     # we want timestamp in ms
     return valid_result_content.last
 
 
-def verify_symbol_ohlc(
+def verify_symbol_spread(
         result_content: pmap,
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
@@ -127,6 +119,8 @@ def verify_symbol_ohlc(
     """
 
     exch_symbol = symbol_mapping[symbol]
+
+    # only one key in result dict (pair) ==> we should make sure somehow
     keys = list(result_content.keys())
 
     # ? check if len(keys) == 2 ?
@@ -145,41 +139,34 @@ def verify_symbol_ohlc(
 #============================================================
 
 
-def parse_result_data_ohlc(
+def parse_result_data_spread(
         result_data: typing.Tuple[tuple],
-        symbol: ntypes.SYMBOL
-    ) -> typing.Tuple[pmap]:
-
-    parsed_ohlc = [_single_candle(data, symbol) for data in result_data]
-
-    return tuple(parsed_ohlc)
-
-
-def _single_candle(
-        # should we have a model for kraken OHLC data ?
-        data: tuple,
         symbol: ntypes.SYMBOL
     ) -> pmap:
 
+    parsed_spread = [_single(data, symbol) for data in result_data]
+    return tuple(parsed_spread)
+
+
+def _single(
+        data: tuple,
+        symbol: ntypes.SYMBOL
+    ) -> pmap:
     parsed = {
         "symbol": symbol,
-        "utcTime": data[0]*10**3,
-        "open": data[1],
-        "high": data[2],
-        "low": data[3],
-        "close": data[4],
-        "volume": data[6],
-        "trdCount": data[7]
+        "utcTime": data[0],
+        "bestBidPrice": data[1],
+        "bestAskPrice": data[2]
     }
-
     return pmap(parsed)
+
 
 def parse_result_data_last(
         result_data: typing.Union[PositiveInt, PositiveFloat]
     ) -> PositiveInt:
 
-    # FIXME no need to parse this shit
-    return result_data * 10**3
+    return result_data
+
 
 
 # ============================================================
@@ -188,28 +175,17 @@ def parse_result_data_last(
 
 
 # FIXME not entirely sure how to properly type hint
-def validate_raw_result_content_ohlc(
+def validate_base_result_content_spread(
         result_content: pmap,
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
-    ) -> Result[make_kraken_model_ohlc, ValidationError]:
+    ) -> Result[make_kraken_model_spread, ValidationError]:
 
-    KrakenResponseOhlc = make_kraken_model_ohlc(symbol, symbol_mapping)
+    KrakenResponseInstrument = make_kraken_model_spread(symbol, symbol_mapping)
 
     try:
-        # validated = type(
-        #     "Test",
-        #     (KrakenResponseOhlc,),
-        #     {
-        #         symbol_mapping[symbol]: response_content[symbol_mapping[symbol]],
-        #         "last": response_content["last"]
-        #     }
-        # )
 
-        validated = KrakenResponseOhlc(**{
-            symbol_mapping[symbol]: result_content[symbol_mapping[symbol]],
-            "last": result_content["last"]
-        })
+        validated = KrakenResponseInstrument(**result_content)
         return Ok(validated)
 
     except ValidationError as e:
@@ -219,14 +195,14 @@ def validate_raw_result_content_ohlc(
         raise e
 
 
-def validate_parsed_result_data_ohlc(
-        parsed_result_ohlc: typing.Tuple[pmap],
+def validate_parsed_result_data_spread(
+        parsed_result_spread: typing.Tuple[pmap],
         parsed_result_last: PositiveInt
-    ) -> Result[NoobitResponseOhlc, ValidationError]:
+    ) -> Result[NoobitResponseSpread, ValidationError]:
 
     try:
-        validated = NoobitResponseOhlc(
-            ohlc=parsed_result_ohlc,
+        validated = NoobitResponseSpread(
+            spread=parsed_result_spread,
             last=parsed_result_last
         )
         return Ok(validated)

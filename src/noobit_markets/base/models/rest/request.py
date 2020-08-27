@@ -65,3 +65,15 @@ class NoobitRequestInstrument(FrozenBaseModel):
 
     symbol: ntypes.SYMBOL
     symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
+
+
+# ============================================================
+# Spread
+# ============================================================
+
+
+class NoobitRequestSpread(FrozenBaseModel):
+
+    symbol: ntypes.SYMBOL
+    symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
+    since: Literal[ntypes.TIMESTAMP, 0]

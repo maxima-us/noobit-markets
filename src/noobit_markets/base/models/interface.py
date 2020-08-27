@@ -105,6 +105,23 @@ class _PublicInterface(FrozenBaseModel):
         NoobitResponseOhlc
     ]
 
+    spread: typing.Callable[
+        #argument types
+        [
+            asyncio.BaseEventLoop,
+            ntypes.CLIENT,
+            ntypes.SYMBOL,
+            ntypes.SYMBOL_TO_EXCHANGE,
+            ntypes.SYMBOL_FROM_EXCHANGE,
+            ntypes.TIMESTAMP,
+            typing.Callable,
+            pydantic.AnyHttpUrl,
+            str
+        ],
+        # return type
+        NoobitResponseOhlc
+    ]
+
 # ============================================================
 # REST PRIVATE ENDPOINTS
 # ============================================================

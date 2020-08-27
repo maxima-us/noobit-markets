@@ -2,12 +2,12 @@ import typing
 from datetime import date
 
 from pyrsistent import pmap
-from pydantic import BaseModel, PositiveInt, ValidationError, constr, validator
+from pydantic import BaseModel, PositiveInt, ValidationError, constr, conint, validator
 from typing_extensions import Literal
 
 from noobit_markets.base import ntypes, mappings
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
-from noobit_markets.base.models.rest.request import NoobitRequestOhlc
+from noobit_markets.base.models.rest.request import NoobitRequestSpread
 
 from noobit_markets.base.models.result import Ok, Err, Result
 
@@ -17,25 +17,24 @@ from noobit_markets.base.models.result import Ok, Err, Result
 # ============================================================
 
 
-class KrakenRequestOhlc(FrozenBaseModel):
+class KrakenRequestSpread(FrozenBaseModel):
     # KRAKEN PAYLOAD
-    #   pair = asset pair to get OHLC data for (example XXBTZUSD)
-    #   interval = time frame interval in minutes (optional):
-    #       1(default), 5, 15, 30, 60, 240, 1440, 10080, 21600
+    #   pair = asset pair to get spread data for (example XXBTZUSD)
     #   since = return commited OHLC data since given id (optional)
 
     pair: constr(regex=r'[A-Z]+')
-    interval: Literal[1, 5, 15, 30, 60, 240, 1440, 10080, 21600]
     # needs to be in ms
     # TODO default to 0 or Optional ?
-    since: typing.Optional[PositiveInt]
+    since: conint(ge=0) = 0
 
     @validator('since')
     def check_year_from_timestamp(cls, v):
+        if v == 0:
+            return v
         y = date.fromtimestamp(v).year
         if not y > 2009 and y < 2050:
             # FIXME we should raise
-            raise ValueError('TimeStamp year not within [2009, 2050]')
+            raise ValueError(f'TimeStamp year: {y} not within [2009, 2050]')
         return v
 
 # ============================================================
@@ -43,23 +42,14 @@ class KrakenRequestOhlc(FrozenBaseModel):
 # ============================================================
 
 
-def parse_request_ohlc(
-        # symbol: ntypes.SYMBOL,
-        # symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
-        # timeframe: ntypes.TIMEFRAME
-        valid_request: NoobitRequestOhlc
+def parse_request_spread(
+        valid_request: NoobitRequestSpread
     ) -> pmap:
 
 
-    # payload = {
-    #     "pair": symbol_mapping[symbol],
-    #     "interval": mappings.TIMEFRAME[timeframe]
-    # }
-
     payload = {
         "pair": valid_request.symbol_mapping[valid_request.symbol],
-        "interval": mappings.TIMEFRAME[valid_request.timeframe]
-        # TODO we forgot <since> ?
+        "since": valid_request.since
     }
 
 
@@ -71,17 +61,17 @@ def parse_request_ohlc(
 # ============================================================
 
 
-def validate_request_ohlc(
+def validate_request_spread(
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
-        timeframe: ntypes.TIMEFRAME
-    ) -> Result[NoobitRequestOhlc, ValidationError]:
+        since: ntypes.TIMESTAMP
+    ) -> Result[NoobitRequestSpread, ValidationError]:
 
     try:
-        valid_req = NoobitRequestOhlc(
+        valid_req = NoobitRequestSpread(
             symbol=symbol,
             symbol_mapping=symbol_mapping,
-            timeframe=timeframe
+            since=since
         )
         return Ok(valid_req)
 
@@ -92,12 +82,12 @@ def validate_request_ohlc(
         raise e
 
 
-def validate_parsed_request_ohlc(
+def validate_parsed_request_spread(
         parsed_request: pmap
-    ) -> Result[KrakenRequestOhlc, ValidationError]:
+    ) -> Result[KrakenRequestSpread, ValidationError]:
 
     try:
-        validated = KrakenRequestOhlc(
+        validated = KrakenRequestSpread(
             **parsed_request
         )
         return Ok(validated)

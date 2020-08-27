@@ -253,3 +253,26 @@ class NoobitResponseInstrument(FrozenBaseModel):
     prevVwap: Decimal
     prevVolume: Decimal
     prevTrdCount: typing.Optional[Decimal]
+
+
+
+
+# ============================================================
+# SPREAD
+# ============================================================
+
+
+class NoobitResponseItemSpread(FrozenBaseModel):
+
+    symbol: ntypes.SYMBOL
+    utcTime: ntypes.TIMESTAMP
+
+    # we only get price, without volume
+    bestAskPrice: Decimal
+    bestBidPrice: Decimal
+
+
+class NoobitResponseSpread(FrozenBaseModel):
+
+    spread: typing.Tuple[NoobitResponseItemSpread, ...]
+    last: ntypes.TIMESTAMP
