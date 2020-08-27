@@ -161,6 +161,22 @@ class _PrivateInterface(FrozenBaseModel):
         NoobitResponseExposure
     ]
 
+    trades: typing.Callable[
+        #argument types
+        [
+            asyncio.BaseEventLoop,
+            ntypes.CLIENT,
+            ntypes.SYMBOL_TO_EXCHANGE,
+            Auth,
+            typing.Callable,
+            pydantic.AnyHttpUrl,
+            str
+        ],
+        # return type
+        # FIXME should be result
+        NoobitResponseExposure
+    ]
+
 
 class RestInterface(FrozenBaseModel):
 

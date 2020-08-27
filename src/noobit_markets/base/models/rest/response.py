@@ -210,9 +210,11 @@ class NoobitResponseItemTrade(FrozenBaseModel):
 
 
 class NoobitResponseTrades(FrozenBaseModel):
+    """Used for both private and public Trades
+    """
 
     trades: typing.Tuple[NoobitResponseItemTrade, ...]
-    last: ntypes.TIMESTAMP
+    last: typing.Optional[ntypes.TIMESTAMP] = Field(...)
 
 
 

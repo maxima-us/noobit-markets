@@ -55,10 +55,7 @@ def parse_result_data_balances(
         asset_mapping: ntypes.ASSET_FROM_EXCHANGE
     ) -> typing.Mapping[ntypes.ASSET, Decimal]:
 
-    # FIXME commented out just for testing
     parsed = {asset_mapping[asset]: amount for asset, amount in result_data.items() if not asset == "KFEE" and amount > Decimal(0)}
-    # parsed = {asset: amount for asset, amount in result_data.items()}
-
 
     return pmap(parsed)
 
