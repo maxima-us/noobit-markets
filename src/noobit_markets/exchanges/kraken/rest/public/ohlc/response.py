@@ -25,16 +25,16 @@ from noobit_markets.exchanges.kraken.errors import ERRORS_FROM_EXCHANGE
 
 
 class FrozenBaseOhlc(FrozenBaseModel):
+
+    # timestamp received from kraken is in seconds
     last: PositiveInt
 
     @validator('last')
     def check_year_from_timestamp(cls, v):
-        # FIXME we should divide last / 10**9 to get ts in s
         y = date.fromtimestamp(v).year
         if not y > 2009 and y < 2050:
-            # FIXME we should raise
-            raise ValueError('TimeStamp year not within [2009, 2050]')
-        # return v * 10**3
+            err_msg = f"Year {y} for timestamp {v} not within [2009, 2050]"
+            raise ValueError(err_msg)
         return v
 
 
@@ -178,7 +178,7 @@ def parse_result_data_last(
         result_data: typing.Union[PositiveInt, PositiveFloat]
     ) -> PositiveInt:
 
-    # FIXME no need to parse this shit
+    # noobit timestamps are in ms
     return result_data * 10**3
 
 

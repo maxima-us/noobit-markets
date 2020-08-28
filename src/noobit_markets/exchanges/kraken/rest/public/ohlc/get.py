@@ -19,19 +19,18 @@ from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_pu
 
 @retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_ohlc_kraken(
-        loop: asyncio.BaseEventLoop,
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         timeframe: ntypes.TIMEFRAME,
-        logger_func=None,
+        since: ntypes.TIMESTAMP,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.ohlc,
     ) -> Result[NoobitResponseOhlc, Exception]:
 
 
     # output: Result[NoobitRequestOhlc, ValidationError]
-    valid_req = validate_request_ohlc(symbol, symbol_to_exchange, timeframe)
+    valid_req = validate_request_ohlc(symbol, symbol_to_exchange, timeframe, since)
     #  logger_func("valid raw req // ", valid_req)
     if valid_req.is_err():
         return valid_req

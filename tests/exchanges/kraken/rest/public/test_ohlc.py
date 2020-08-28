@@ -25,12 +25,12 @@ async def test_ohlc():
         }
 
         symbols = await get_ohlc_kraken(
-            None,
-            client,
-            "XBT-USD",
-            symbol_mapping["asset_pairs"],
-            "1H",
-            lambda *args: print("=====>", *args)
+            # loop=None,
+            client=client,
+            symbol="XBT-USD",
+            symbol_to_exchange=symbol_mapping["asset_pairs"],
+            timeframe="1H",
+            since=0
         )
 
         assert isinstance(symbols, Ok)

@@ -2,7 +2,7 @@ import typing
 from datetime import date
 
 from pyrsistent import pmap
-from pydantic import BaseModel, PositiveInt, ValidationError, constr, validator
+from pydantic import BaseModel, PositiveInt, ValidationError, constr, validator, conint
 from typing_extensions import Literal
 
 from noobit_markets.base import ntypes, mappings
@@ -26,16 +26,19 @@ class KrakenRequestOhlc(FrozenBaseModel):
 
     pair: constr(regex=r'[A-Z]+')
     interval: Literal[1, 5, 15, 30, 60, 240, 1440, 10080, 21600]
-    # needs to be in ms
-    # TODO default to 0 or Optional ?
-    since: typing.Optional[PositiveInt]
+
+    # needs to be in s like <last> timestamp in ohlc response
+    since: conint(ge=0) = 0
 
     @validator('since')
     def check_year_from_timestamp(cls, v):
+        if v == 0:
+            return v
+
         y = date.fromtimestamp(v).year
         if not y > 2009 and y < 2050:
-            # FIXME we should raise
-            raise ValueError('TimeStamp year not within [2009, 2050]')
+            err_msg = f"Year {y} for timestamp {v} not within [2009, 2050]"
+            raise ValueError(err_msg)
         return v
 
 # ============================================================
@@ -44,22 +47,15 @@ class KrakenRequestOhlc(FrozenBaseModel):
 
 
 def parse_request_ohlc(
-        # symbol: ntypes.SYMBOL,
-        # symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
-        # timeframe: ntypes.TIMEFRAME
         valid_request: NoobitRequestOhlc
     ) -> pmap:
 
 
-    # payload = {
-    #     "pair": symbol_mapping[symbol],
-    #     "interval": mappings.TIMEFRAME[timeframe]
-    # }
-
     payload = {
         "pair": valid_request.symbol_mapping[valid_request.symbol],
-        "interval": mappings.TIMEFRAME[valid_request.timeframe]
-        # TODO we forgot <since> ?
+        "interval": mappings.TIMEFRAME[valid_request.timeframe],
+        # noobit ts are in ms vs ohlc kraken ts in s
+        "since": valid_request.since * 10**-3
     }
 
 
@@ -74,14 +70,16 @@ def parse_request_ohlc(
 def validate_request_ohlc(
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
-        timeframe: ntypes.TIMEFRAME
+        timeframe: ntypes.TIMEFRAME,
+        since: ntypes.TIMESTAMP
     ) -> Result[NoobitRequestOhlc, ValidationError]:
 
     try:
         valid_req = NoobitRequestOhlc(
             symbol=symbol,
             symbol_mapping=symbol_mapping,
-            timeframe=timeframe
+            timeframe=timeframe,
+            since=since
         )
         return Ok(valid_req)
 
