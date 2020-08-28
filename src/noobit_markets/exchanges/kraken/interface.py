@@ -5,7 +5,7 @@ from noobit_markets.base.models.interface import ExchangeInterface
 from noobit_markets.exchanges.kraken.rest.private.balances.get import get_balances_kraken
 from noobit_markets.exchanges.kraken.rest.private.exposure.get import get_exposure_kraken
 from noobit_markets.exchanges.kraken.rest.private.trades.get import get_usertrades_kraken
-
+from noobit_markets.exchanges.kraken.rest.private.positions.get import get_openpositions_kraken
 
 # public endpoints
 from noobit_markets.exchanges.kraken.rest.public.ohlc.get import get_ohlc_kraken
@@ -30,7 +30,8 @@ KRAKEN = ExchangeInterface(**{
         "private": {
             "balances": get_balances_kraken,
             "exposure": get_exposure_kraken,
-            "trades": get_usertrades_kraken
+            "trades": get_usertrades_kraken,
+            "open_positions": get_openpositions_kraken
         }
     }
 })

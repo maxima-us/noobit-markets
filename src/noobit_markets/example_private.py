@@ -25,6 +25,8 @@ try:
             logger_func= lambda *args: print("")
         )
     )
+    if symbol_to_exch.is_err():
+        print(symbol_to_exch)
 except Exception as e:
     raise e
 
@@ -49,8 +51,9 @@ try:
             logger_func= lambda *args: print("========> ", *args, "\n\n")
         )
     )
-    print("Balances : ", balances.value)
-    print("Is Exception : ", isinstance(balances.value, Exception))
+    if balances.is_err():
+        print("Balances : ", balances.value)
+        print("Is Exception : ", isinstance(balances.value, Exception))
 except Exception as e:
     raise e
 
@@ -73,8 +76,9 @@ try:
             logger_func= lambda *args: print("========> ", *args, "\n\n")
         )
     )
-    print("Balances : ", exposure.value)
-    print("Is Exception : ", isinstance(exposure.value, Exception))
+    if exposure.is_err():
+        print("Exposure : ", exposure.value)
+        print("Is Exception : ", isinstance(exposure.value, Exception))
 except Exception as e:
     raise e
 
@@ -97,6 +101,30 @@ try:
             logger_func= lambda *args: print("========> ", *args, "\n\n")
         )
     )
-    print(trades)
+    if trades.is_err():
+        print(trades)
+except Exception as e:
+    raise e
+
+
+# ============================================================
+# OPEN POSITIONS
+# ============================================================
+
+
+func_op = interface.KRAKEN.rest.private.open_positions
+
+try:
+    open_pos = asyncio.run(
+        func_op(
+            loop=None,
+            client=httpx.AsyncClient(),
+            symbols_to_exchange=symbols_to_exchange,
+            logger_func= lambda *args: print("========> ", *args, "\n\n")
+        )
+    )
+    if open_pos.is_err():
+        print(open_pos)
+    print(open_pos)
 except Exception as e:
     raise e

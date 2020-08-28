@@ -55,7 +55,9 @@ def parse_result_data_balances(
         asset_mapping: ntypes.ASSET_FROM_EXCHANGE
     ) -> typing.Mapping[ntypes.ASSET, Decimal]:
 
-    parsed = {asset_mapping[asset]: amount for asset, amount in result_data.items() if not asset == "KFEE" and amount > Decimal(0)}
+    # DARKPOOL PAIRS: suffixed by .d
+    # STAKED PAIRS: suffixed by .s
+    parsed = {asset_mapping[asset]: amount for asset, amount in result_data.items() if not asset == "KFEE" and amount > Decimal(0) and "." not in asset}
 
     return pmap(parsed)
 
