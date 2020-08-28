@@ -1,22 +1,16 @@
 import typing
 from decimal import Decimal
-import time
-import json
-import copy
-from datetime import date
 
 from pyrsistent import pmap
-from pydantic import PositiveInt, PositiveFloat, create_model, ValidationError, validator
+from pydantic import create_model, ValidationError
 
 # noobit base
 from noobit_markets.base import ntypes
-from noobit_markets.base.errors import BaseError
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.response import NoobitResponseInstrument
 from noobit_markets.base.models.result import Ok, Err, Result
 
-# noobit kraken
-from noobit_markets.exchanges.kraken.errors import ERRORS_FROM_EXCHANGE
+
 
 
 #============================================================
@@ -68,6 +62,8 @@ def make_kraken_model_instrument(
     return model
 
 
+
+
 #============================================================
 # UTILS
 #============================================================
@@ -89,7 +85,7 @@ def get_result_data_instrument(
     """
 
 
-    # valid_result_content.XXBTZUSD will return a pydantic Model
+    # valid_result_content.XXBTZUSD will return KrakenInstrumentData pydantic model
     result_data = getattr(valid_result_content, symbol_mapping[symbol])
     return pmap(result_data)
 
@@ -113,7 +109,6 @@ def verify_symbol_instrument(
 
     exch_symbol = symbol_mapping[symbol]
 
-    # only one key in result dict (pair) ==> we should make sure somehow
     keys = list(result_content.keys())
 
     if len(keys) > 1:
@@ -127,6 +122,8 @@ def verify_symbol_instrument(
     return Ok(exch_symbol) if valid else Err(ValueError(err_msg))
 
 
+
+
 #============================================================
 # PARSE
 #============================================================
@@ -138,22 +135,23 @@ def parse_result_data_instrument(
     ) -> pmap:
 
     parsed_instrument = {
-            "symbol": symbol,
-            "low": result_data["l"][0],
-            "high": result_data["h"][0],
-            "vwap": result_data["p"][0],
-            "last": result_data["c"][0],
-            "volume": result_data["v"][0],
-            "trdCount": result_data["t"][0],
-            "bestAsk": {result_data["a"][0]: result_data["a"][2]},
-            "bestBid": {result_data["b"][0]: result_data["b"][2]},
-            "prevLow": result_data["l"][1],
-            "prevHigh": result_data["h"][1],
-            "prevVwap": result_data["p"][1],
-            "prevVolume": result_data["v"][1],
-            "prevTrdCount": result_data["t"][1]
+        "symbol": symbol,
+        "low": result_data["l"][0],
+        "high": result_data["h"][0],
+        "vwap": result_data["p"][0],
+        "last": result_data["c"][0],
+        "volume": result_data["v"][0],
+        "trdCount": result_data["t"][0],
+        "bestAsk": {result_data["a"][0]: result_data["a"][2]},
+        "bestBid": {result_data["b"][0]: result_data["b"][2]},
+        "prevLow": result_data["l"][1],
+        "prevHigh": result_data["h"][1],
+        "prevVwap": result_data["p"][1],
+        "prevVolume": result_data["v"][1],
+        "prevTrdCount": result_data["t"][1]
     }
     return pmap(parsed_instrument)
+
 
 
 
@@ -172,15 +170,6 @@ def validate_base_result_content_instrument(
     KrakenResponseInstrument = make_kraken_model_instrument(symbol, symbol_mapping)
 
     try:
-        # validated = type(
-        #     "Test",
-        #     (KrakenResponseOhlc,),
-        #     {
-        #         symbol_mapping[symbol]: response_content[symbol_mapping[symbol]],
-        #         "last": response_content["last"]
-        #     }
-        # )
-
         validated = KrakenResponseInstrument(**result_content)
         return Ok(validated)
 

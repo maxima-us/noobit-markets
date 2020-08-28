@@ -49,12 +49,11 @@ func_ohlc = interface.KRAKEN.rest.public.ohlc
 
 ohlc = asyncio.run(
     func_ohlc(
-        loop=None,
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
         symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
         timeframe="1H",
-        logger_func= lambda *args: print("")
+        since=0
     )
 )
 if ohlc.is_err():

@@ -1,15 +1,15 @@
-import typing
 from datetime import date
 
 from pyrsistent import pmap
-from pydantic import BaseModel, PositiveInt, ValidationError, constr, conint, validator
-from typing_extensions import Literal
+from pydantic import ValidationError, constr, conint, validator
 
-from noobit_markets.base import ntypes, mappings
+from noobit_markets.base import ntypes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.request import NoobitRequestSpread
 
 from noobit_markets.base.models.result import Ok, Err, Result
+
+
 
 
 # ============================================================
@@ -23,19 +23,22 @@ class KrakenRequestSpread(FrozenBaseModel):
     #   since = return commited OHLC data since given id (optional)
 
     pair: constr(regex=r'[A-Z]+')
-    # needs to be in ms
-    # TODO default to 0 or Optional ?
+    # needs to be given in s (same as spread <last> timestamp from spread response)
     since: conint(ge=0) = 0
 
     @validator('since')
     def check_year_from_timestamp(cls, v):
         if v == 0:
             return v
+
         y = date.fromtimestamp(v).year
         if not y > 2009 and y < 2050:
-            # FIXME we should raise
-            raise ValueError(f'TimeStamp year: {y} not within [2009, 2050]')
+            err_msg = f"Year {y} for timestamp {v} not within [2009, 2050]"
+            raise ValueError(err_msg)
         return v
+
+
+
 
 # ============================================================
 # PARSE
@@ -54,6 +57,8 @@ def parse_request_spread(
 
 
     return pmap(payload)
+
+
 
 
 # ============================================================

@@ -1,7 +1,5 @@
 import typing
 from decimal import Decimal
-import time
-import json
 import copy
 from datetime import date
 
@@ -10,13 +8,11 @@ from pydantic import PositiveInt, PositiveFloat, create_model, ValidationError, 
 
 # noobit base
 from noobit_markets.base import ntypes
-from noobit_markets.base.errors import BaseError
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.response import NoobitResponseSpread
 from noobit_markets.base.models.result import Ok, Err, Result
 
-# noobit kraken
-from noobit_markets.exchanges.kraken.errors import ERRORS_FROM_EXCHANGE
+
 
 
 #============================================================
@@ -37,17 +33,19 @@ from noobit_markets.exchanges.kraken.errors import ERRORS_FROM_EXCHANGE
 #     o = today's opening price
 
 class FrozenBaseSpread(FrozenBaseModel):
+
+    # timestamp received in s
+    # ? could be decimal ?
     last: PositiveInt
 
     @validator('last')
     def check_year_from_timestamp(cls, v):
-        # FIXME we should divide last / 10**9 to get ts in s
         y = date.fromtimestamp(v).year
         if not y > 2009 and y < 2050:
-            # FIXME we should raise
-            raise ValueError('TimeStamp year not within [2009, 2050]')
-        # return v * 10**3
+            err_msg = f"Year {y} for timestamp {v} not within [2009, 2050]"
+            raise ValueError(err_msg)
         return v
+
 
 # validate incoming data, before any processing
 # useful to check for API changes on exchanges side
@@ -59,7 +57,7 @@ def make_kraken_model_spread(
 
     kwargs = {
         # tuple of time, bid, ask
-        #! time is timestamp in s
+        # time is timestamp in s
         symbol_mapping[symbol]: (typing.Tuple[typing.Tuple[Decimal, Decimal, Decimal], ...], ...),
         "__base__": FrozenBaseSpread
     }
@@ -70,6 +68,8 @@ def make_kraken_model_spread(
     )
 
     return model
+
+
 
 
 #============================================================
@@ -98,7 +98,6 @@ def get_result_data_last(
         valid_result_content: make_kraken_model_spread,
     ) -> typing.Union[PositiveInt, PositiveFloat]:
 
-    # we want timestamp in ms
     return valid_result_content.last
 
 
@@ -134,17 +133,19 @@ def verify_symbol_spread(
     return Ok(exch_symbol) if valid else Err(ValueError(err_msg))
 
 
+
+
 #============================================================
 # PARSE
 #============================================================
 
 
 def parse_result_data_spread(
-        result_data: typing.Tuple[tuple],
+        result_data_spread: typing.Tuple[tuple],
         symbol: ntypes.SYMBOL
     ) -> pmap:
 
-    parsed_spread = [_single(data, symbol) for data in result_data]
+    parsed_spread = [_single(data, symbol) for data in result_data_spread]
     return tuple(parsed_spread)
 
 
@@ -154,7 +155,8 @@ def _single(
     ) -> pmap:
     parsed = {
         "symbol": symbol,
-        "utcTime": data[0],
+        # noobit timestamps are in ms
+        "utcTime": data[0]*10**3,
         "bestBidPrice": data[1],
         "bestAskPrice": data[2]
     }
@@ -162,10 +164,12 @@ def _single(
 
 
 def parse_result_data_last(
-        result_data: typing.Union[PositiveInt, PositiveFloat]
+        result_data_last: typing.Union[PositiveInt, PositiveFloat]
     ) -> PositiveInt:
 
-    return result_data
+    # noobit timestamps need to be ms
+    return result_data_last * 10**3
+
 
 
 

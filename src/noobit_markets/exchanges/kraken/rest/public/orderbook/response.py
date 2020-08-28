@@ -1,23 +1,16 @@
 import typing
 from decimal import Decimal
 import time
-import json
-import copy
-from datetime import date
 from collections import Counter
 
 from pyrsistent import pmap
-from pydantic import PositiveInt, PositiveFloat, create_model, ValidationError, validator
+from pydantic import create_model, ValidationError
 
 # noobit base
 from noobit_markets.base import ntypes
-from noobit_markets.base.errors import BaseError
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.response import NoobitResponseOrderBook
 from noobit_markets.base.models.result import Ok, Err, Result
-
-# noobit kraken
-from noobit_markets.exchanges.kraken.errors import ERRORS_FROM_EXCHANGE
 
 
 
@@ -29,25 +22,10 @@ from noobit_markets.exchanges.kraken.errors import ERRORS_FROM_EXCHANGE
 
 class KrakenBook(FrozenBaseModel):
 
+    # tuples of price, volume, time
+    # where timestamps are in s
     asks: typing.Tuple[typing.Tuple[Decimal, Decimal, Decimal], ...]
     bids: typing.Tuple[typing.Tuple[Decimal, Decimal, Decimal], ...]
-
-
-class FrozenBaseOrderBook(FrozenBaseModel):
-    pass
-
-    # FIXME no <last>
-    # last: PositiveInt
-
-    # @validator('last')
-    # def check_year_from_timestamp(cls, v):
-    #     y = date.fromtimestamp(v).year
-    #     if not y > 2009 and y < 2050:
-    #         # FIXME we should raise
-    #         raise ValueError('TimeStamp year not within [2009, 2050]')
-    #     # return v * 10**3
-    #     return v
-
 
 
 def make_kraken_model_orderbook(
@@ -75,7 +53,6 @@ def make_kraken_model_orderbook(
 #============================================================
 
 
-# TODO this is applicable to many endpoints ==> in global kraken functions
 def verify_symbol(
         result_content: pmap,
         symbol: ntypes.SYMBOL,
@@ -113,13 +90,6 @@ def get_result_data_orderbook(
     return book
 
 
-# def get_result_data_last(
-#         valid_result_content: make_kraken_model_orderbook
-#     ) -> typing.Union[PositiveInt, PositiveFloat]:
-
-#     return valid_result_content.las
-
-
 
 
 #============================================================
@@ -132,21 +102,15 @@ def parse_result_data_orderbook(
     ) -> pmap:
 
     parsed_book = {
-        # FIXME change all other instances of last/time to time.time_ms
-        "utcTime": time.time_ns() * 10**-6,
+        # noobit timestamp in ms
+        "utcTime": time.time() * 10**3,
         "symbol": symbol,
+        # we ignore timestamps so no need to parse each one
         "asks": Counter({item[0]: item[1] for item in result_data.asks}),
         "bids": Counter({item[0]: item[1] for item in result_data.bids})
     }
 
     return pmap(parsed_book)
-
-
-# def parse_result_data_last(
-#         result_data: typing.Union[PositiveInt, PositiveFloat]
-#     ) -> PositiveInt:
-
-#     return result_data * 10**3
 
 
 
@@ -166,19 +130,8 @@ def validate_raw_result_content_orderbook(
     KrakenResponseOrderBook = make_kraken_model_orderbook(symbol, symbol_mapping)
 
     try:
-        # validated = type(
-        #     "Test",
-        #     (KrakenResponseOhlc,),
-        #     {
-        #         symbol_mapping[symbol]: response_content[symbol_mapping[symbol]],
-        #         "last": response_content["last"]
-        #     }
-        # )
 
-        validated = KrakenResponseOrderBook(**result_content
-            # symbol_mapping[symbol]: result_content[symbol_mapping[symbol]],
-            # "last": result_content["last"]
-        )
+        validated = KrakenResponseOrderBook(**result_content)
         return Ok(validated)
 
     except ValidationError as e:
