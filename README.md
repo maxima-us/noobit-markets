@@ -1,3 +1,3 @@
 # noobit-markets
 
-crypto api
+crypto api ...
