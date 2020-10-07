@@ -1,7 +1,5 @@
 import typing
 from decimal import Decimal
-import time
-import json
 import copy
 from datetime import date
 
@@ -10,13 +8,11 @@ from pydantic import PositiveInt, PositiveFloat, create_model, ValidationError, 
 
 # noobit base
 from noobit_markets.base import ntypes
-from noobit_markets.base.errors import BaseError
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.response import NoobitResponseOhlc
 from noobit_markets.base.models.result import Ok, Err, Result
 
-# noobit kraken
-from noobit_markets.exchanges.kraken.errors import ERRORS_FROM_EXCHANGE
+
 
 
 #============================================================
@@ -69,6 +65,8 @@ def make_kraken_model_ohlc(
     return model
 
 
+
+
 #============================================================
 # UTILS
 #============================================================
@@ -79,15 +77,6 @@ def get_result_data_ohlc(
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
     ) -> typing.Tuple[tuple]:
-    """Get result data from result content (ie only candle data without <last>).
-    Result content needs to have been validated.
-
-    Args:
-        result_content : mapping of `exchange format symbol` to `KrakenResponseItemSymbols`
-
-    Returns:
-        typing.Tuple[tuple]: result data
-    """
 
     # input example
     #   KrakenResponseOhlc(XXBTZUSD=typing.Tuple(tuple), last=int)
@@ -140,6 +129,8 @@ def verify_symbol_ohlc(
     return Ok(exch_symbol) if valid else Err(ValueError(err_msg))
 
 
+
+
 #============================================================
 # PARSE
 #============================================================
@@ -156,7 +147,6 @@ def parse_result_data_ohlc(
 
 
 def _single_candle(
-        # should we have a model for kraken OHLC data ?
         data: tuple,
         symbol: ntypes.SYMBOL
     ) -> pmap:
@@ -182,6 +172,8 @@ def parse_result_data_last(
     return result_data * 10**3
 
 
+
+
 # ============================================================
 # VALIDATE
 # ============================================================
@@ -197,15 +189,6 @@ def validate_raw_result_content_ohlc(
     KrakenResponseOhlc = make_kraken_model_ohlc(symbol, symbol_mapping)
 
     try:
-        # validated = type(
-        #     "Test",
-        #     (KrakenResponseOhlc,),
-        #     {
-        #         symbol_mapping[symbol]: response_content[symbol_mapping[symbol]],
-        #         "last": response_content["last"]
-        #     }
-        # )
-
         validated = KrakenResponseOhlc(**{
             symbol_mapping[symbol]: result_content[symbol_mapping[symbol]],
             "last": result_content["last"]

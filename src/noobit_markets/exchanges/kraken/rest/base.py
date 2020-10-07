@@ -71,11 +71,10 @@ async def get_result_content_from_public_req(
     # input: pmap // output: pmap
     resp = await send_public_request(client, make_req)
 
-    # TODO wrap error msg (str) in Exception
     # input: pmap // output: Result[PositiveInt, str]
     valid_status = get_response_status_code(resp)
     if valid_status.is_err():
-        return Err(valid_status)
+        return valid_status
 
     # input: pmap // output: frozenset
     err_content = get_error_content(resp)
@@ -83,7 +82,7 @@ async def get_result_content_from_public_req(
         # input: tuple // output: Err[typing.Tuple[BaseError]]
         parsed_err_content = parse_error_content(err_content, get_sent_request(resp))
         # print("//////", parsed_err_content.value[0].accept)
-        return Err(parsed_err_content)
+        return parsed_err_content
 
     # input: pmap // output: pmap
     result_content = get_result_content(resp)
@@ -107,11 +106,10 @@ async def get_result_content_from_private_req(
     # input: pmap // output: pmap
     resp = await send_private_request(client, make_req)
 
-    # TODO wrap error msg (str) in Exception
     # input: pmap // output: Result[PositiveInt, str]
     valid_status = get_response_status_code(resp)
     if valid_status.is_err():
-        return Err(valid_status)
+        return valid_status
 
     # input: pmap // output: frozenset
     err_content = get_error_content(resp)
@@ -119,7 +117,7 @@ async def get_result_content_from_private_req(
         # input: tuple // output: Err[typing.Tuple[BaseError]]
         parsed_err_content = parse_error_content(err_content, get_sent_request(resp))
         # print("//////", parsed_err_content.value[0].accept)
-        return Err(parsed_err_content)
+        return parsed_err_content
 
     # input: pmap // output: pmap
     result_content = get_result_content(resp)

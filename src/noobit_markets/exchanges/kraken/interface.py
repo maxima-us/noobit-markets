@@ -6,6 +6,11 @@ from noobit_markets.exchanges.kraken.rest.private.balances.get import get_balanc
 from noobit_markets.exchanges.kraken.rest.private.exposure.get import get_exposure_kraken
 from noobit_markets.exchanges.kraken.rest.private.trades.get import get_usertrades_kraken
 from noobit_markets.exchanges.kraken.rest.private.positions.get import get_openpositions_kraken
+from noobit_markets.exchanges.kraken.rest.private.orders.get import (
+    get_openorders_kraken,
+    get_closedorders_kraken,
+)
+from noobit_markets.exchanges.kraken.rest.private.trading.post import post_neworder_kraken
 
 # public endpoints
 from noobit_markets.exchanges.kraken.rest.public.ohlc.get import get_ohlc_kraken
@@ -31,7 +36,10 @@ KRAKEN = ExchangeInterface(**{
             "balances": get_balances_kraken,
             "exposure": get_exposure_kraken,
             "trades": get_usertrades_kraken,
-            "open_positions": get_openpositions_kraken
+            "open_positions": get_openpositions_kraken,
+            "open_orders": get_openorders_kraken,
+            "closed_orders": get_closedorders_kraken,
+            "new_order": post_neworder_kraken
         }
     }
 })

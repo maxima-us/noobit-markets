@@ -576,3 +576,28 @@ class NoobitResponseItemOrder(FrozenBaseModel):
 class NoobitResponseOpenPositions(FrozenBaseModel):
 
     positions: typing.Tuple[NoobitResponseItemOrder, ...]
+
+
+class NoobitResponseOpenOrders(FrozenBaseModel):
+
+    orders: typing.Tuple[NoobitResponseItemOrder, ...]
+
+
+class NoobitResponseClosedOrders(FrozenBaseModel):
+
+    orders: typing.Tuple[NoobitResponseItemOrder, ...]
+    count: PositiveInt
+
+
+
+
+
+# TODO implement actual model (this is same as kraken response model)
+class Descr(FrozenBaseModel):
+    order: typing.Any
+    close: typing.Any
+
+class NoobitResponseNewOrder(FrozenBaseModel):
+
+    descr: typing.Any
+    txid: typing.Any

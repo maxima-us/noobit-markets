@@ -1,7 +1,5 @@
 import typing
 from decimal import Decimal
-import time
-import json
 import copy
 from datetime import date
 
@@ -12,13 +10,11 @@ from typing_extensions import Literal
 
 # noobit base
 from noobit_markets.base import ntypes
-from noobit_markets.base.errors import BaseError
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
-from noobit_markets.base.models.rest.response import NoobitResponseTrades, NoobitResponseItemTrade
+from noobit_markets.base.models.rest.response import NoobitResponseTrades
 from noobit_markets.base.models.result import Ok, Err, Result
 
-# noobit kraken
-from noobit_markets.exchanges.kraken.errors import ERRORS_FROM_EXCHANGE
+
 
 
 #============================================================
@@ -38,23 +34,20 @@ from noobit_markets.exchanges.kraken.errors import ERRORS_FROM_EXCHANGE
 
 class FrozenBaseTrades(FrozenBaseModel):
 
-    # will be in ns
+    # timestamp received from kraken in ns
     last: PositiveInt
 
-    # FIXME not useful to actually type check
-    # only use is to to pass <last> as <since> when polling historic trades
-    # @validator('last')
-    # def check_year_from_timestamp(cls, v):
+    @validator('last')
+    def check_year_from_timestamp(cls, v):
 
-    #     # convert to ms from s
-    #     v /= v * 10**-9
+        # convert from ns to s
+        v_s = v * 10**-9
 
-    #     y = date.fromtimestamp(v).year
-    #     if not y > 2009 and y < 2050:
-    #         # FIXME we should raise
-    #         raise ValueError(f'TimeStamp year not within [2009, 2050] - Given Timestamp: {v}')
-    #     # return v * 10**3
-    #     return v
+        y = date.fromtimestamp(v_s).year
+        if not y > 2009 and y < 2050:
+            err_msg = f"Year {y} for timestamp {v} not within [2009, 2050]"
+            raise ValueError(err_msg)
+        return v
 
 
 
@@ -71,7 +64,7 @@ def make_kraken_model_trades(
             # tuple : price, volume, time, buy/sell, market/limit, misc
             typing.Tuple[
                 typing.Tuple[
-                    # time = decimal or int ?
+                    # time = timestamp in s, decimal
                     Decimal, Decimal, Decimal, Literal["b", "s"], Literal["m", "l"], typing.Any
                 ],
                 ...
@@ -82,8 +75,8 @@ def make_kraken_model_trades(
     }
 
     model = create_model(
-    'KrakenResponseTrades',
-    **kwargs
+        'KrakenResponseTrades',
+        **kwargs
     )
 
     return model
@@ -126,7 +119,6 @@ def get_result_data_last(
         valid_result_content: make_kraken_model_trades,
     ) -> typing.Union[PositiveInt, PositiveFloat]:
 
-    # we want timestamp in ms
     return valid_result_content.last
 
 
@@ -175,7 +167,6 @@ def parse_result_data_trades(
 
 
 def _single_trade(
-        # should we have a model for kraken OHLC data ?
         data: tuple,
         symbol: ntypes.SYMBOL
     ) -> pmap:
@@ -184,7 +175,7 @@ def _single_trade(
         "symbol": symbol,
         "orderID": None,
         "trdMatchID": None,
-        # time in ms
+        # noobit timestamp = ms
         "transactTime": data[2]*10**3,
         "side": "buy" if data[3] == "b" else "sell",
         "ordType": "market" if data[4] == "m" else "limit",
@@ -201,7 +192,8 @@ def parse_result_data_last(
         result_data: typing.Union[PositiveInt, PositiveFloat]
     ) -> PositiveInt:
 
-    return result_data
+    # timestamp is in ns here, noobit timestamp = ms
+    return result_data * 10**-6
 
 
 # ============================================================
@@ -219,15 +211,6 @@ def validate_base_result_content_trades(
     KrakenResponseTrades = make_kraken_model_trades(symbol, symbol_mapping)
 
     try:
-        # validated = type(
-        #     "Test",
-        #     (KrakenResponseOhlc,),
-        #     {
-        #         symbol_mapping[symbol]: response_content[symbol_mapping[symbol]],
-        #         "last": response_content["last"]
-        #     }
-        # )
-
         validated = KrakenResponseTrades(**result_content)
         return Ok(validated)
 

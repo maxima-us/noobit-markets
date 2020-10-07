@@ -41,6 +41,7 @@ class KrakenRequestOhlc(FrozenBaseModel):
             raise ValueError(err_msg)
         return v
 
+
 # ============================================================
 # PARSE
 # ============================================================

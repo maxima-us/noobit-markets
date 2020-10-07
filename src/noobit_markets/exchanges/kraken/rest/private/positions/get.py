@@ -64,7 +64,6 @@ async def get_openpositions_kraken(
     if result_content.is_err():
         return result_content
 
-    print(result_content.value)
     # step 9: compare received symbol to passed symbol (!!!!! Not Applicable)
 
     # step 10: validate result content ==> output: Result[KrakenResponseBalances, ValidationError]
@@ -84,3 +83,6 @@ async def get_openpositions_kraken(
     valid_parsed_result_data = validate_parsed_result_data_openpositions(parsed_result_data)
 
     return valid_parsed_result_data
+
+
+# TODO get_closedpositions_kraken

@@ -194,6 +194,42 @@ class _PrivateInterface(FrozenBaseModel):
     ]
 
 
+    open_orders: typing.Callable[
+        #argument types
+        [
+            asyncio.BaseEventLoop,
+            ntypes.CLIENT,
+            ntypes.SYMBOL_TO_EXCHANGE,
+            Auth,
+            typing.Callable,
+            pydantic.AnyHttpUrl,
+            str
+        ],
+        # return type
+        # FIXME should be result
+        NoobitResponseExposure
+    ]
+
+    closed_orders: typing.Callable[
+        #argument types
+        [
+            asyncio.BaseEventLoop,
+            ntypes.CLIENT,
+            ntypes.SYMBOL_TO_EXCHANGE,
+            Auth,
+            typing.Callable,
+            pydantic.AnyHttpUrl,
+            str
+        ],
+        # return type
+        # FIXME should be result
+        NoobitResponseExposure
+    ]
+
+
+    new_order: typing.Callable
+
+
 class RestInterface(FrozenBaseModel):
 
     public: _PublicInterface

@@ -36,7 +36,6 @@ class KrakenResponseBalances(FrozenBaseModel):
 
 
 def get_result_data_balances(
-        #FIXME should we pass in model or pmap ??
         valid_result_content: KrakenResponseBalances,
     ) -> typing.Mapping[str, Decimal]:
 

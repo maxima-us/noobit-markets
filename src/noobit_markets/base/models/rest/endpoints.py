@@ -40,7 +40,7 @@ class _PrivateEndpoints(FrozenBaseModel):
     trades_info: str
     ledger_info: str
     volume: str
-    add_order: str
+    new_order: str
     remove_order: str
     ws_token: str
 

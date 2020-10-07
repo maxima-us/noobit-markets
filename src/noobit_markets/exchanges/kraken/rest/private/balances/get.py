@@ -38,7 +38,7 @@ async def get_balances_kraken(
     # get nonce right away since there is noother param
     data = {"nonce": auth.nonce}
 
-    #! we do not need to validate, as there are no param
+    #! we do not need to validate, as there are no params
     #!      and type checking a nonce is useless
     #!      if invalid nonce: error_content will inform us
 

@@ -131,7 +131,7 @@ def retry_request(
                     # no retries if we had a validation error
                     if isinstance(result.value, ValidationError):
                         return result
-                    # FIXME return without retries if len>1
+                    # FIXME return without retries if several errors
                     if len(result.value) > 1:
                         return result
                     #! returns a tuple of errors

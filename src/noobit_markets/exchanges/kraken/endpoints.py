@@ -37,7 +37,7 @@ KRAKEN_ENDPOINTS = endpoints.RESTEndpoints(**{
             "trades_info": "QueryTrades",
             "ledger_info": "QueryLedgers",
             "volume": "TradeVolume",
-            "add_order": "AddOrder",
+            "new_order": "AddOrder",
             "remove_order": "CancelOrder",
             "ws_token": "GetWebSocketsToken"
         }
