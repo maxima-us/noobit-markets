@@ -84,11 +84,6 @@ async def post_neworder_kraken(
         return result_content
     print(result_content)
 
-    # input: pmap // Result[ntypes.SYMBOL, ValueError]
-    # valid_symbol = verify_symbol_neworder(result_content.value, symbol, symbol_to_exchange)
-    # if valid_symbol.is_err():
-    #     return valid_symbol
-
     # input: pmap // output: Result[KrakenResponseOhlc, ValidationError]
     valid_result_content = validate_raw_result_content_neworder(result_content.value)
     if valid_result_content.is_err():
