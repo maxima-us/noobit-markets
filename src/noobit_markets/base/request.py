@@ -53,7 +53,7 @@ def make_httpx_get_request(
     req_dict = {
         "url": full_url,
         "headers": headers,
-        "params": valid_request_model.dict()
+        "params": valid_request_model.dict(exclude_none=True)
     }
 
     return pmap(req_dict)
@@ -72,7 +72,7 @@ def make_httpx_post_request(
     req_dict = {
         "url": full_url,
         "headers": headers,
-        "data": valid_request_model.dict()
+        "data": valid_request_model.dict(exclude_none=True)
         # FIXME this is just to test private req
         # "data": valid_request_model
     }
