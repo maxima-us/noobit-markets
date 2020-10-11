@@ -26,7 +26,7 @@ KRAKEN_ENDPOINTS = endpoints.RESTEndpoints(**{
         "endpoints": {
             'balances': "Balance",
             "account_balance": "Balance",
-            # "exposure": "TradeBalance",
+            "exposure": "TradeBalance",
             "open_positions": "OpenPositions",
             "open_orders": "OpenOrders",
             "closed_orders": "ClosedOrders",

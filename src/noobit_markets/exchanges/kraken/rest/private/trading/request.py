@@ -98,8 +98,8 @@ class KrakenRequestNewOrder(ExchangePrivateRequest):
             raise ValueError(err_msg)
         return v
 
-    validator("starttm")(_check_year_from_timestamp)
-    validator("expiretm")(_check_year_from_timestamp)
+    validator("starttm", allow_reuse=True)(_check_year_from_timestamp)
+    validator("expiretm", allow_reuse=True)(_check_year_from_timestamp)
 
 
     @validator("leverage")
