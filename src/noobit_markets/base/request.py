@@ -135,6 +135,9 @@ def retry_request(
                     if len(result.value) > 1:
                         return result
                     #! returns a tuple of errors
+                    #FIXME kraken returns a tuple of errors
+                    #   binance for examples returns a dict
+                    #   containing error code and error message
                     if result.value[0].accept:
                         return result
                     else:

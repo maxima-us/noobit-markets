@@ -50,7 +50,7 @@ async def get_ohlc_binance(
     if result_content.is_err():
         return result_content
 
-
+    #! response does not contain symbol, useless
     # input: pmap // Result[ntypes.SYMBOL, ValueError]
     # valid_symbol = verify_symbol_ohlc(result_content.value, symbol, symbol_to_exchange)
     # if valid_symbol.is_err():
@@ -61,6 +61,7 @@ async def get_ohlc_binance(
     if valid_result_content.is_err():
         return valid_result_content
 
+    #! not needed, response[_content] contains data right away, no index
     # input: KrakenResponseOhlc // output: typing.Tuple[tuple]
     # result_data_ohlc = get_result_data_ohlc(valid_result_content.value, symbol, symbol_to_exchange)
 

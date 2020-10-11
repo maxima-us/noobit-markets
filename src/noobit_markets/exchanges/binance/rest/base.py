@@ -38,26 +38,28 @@ def get_sent_request(response_json: pmap) -> str:
 
 #FIXME binance gives error detail in _content, example :
 #'_content': b'{"code":-1105,"msg":"Parameter \'startTime\' was empty."}'
-#! not applicable to binance ("error" key)
-def get_error_content(response_json: pmap) -> frozenset:
+#! not applicable to binance (no "error" key)
+def get_error_content(response_json: pmap) -> list:
     error_content = json.loads(response_json["_content"])
-    return frozenset(error_content)
+    return [error_content]
 
 
-#! not applicable to binance ("result" key)
+#! not applicable to binance (no "result" key)
 def get_result_content(response_json: pmap) -> pmap:
 
     result_content = json.loads(response_json["_content"])
     return result_content
 
 
-# def parse_error_content(
-#         error_content: tuple,
-#         sent_request: pmap
-#     ) -> Err[typing.Tuple[BaseError]]:
+def parse_error_content(
+        error_content: tuple,
+        sent_request: pmap
+    ) -> Err[typing.Tuple[BaseError]]:
 
-#     tupled = tuple([ERRORS_FROM_EXCHANGE[error](error_content, sent_request) for error in error_content])
-#     return Err(tupled)
+    # error content ex: error_content = {'code': -1121, 'msg': 'Invalid symbol.'}
+
+    tupled = tuple([ERRORS_FROM_EXCHANGE[error["code"] * (-1)](error_content, sent_request) for error in error_content])
+    return Err(tupled)
 
 
 async def get_result_content_from_public_req(
@@ -67,6 +69,11 @@ async def get_result_content_from_public_req(
         base_url: AnyHttpUrl,
         endpoint: str,
     ) -> Result[pmap, typing.Any]:
+
+
+    # binance returns error message inside result content
+    # no special index like in kraken
+
 
     # input: valid_request_model must be FrozenBaseModel !!! not dict !! // output: pmap
     make_req = make_httpx_get_request(base_url, endpoint, headers, valid_binance_req)
@@ -80,7 +87,9 @@ async def get_result_content_from_public_req(
     # input: pmap // output: Result[PositiveInt, str]
     valid_status = get_response_status_code(resp)
     if valid_status.is_err():
-        return Err(result_content)
+        err_content = get_error_content(resp)
+        parsed_err_content = parse_error_content(err_content, get_sent_request(resp))
+        return parsed_err_content
 
     # input: pmap // output: frozenset
     # err_content = get_error_content(resp)
@@ -97,6 +106,7 @@ async def get_result_content_from_public_req(
     return Ok(result_content)
 
 
+# TODO fix
 async def get_result_content_from_private_req(
         client: ntypes.CLIENT,
         valid_binance_req: FrozenBaseModel,
