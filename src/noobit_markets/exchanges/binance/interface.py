@@ -7,6 +7,7 @@ from noobit_markets.base.models.interface import ExchangeInterface
 from noobit_markets.exchanges.binance.rest.public.ohlc.get import get_ohlc_binance
 from noobit_markets.exchanges.binance.rest.public.orderbook.get import get_orderbook_binance
 from noobit_markets.exchanges.binance.rest.public.trades.get import get_trades_binance
+from noobit_markets.exchanges.binance.rest.public.instrument.get import get_instrument_binance
 
 
 BINANCE = ExchangeInterface(**{
@@ -16,7 +17,7 @@ BINANCE = ExchangeInterface(**{
             "orderbook": get_orderbook_binance, 
             "symbols": None, 
             "trades": get_trades_binance, 
-            "instrument": None, 
+            "instrument": get_instrument_binance, 
             "spread": None, 
         },
         "private": {
