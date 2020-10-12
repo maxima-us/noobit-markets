@@ -18,28 +18,27 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_p
 
 
 @retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
-async def get_orderbook_binance(
+async def get_trades_binance(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
-        depth: ntypes.DEPTH,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
-        endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.orderbook,
+        endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.trades,
     ) -> Result[NoobitResponseOhlc, Exception]:
 
 
-    # output: Result[NoobitRequestOhlc, ValidationError]
-    valid_req = validate_request_orderbook(symbol, symbol_to_exchange, depth) 
+    # output: Result[NoobitRequestTrades, ValidationError]
+    valid_req = validate_base_request_trades(symbol, symbol_to_exchange)
     if valid_req.is_err():
         return valid_req
 
 
     # output: pmap
-    parsed_req = parse_request_orderbook(valid_req.value)
+    parsed_req = parse_request_trades(valid_req.value)
 
 
-    # output: Result[BinanceRequestOhlc, ValidationError]
-    valid_binance_req = validate_parsed_request_orderbook(parsed_req)
+    # output: Result[BinanceRequesTrades, ValidationError]
+    valid_binance_req = validate_parsed_request_trades(parsed_req)
     if valid_binance_req.is_err():
         return valid_binance_req
 
@@ -50,16 +49,16 @@ async def get_orderbook_binance(
         return result_content
 
 
-    # input: pmap // output: Result[BinanceResponseOhlc, ValidationError]
-    valid_result_content = validate_raw_result_content_orderbook(result_content.value, symbol, symbol_to_exchange)
+    # input: pmap // output: Result[BinanceResponseTrades, ValidationError]
+    valid_result_content = validate_raw_result_content_trades(result_content.value, symbol, symbol_to_exchange)
     if valid_result_content.is_err():
         return valid_result_content
 
 
     # input: typing.Tuple[tuple] // output: typing.Tuple[pmap]
-    parsed_result_ob = parse_result_data_orderbook(valid_result_content.value, symbol)
+    parsed_result_ob = parse_result_data_trades(valid_result_content.value.trades, symbol)
 
 
-    # input: typing.Tuple[pmap] //  output: Result[NoobitResponseOhlc, ValidationError]
-    valid_parsed_response_data = validate_parsed_result_data_orderbook(parsed_result_ob)
+    # input: typing.Tuple[pmap] //  output: Result[NoobitResponseTrades, ValidationError]
+    valid_parsed_response_data = validate_parsed_result_data_trades(parsed_result_ob)
     return valid_parsed_response_data

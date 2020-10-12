@@ -161,9 +161,9 @@ def parse_result_data_trades(
         symbol: ntypes.SYMBOL
     ) -> typing.Tuple[pmap]:
 
-    parsed_ohlc = [_single_trade(data, symbol) for data in result_data]
+    parsed_trades = [_single_trade(data, symbol) for data in result_data]
 
-    return tuple(parsed_ohlc)
+    return tuple(parsed_trades)
 
 
 def _single_trade(

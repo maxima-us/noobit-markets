@@ -1,7 +1,7 @@
 from datetime import date
 
 from pyrsistent import pmap
-from pydantic import ValidationError, constr, conint, validator
+from pydantic import ValidationError, constr, conint, validator, PositiveInt
 
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
@@ -15,29 +15,12 @@ from noobit_markets.base.models.result import Ok, Err, Result
 # ============================================================
 
 
-class KrakenRequestTrades(FrozenBaseModel):
-    # KRAKEN PAYLOAD
-    #   pair = asset pair to get Trades data for
-    #   since = return commited OHLC data since given id (optional)
+class BinanceRequestTrades(FrozenBaseModel):
 
-    #FIXME incorrect, normal string (XXBTZUSD and not XBT-USD)
-    pair: constr(regex=r'[A-Z]+')
-    # needs to be in ns (same as <last> param received from response)
-    since: conint(ge=0) = 0
+    symbol: str 
+    limit: PositiveInt = 1000
 
-    @validator('since')
-    def check_year_from_timestamp(cls, v):
-        if v == 0:
-            return v
 
-        # convert from ns to s
-        v_s = v * 10**-9
-
-        y = date.fromtimestamp(v_s).year
-        if not y > 2009 and y < 2050:
-            err_msg = f"Year {y} for timestamp {v} not within [2009, 2050]"
-            raise ValueError(err_msg)
-        return v
 
 # ============================================================
 # PARSE
@@ -50,9 +33,7 @@ def parse_request_trades(
 
 
     payload = {
-        "pair": valid_request.symbol_mapping[valid_request.symbol],
-        # convert from noobit ts (ms) to expected (ns)
-        "since": valid_request.since * 10**6
+        "symbol": valid_request.symbol_mapping[valid_request.symbol],
     }
 
     return pmap(payload)
@@ -66,14 +47,13 @@ def parse_request_trades(
 def validate_base_request_trades(
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
-        since: ntypes.TIMESTAMP
     ) -> Result[NoobitRequestTrades, ValidationError]:
 
     try:
         valid_req = NoobitRequestTrades(
             symbol=symbol,
             symbol_mapping=symbol_mapping,
-            since=since
+            since=None
         )
         return Ok(valid_req)
 
@@ -86,10 +66,10 @@ def validate_base_request_trades(
 
 def validate_parsed_request_trades(
         parsed_request: pmap
-    ) -> Result[KrakenRequestTrades, ValidationError]:
+    ) -> Result[BinanceRequestTrades, ValidationError]:
 
     try:
-        validated = KrakenRequestTrades(
+        validated = BinanceRequestTrades(
             **parsed_request
         )
         return Ok(validated)

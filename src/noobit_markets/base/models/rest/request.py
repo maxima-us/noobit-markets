@@ -52,7 +52,7 @@ class NoobitRequestTrades(FrozenBaseModel):
 
     symbol: ntypes.SYMBOL
     symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
-    since: Literal[ntypes.TIMESTAMP, 0]
+    since: typing.Optional[ntypes.TIMESTAMP]
 
 
 
