@@ -10,7 +10,7 @@ from noobit_markets.base.models.rest.response import NoobitResponseTrades
 
 @pytest.mark.asyncio
 @pytest.mark.vcr()
-async def test_ohlc():
+async def test_trades():
 
     async with httpx.AsyncClient() as client:
 
@@ -29,7 +29,7 @@ async def test_ohlc():
             client,
             "XBT-USD",
             symbol_mapping["asset_pairs"],
-            0,
+            None,
             lambda *args: print("=====>", *args)
         )
 
@@ -39,5 +39,5 @@ async def test_ohlc():
 
 if __name__ == '__main__':
     pytest.main(['-s', __file__, '--block-network'])
-    # record run
+    # uncomment below to record cassette
     # pytest.main(['-s', __file__, '--record-mode=new_episodes'])

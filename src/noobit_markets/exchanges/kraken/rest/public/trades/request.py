@@ -1,5 +1,6 @@
 from datetime import date
 
+import typing
 from pyrsistent import pmap
 from pydantic import ValidationError, constr, conint, validator
 
@@ -23,11 +24,11 @@ class KrakenRequestTrades(FrozenBaseModel):
     #FIXME incorrect, normal string (XXBTZUSD and not XBT-USD)
     pair: constr(regex=r'[A-Z]+')
     # needs to be in ns (same as <last> param received from response)
-    since: conint(ge=0) = 0
+    since: typing.Optional[conint(ge=0)]
 
     @validator('since')
     def check_year_from_timestamp(cls, v):
-        if v == 0:
+        if v == 0 or v is None:
             return v
 
         # convert from ns to s
@@ -52,7 +53,7 @@ def parse_request_trades(
     payload = {
         "pair": valid_request.symbol_mapping[valid_request.symbol],
         # convert from noobit ts (ms) to expected (ns)
-        "since": valid_request.since * 10**6
+        "since": None if valid_request.since is None else valid_request.since * 10**6
     }
 
     return pmap(payload)

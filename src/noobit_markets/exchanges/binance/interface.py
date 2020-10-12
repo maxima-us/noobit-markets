@@ -15,7 +15,7 @@ BINANCE = ExchangeInterface(**{
             "ohlc": get_ohlc_binance,
             "orderbook": get_orderbook_binance, 
             "symbols": None, 
-            "trades": None, 
+            "trades": get_trades_binance, 
             "instrument": None, 
             "spread": None, 
         },
