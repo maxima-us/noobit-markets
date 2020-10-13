@@ -6,6 +6,7 @@ from noobit_markets.exchanges.binance.rest.public.orderbook.get import get_order
 from noobit_markets.exchanges.binance.rest.public.trades.get import get_trades_binance
 from noobit_markets.exchanges.binance.rest.public.instrument.get import get_instrument_binance
 from noobit_markets.exchanges.binance.rest.public.symbols.get import get_symbols_binance
+from noobit_markets.exchanges.binance.rest.public.spread.get import get_spread_binance
 
 
 
@@ -62,6 +63,18 @@ if res.is_err():
 res = asyncio.run(
     get_symbols_binance(
         client=httpx.AsyncClient(),
+    )
+)
+
+if res.is_err():
+    print(res)
+
+
+res = asyncio.run(
+    get_spread_binance(
+        client=httpx.AsyncClient(),
+        symbol="XBT-USD",
+        symbol_to_exchange={"XBT-USD": "BTCUSDT"},
     )
 )
 

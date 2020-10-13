@@ -136,16 +136,18 @@ def parse_result_data_symbols(
         "assets": parse_result_data_assets(result_data)
     }
 
+    #TODO FILTER OUT SYMBOLS THAT ARE NOT TRADING
     return pmap(parsed)
 
 
 def parse_result_data_assetpairs(
-        result_data: BinanceResponseSymbols,
+        result_data: BinanceResponseItemSymbols,
     ) -> pmap:
 
     parsed = {
         f"{data.baseAsset}-{data.quoteAsset}": _single_assetpair(data) 
-        for data in result_data.symbols
+        #? filter out pairs that are not trading ?
+        for data in result_data.symbols if data.status == "TRADING"
     }
 
     return pmap(parsed)

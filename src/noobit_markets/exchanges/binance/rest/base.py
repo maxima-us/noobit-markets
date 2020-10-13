@@ -47,9 +47,12 @@ def get_error_content(response_json: pmap) -> list:
 #! not applicable to binance (no "result" key)
 def get_result_content(response_json: pmap) -> pmap:
 
-    result_content = json.loads(response_json["_content"])
-    return result_content
-
+    try:
+        result_content = json.loads(response_json["_content"])
+        return result_content
+    except json.JSONDecodeError as e:
+        msg = (f"Invalid json string : {response_json['_content']}")
+        raise ValueError(msg) from e
 
 def parse_error_content(
         error_content: tuple,

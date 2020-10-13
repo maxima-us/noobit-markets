@@ -15,7 +15,7 @@ BINANCE_ENDPOINTS = endpoints.RESTEndpoints(**{
             "ohlc": "klines",
             "orderbook": "depth",
             "trades": "trades",
-            "spread": "bookTicker",
+            "spread": "ticker/bookTicker",
 
             #kraken api does not have it
             "historical_trades": "historicalTrades"
