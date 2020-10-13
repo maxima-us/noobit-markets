@@ -48,6 +48,7 @@ from noobit_markets.base.models.result import Ok, Err, Result
 
 class BinanceResponseInstrument(FrozenBaseModel):
 
+    #TODO regex capital
     symbol: str
     priceChange: Decimal
     priceChangePercent: Decimal

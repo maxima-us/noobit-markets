@@ -55,13 +55,14 @@ class NoobitResponseOhlc(FrozenBaseModel):
 class NoobitResponseItemSymbols(FrozenBaseModel):
 
     exchange_name: str
-    ws_name: str
+    #? keep this field 
+    ws_name: typing.Optional[str]
     base: str
     quote: str
     volume_decimals: conint(ge=0)
     price_decimals: conint(ge=0)
-    leverage_available: typing.Tuple[PositiveInt, ...]
-    order_min: Decimal
+    leverage_available: typing.Optional[typing.Tuple[PositiveInt, ...]] = Field(...)
+    order_min: typing.Optional[Decimal] = Field(...)
 
 
 class NoobitResponseSymbols(FrozenBaseModel):

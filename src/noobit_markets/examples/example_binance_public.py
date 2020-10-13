@@ -5,6 +5,7 @@ from noobit_markets.exchanges.binance.rest.public.ohlc.get import get_ohlc_binan
 from noobit_markets.exchanges.binance.rest.public.orderbook.get import get_orderbook_binance
 from noobit_markets.exchanges.binance.rest.public.trades.get import get_trades_binance
 from noobit_markets.exchanges.binance.rest.public.instrument.get import get_instrument_binance
+from noobit_markets.exchanges.binance.rest.public.symbols.get import get_symbols_binance
 
 
 
@@ -17,8 +18,8 @@ res = asyncio.run(
         since=0
     )
 )
-
-print(res)
+if res.is_err():
+    print(res)
 
 
 res = asyncio.run(
@@ -30,7 +31,8 @@ res = asyncio.run(
     )
 )
 
-print(res)
+if res.is_err():
+    print(res)
 
 
 res = asyncio.run(
@@ -41,7 +43,8 @@ res = asyncio.run(
     )
 )
 
-print(res)
+if res.is_err():
+    print(res)
 
 
 res = asyncio.run(
@@ -52,4 +55,15 @@ res = asyncio.run(
     )
 )
 
-print(res)
+if res.is_err():
+    print(res)
+
+
+res = asyncio.run(
+    get_symbols_binance(
+        client=httpx.AsyncClient(),
+    )
+)
+
+if res:
+    print(res)
