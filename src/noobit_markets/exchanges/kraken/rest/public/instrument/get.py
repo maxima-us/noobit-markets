@@ -23,7 +23,6 @@ async def get_instrument_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
-        logger_func=None,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.instrument,
     ) -> Result[NoobitResponseInstrument, Exception]:
@@ -31,19 +30,16 @@ async def get_instrument_kraken(
 
     # output: Result[NoobitRequestOhlc, ValidationError]
     valid_req = validate_base_request_instrument(symbol, symbol_to_exchange)
-    logger_func("valid raw req // ", valid_req)
     if valid_req.is_err():
         return valid_req
 
 
     # output: pmap
     parsed_req = parse_request_instrument(valid_req.value)
-    logger_func("parsed req // ", parsed_req)
 
 
     # output: Result[KrakenRequestOhlc, ValidationError]
     valid_kraken_req = validate_parsed_request_instrument(parsed_req)
-    logger_func("validated req // ", valid_kraken_req)
     if valid_kraken_req.is_err():
         return valid_kraken_req
 
@@ -61,7 +57,6 @@ async def get_instrument_kraken(
 
     # input: pmap // output: Result[KrakenResponseOhlc, ValidationError]
     valid_result_content = validate_base_result_content_instrument(result_content.value, symbol, symbol_to_exchange)
-    logger_func("validated resp result content", valid_result_content)
     if valid_result_content.is_err():
         return valid_result_content
     # logger_func("valid result_content // ", valid_result_content)
@@ -76,5 +71,5 @@ async def get_instrument_kraken(
 
 
     # input: typing.Tuple[pmap] //  output: Result[NoobitResponseOhlc, ValidationError]
-    valid_parsed_response_data = validate_parsed_result_data_instrument(parsed_result)
+    valid_parsed_response_data = validate_parsed_result_data_instrument(parsed_result, result_content.value)
     return valid_parsed_response_data

@@ -82,11 +82,12 @@ def validate_raw_result_content_balances(
 
 
 def validate_parsed_result_data_balances(
-        parsed_result_data: typing.Mapping[ntypes.ASSET, Decimal]
+        parsed_result_data: typing.Mapping[ntypes.ASSET, Decimal],
+        raw_json=typing.Any
     ) -> Result[NoobitResponseBalances, ValidationError]:
 
     try:
-        validated = NoobitResponseBalances(data = parsed_result_data)
+        validated = NoobitResponseBalances(data = parsed_result_data, rawJson=raw_json)
         return Ok(validated)
 
     except ValidationError as e:

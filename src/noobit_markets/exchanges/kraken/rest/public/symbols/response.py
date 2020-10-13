@@ -196,10 +196,11 @@ def validate_raw_result_content_symbols(
 
 def validate_parsed_result_data_symbols(
         parsed_result_data: pmap,
+        raw_json: typing.Any
     ) -> Result[NoobitResponseSymbols, ValidationError]:
 
     try:
-        validated = NoobitResponseSymbols(**parsed_result_data)
+        validated = NoobitResponseSymbols(**parsed_result_data, rawJson=raw_json)
         return Ok(validated)
 
     except ValidationError as e:

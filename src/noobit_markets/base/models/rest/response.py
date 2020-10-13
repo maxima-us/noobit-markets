@@ -4,10 +4,24 @@ from datetime import date
 from datetime import datetime
 
 from typing_extensions import Literal
-from pydantic import PositiveInt, conint, validator, Field
+from pydantic import PositiveInt, conint, validator, Field, constr
 
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base import ntypes
+
+
+
+
+# ============================================================
+# OHLC
+# ============================================================
+
+
+class NoobitBaseResponse(FrozenBaseModel):
+
+    #? should this be mandatory
+    exchange: typing.Optional[constr(regex=r'[A-Z]+')]
+    rawJson: typing.Any
 
 
 
@@ -31,7 +45,7 @@ class NoobitResponseItemOhlc(FrozenBaseModel):
     trdCount: PositiveInt
 
 
-class NoobitResponseOhlc(FrozenBaseModel):
+class NoobitResponseOhlc(NoobitBaseResponse):
 
     ohlc: typing.Tuple[NoobitResponseItemOhlc, ...]
     last: PositiveInt
@@ -65,7 +79,7 @@ class NoobitResponseItemSymbols(FrozenBaseModel):
     order_min: typing.Optional[Decimal] = Field(...)
 
 
-class NoobitResponseSymbols(FrozenBaseModel):
+class NoobitResponseSymbols(NoobitBaseResponse):
 
     asset_pairs: typing.Mapping[ntypes.SYMBOL, NoobitResponseItemSymbols]
     assets: ntypes.ASSET_TO_EXCHANGE
@@ -76,7 +90,7 @@ class NoobitResponseSymbols(FrozenBaseModel):
 # ============================================================
 
 
-class NoobitResponseBalances(FrozenBaseModel):
+class NoobitResponseBalances(NoobitBaseResponse):
 
     # FIXME replace with more explicit field name ?
     data: typing.Mapping[ntypes.ASSET, Decimal]
@@ -88,7 +102,7 @@ class NoobitResponseBalances(FrozenBaseModel):
 # OHLC
 # ============================================================
 
-class NoobitResponseOrderBook(FrozenBaseModel):
+class NoobitResponseOrderBook(NoobitBaseResponse):
 
     utcTime: ntypes.TIMESTAMP
     symbol: ntypes.SYMBOL
@@ -96,11 +110,14 @@ class NoobitResponseOrderBook(FrozenBaseModel):
     bids: ntypes.BIDS
 
 
+
+
 # ============================================================
 # EXPOSURE
 # ============================================================
 
-class NoobitResponseExposure(FrozenBaseModel):
+
+class NoobitResponseExposure(NoobitBaseResponse):
 
      # FIX Definition: https://www.onixs.biz/fix-dictionary/4.4/tagNum_900.html
     # (Total value of assets + positions + unrealized)
@@ -210,7 +227,7 @@ class NoobitResponseItemTrade(FrozenBaseModel):
     text: typing.Optional[typing.Any]
 
 
-class NoobitResponseTrades(FrozenBaseModel):
+class NoobitResponseTrades(NoobitBaseResponse):
     """Used for both private and public Trades
     """
 
@@ -225,7 +242,7 @@ class NoobitResponseTrades(FrozenBaseModel):
 # ============================================================
 
 
-class NoobitResponseInstrument(FrozenBaseModel):
+class NoobitResponseInstrument(NoobitBaseResponse):
 
     # FIX Definition:
     #   Ticker symbol. Common, "human understood" representation of the security.
@@ -275,7 +292,7 @@ class NoobitResponseItemSpread(FrozenBaseModel):
     bestBidPrice: Decimal
 
 
-class NoobitResponseSpread(FrozenBaseModel):
+class NoobitResponseSpread(NoobitBaseResponse):
 
     spread: typing.Tuple[NoobitResponseItemSpread, ...]
     last: ntypes.TIMESTAMP
@@ -574,17 +591,17 @@ class NoobitResponseItemOrder(FrozenBaseModel):
 #   }
 
 
-class NoobitResponseOpenPositions(FrozenBaseModel):
+class NoobitResponseOpenPositions(NoobitBaseResponse):
 
     positions: typing.Tuple[NoobitResponseItemOrder, ...]
 
 
-class NoobitResponseOpenOrders(FrozenBaseModel):
+class NoobitResponseOpenOrders(NoobitBaseResponse):
 
     orders: typing.Tuple[NoobitResponseItemOrder, ...]
 
 
-class NoobitResponseClosedOrders(FrozenBaseModel):
+class NoobitResponseClosedOrders(NoobitBaseResponse):
 
     orders: typing.Tuple[NoobitResponseItemOrder, ...]
     count: PositiveInt
@@ -598,7 +615,7 @@ class Descr(FrozenBaseModel):
     order: typing.Any
     close: typing.Any
 
-class NoobitResponseNewOrder(FrozenBaseModel):
+class NoobitResponseNewOrder(NoobitBaseResponse):
 
     descr: typing.Any
     txid: typing.Any

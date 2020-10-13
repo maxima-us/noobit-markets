@@ -61,5 +61,5 @@ async def get_orderbook_binance(
 
 
     # input: typing.Tuple[pmap] //  output: Result[NoobitResponseOhlc, ValidationError]
-    valid_parsed_response_data = validate_parsed_result_data_orderbook(parsed_result_ob)
+    valid_parsed_response_data = validate_parsed_result_data_orderbook(parsed_result_ob, result_content.value)
     return valid_parsed_response_data

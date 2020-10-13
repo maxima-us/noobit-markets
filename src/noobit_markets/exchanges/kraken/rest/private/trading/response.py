@@ -93,12 +93,14 @@ validate_raw_result_content_neworder = partial(
 
 def validate_parsed_result_data_neworder(
         parsed_result_data: pmap,
+        raw_json: typing.Any
     ) -> Result[NoobitResponseNewOrder, ValidationError]:
 
     try:
         validated = NoobitResponseNewOrder(
             descr=parsed_result_data,
-            txid="testing 0000"
+            txid="testing 0000",
+            rawJson=raw_json
         )
         return Ok(validated)
 

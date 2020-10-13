@@ -106,11 +106,12 @@ def validate_base_result_content_exposure(
 
 
 def validate_parsed_result_data_exposure(
-        parsed_result_data: typing.Mapping[ntypes.ASSET, Decimal]
+        parsed_result_data: typing.Mapping[ntypes.ASSET, Decimal],
+        raw_json: typing.Any
     ) -> Result[NoobitResponseExposure, ValidationError]:
 
     try:
-        validated = NoobitResponseExposure(**parsed_result_data)
+        validated = NoobitResponseExposure(**parsed_result_data, rawJson=raw_json)
         return Ok(validated)
 
     except ValidationError as e:

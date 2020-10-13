@@ -422,11 +422,11 @@ def _single_order(
 
 def validate_base_result_content(
         result_content: pmap,
-        model: FrozenBaseModel
+        model: FrozenBaseModel,
     ) -> Result[FrozenBaseModel, ValidationError]:
 
     try:
-        validated = model(**result_content)
+        validated = model(**result_content) 
         return Ok(validated)
 
     except ValidationError as e:
@@ -448,13 +448,15 @@ validate_base_result_content_openorders = partial(
 
 def validate_parsed_result_data_closedorders(
         parsed_result_data: typing.Mapping[str, pmap],
-        count: PositiveInt 
+        count: PositiveInt,
+        raw_json: typing.Any
     ) -> Result[NoobitResponseClosedOrders, ValidationError]:
 
     try:
         validated = NoobitResponseClosedOrders(
             orders=parsed_result_data,
-            count=count
+            count=count,
+            rawJson=raw_json
         )
         return Ok(validated)
 
@@ -467,11 +469,13 @@ def validate_parsed_result_data_closedorders(
 
 def validate_parsed_result_data_openorders(
         parsed_result_data: typing.Mapping[str, pmap],
+        raw_json: typing.Any
     ) -> Result[NoobitResponseOpenOrders, ValidationError]:
 
     try:
         validated = NoobitResponseOpenOrders(
             orders=parsed_result_data,
+            rawJson=raw_json
         )
         return Ok(validated)
 

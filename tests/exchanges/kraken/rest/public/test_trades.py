@@ -30,7 +30,6 @@ async def test_trades():
             "XBT-USD",
             symbol_mapping["asset_pairs"],
             None,
-            lambda *args: print("=====>", *args)
         )
 
         assert isinstance(symbols, Ok)

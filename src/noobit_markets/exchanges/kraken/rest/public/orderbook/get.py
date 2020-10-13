@@ -24,7 +24,6 @@ async def get_orderbook_kraken(
         symbol: ntypes.SYMBOL,
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         depth: ntypes.DEPTH,
-        logger_func=None,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.orderbook,
     ) -> Result[NoobitResponseOrderBook, Exception]:
@@ -39,12 +38,12 @@ async def get_orderbook_kraken(
 
     # output: pmap
     parsed_req = parse_request_orderbook(valid_req.value)
-    logger_func("parsed req // ", parsed_req)
+    # logger_func("parsed req // ", parsed_req)
 
 
     # output: Result[KrakenRequestOhlc, ValidationError]
     valid_kraken_req = validate_parsed_request_orderbook(parsed_req)
-    logger_func("validated req // ", valid_kraken_req)
+    # logger_func("validated req // ", valid_kraken_req)
     if valid_kraken_req.is_err():
         return valid_kraken_req
 
@@ -56,7 +55,7 @@ async def get_orderbook_kraken(
 
     # input: pmap // Result[ntypes.SYMBOL, ValueError]
     valid_symbol = verify_symbol(result_content.value, symbol, symbol_to_exchange)
-    logger_func("valid symbol // ", valid_symbol)
+    # logger_func("valid symbol // ", valid_symbol)
     if valid_symbol.is_err():
         return valid_symbol
 
@@ -66,21 +65,18 @@ async def get_orderbook_kraken(
     # logger_func("validated resp result content", valid_result_content)
     if valid_result_content.is_err():
         return valid_result_content
-    logger_func("valid result_content // ", valid_result_content)
+    # logger_func("valid result_content // ", valid_result_content)
 
     # input: KrakenResponseOhlc // output: typing.Tuple[tuple]
     result_data = get_result_data_orderbook(valid_result_content.value, symbol, symbol_to_exchange)
-    logger_func("resp result data", result_data)
+    # logger_func("resp result data", result_data)
 
     # input: typing.Tuple[tuple] // output: typing.Tuple[pmap]
     parsed_result = parse_result_data_orderbook(result_data, symbol)
 
 
     # input: typing.Tuple[pmap] //  output: Result[NoobitResponseOhlc, ValidationError]
-    valid_parsed_response_data = validate_parsed_result_data_orderbook(parsed_result)
-    # ? logger_func("validated & parsed result data // ", valid_parsed_response_data)
-    # if valid_parsed_response_data.is_err():
-        # return valid_parsed_response_data
+    valid_parsed_response_data = validate_parsed_result_data_orderbook(parsed_result, result_content.value)
     return valid_parsed_response_data
 
 
@@ -98,7 +94,6 @@ if __name__ == "__main__":
             "XBT-USD",
             {"XBT-USD": "XXBTZUSD"},
             None,
-            lambda *args: print("====>", *args)
         )
     )
 

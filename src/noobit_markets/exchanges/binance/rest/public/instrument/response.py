@@ -148,11 +148,13 @@ def validate_raw_result_content_instrument(
 
 def validate_parsed_result_data_instrument(
         parsed_result: typing.Tuple[pmap],
+        raw_json: typing.Any
     ) -> Result[NoobitResponseInstrument, ValidationError]:
 
     try:
         validated = NoobitResponseInstrument(
-            **parsed_result
+            **parsed_result,
+            rawJson=raw_json
         )
         return Ok(validated)
 

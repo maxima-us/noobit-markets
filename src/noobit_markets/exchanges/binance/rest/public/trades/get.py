@@ -60,5 +60,5 @@ async def get_trades_binance(
 
 
     # input: typing.Tuple[pmap] //  output: Result[NoobitResponseTrades, ValidationError]
-    valid_parsed_response_data = validate_parsed_result_data_trades(parsed_result_ob)
+    valid_parsed_response_data = validate_parsed_result_data_trades(parsed_result_ob, result_content.value)
     return valid_parsed_response_data

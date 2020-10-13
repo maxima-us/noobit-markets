@@ -24,7 +24,6 @@ async def get_spread_kraken(
         symbol: ntypes.SYMBOL,
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         since: ntypes.TIMESTAMP,
-        logger_func=None,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.spread,
     ) -> Result[NoobitResponseSpread, Exception]:
@@ -79,5 +78,5 @@ async def get_spread_kraken(
     parsed_result_last = parse_result_data_last(result_data_last)
 
     # input: typing.Tuple[pmap] //  output: Result[NoobitResponseOhlc, ValidationError]
-    valid_parsed_response_data = validate_parsed_result_data_spread(parsed_result_spread, parsed_result_last)
+    valid_parsed_response_data = validate_parsed_result_data_spread(parsed_result_spread, parsed_result_last, result_content.value)
     return valid_parsed_response_data

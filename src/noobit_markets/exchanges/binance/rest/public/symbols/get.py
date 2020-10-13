@@ -45,5 +45,5 @@ async def get_symbols_binance(
 
 
     # input: typing.Tuple[pmap] //  output: Result[NoobitResponseOhlc, ValidationError]
-    valid_parsed_response_data = validate_parsed_result_data_symbols(parsed_result)
+    valid_parsed_response_data = validate_parsed_result_data_symbols(parsed_result, result_content.value)
     return valid_parsed_response_data

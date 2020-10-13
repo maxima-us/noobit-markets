@@ -68,6 +68,6 @@ async def get_exposure_kraken(
     parsed_result_data = parse_result_data_exposure(result_data_balances, asset_to_exchange)
 
     # step 13: validate parsed result data ==> output: Result[NoobitResponseTradeBalance, ValidationError]
-    valid_parsed_result_data = validate_parsed_result_data_exposure(parsed_result_data)
+    valid_parsed_result_data = validate_parsed_result_data_exposure(parsed_result_data, result_content.value)
 
     return valid_parsed_result_data

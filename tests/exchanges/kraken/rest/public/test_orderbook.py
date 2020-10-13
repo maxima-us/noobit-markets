@@ -30,7 +30,6 @@ async def test_orderbook():
             "XBT-USD",
             symbol_mapping["asset_pairs"],
             500,
-            lambda *args: print("=====>", *args)
         )
 
         assert isinstance(symbols, Ok)

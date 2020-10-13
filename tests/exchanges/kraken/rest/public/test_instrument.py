@@ -29,7 +29,6 @@ async def test_instrument():
             client,
             "XBT-USD",
             symbol_mapping["asset_pairs"],
-            lambda *args: print("=====>", *args)
         )
 
         assert isinstance(symbols, Ok)

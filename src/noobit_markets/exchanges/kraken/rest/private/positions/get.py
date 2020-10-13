@@ -80,7 +80,7 @@ async def get_openpositions_kraken(
     parsed_result_data = parse_result_data_openpositions(result_data_balances, symbols_from_exchange)
 
     # step 13: validate parsed result data ==> output: Result[NoobitResponseTradeBalance, ValidationError]
-    valid_parsed_result_data = validate_parsed_result_data_openpositions(parsed_result_data)
+    valid_parsed_result_data = validate_parsed_result_data_openpositions(parsed_result_data, result_content.value)
 
     return valid_parsed_result_data
 

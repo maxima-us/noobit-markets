@@ -127,13 +127,15 @@ def validate_raw_result_content_trades(
 
 def validate_parsed_result_data_trades(
         parsed_result: typing.Tuple[pmap],
+        raw_json: typing.Any
     ) -> Result[NoobitResponseTrades, ValidationError]:
 
     try:
         validated = NoobitResponseTrades(
             trades=parsed_result,
             #TODO extract last
-            last=1
+            last=1,
+            rawJson=raw_json
         )
         return Ok(validated)
 

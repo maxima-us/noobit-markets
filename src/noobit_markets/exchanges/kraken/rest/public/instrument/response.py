@@ -182,10 +182,14 @@ def validate_base_result_content_instrument(
 
 def validate_parsed_result_data_instrument(
         parsed_result_data: typing.Tuple[pmap],
+        raw_json: typing.Any
     ) -> Result[NoobitResponseInstrument, ValidationError]:
 
     try:
-        validated = NoobitResponseInstrument(**parsed_result_data)
+        validated = NoobitResponseInstrument(
+            **parsed_result_data,
+            rawJson=raw_json
+        )
         return Ok(validated)
 
     except ValidationError as e:

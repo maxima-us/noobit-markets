@@ -54,6 +54,7 @@ def get_result_content(response_json: pmap) -> pmap:
         msg = (f"Invalid json string : {response_json['_content']}")
         raise ValueError(msg) from e
 
+
 def parse_error_content(
         error_content: tuple,
         sent_request: pmap

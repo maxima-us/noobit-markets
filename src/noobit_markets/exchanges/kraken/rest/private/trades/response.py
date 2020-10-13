@@ -191,13 +191,15 @@ def validate_base_result_content_usertrades(
 
 
 def validate_parsed_result_data_usertrades(
-        parsed_result_data: typing.Mapping[str, pmap]
+        parsed_result_data: typing.Mapping[str, pmap],
+        raw_json: typing.Any
     ) -> Result[NoobitResponseTrades, ValidationError]:
 
     try:
         validated = NoobitResponseTrades(
             trades=parsed_result_data,
-            last=None
+            last=None,
+            rawJson=raw_json
         )
         return Ok(validated)
 

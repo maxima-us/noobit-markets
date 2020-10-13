@@ -174,12 +174,14 @@ def validate_base_result_content_openpositions(
 
 
 def validate_parsed_result_data_openpositions(
-        parsed_result_data: typing.Mapping[ntypes.ASSET, Decimal]
+        parsed_result_data: typing.Mapping[ntypes.ASSET, Decimal],
+        raw_json: typing.Any
     ) -> Result[NoobitResponseOpenPositions, ValidationError]:
 
     try:
         validated = NoobitResponseOpenPositions(
-            positions=parsed_result_data
+            positions=parsed_result_data,
+            rawJson=raw_json
         )
         return Ok(validated)
 

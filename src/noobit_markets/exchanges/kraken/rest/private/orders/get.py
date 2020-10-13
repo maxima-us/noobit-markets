@@ -84,7 +84,7 @@ async def get_closedorders_kraken(
     count = get_result_data_count(valid_result_content.value)
 
     # step 13: validate parsed result data ==> output: Result[NoobitResponseTradeBalance, ValidationError]
-    valid_parsed_result_data = validate_parsed_result_data_closedorders(parsed_result_data, count)
+    valid_parsed_result_data = validate_parsed_result_data_closedorders(parsed_result_data, count, result_content.value)
 
     return valid_parsed_result_data
 
@@ -140,6 +140,6 @@ async def get_openorders_kraken(
     parsed_result_data = parse_result_data_openorders(result_data_balances, symbols_from_altname)
 
     # step 13: validate parsed result data ==> output: Result[NoobitResponseTradeBalance, ValidationError]
-    valid_parsed_result_data = validate_parsed_result_data_openorders(parsed_result_data)
+    valid_parsed_result_data = validate_parsed_result_data_openorders(parsed_result_data, result_content.value)
 
     return valid_parsed_result_data

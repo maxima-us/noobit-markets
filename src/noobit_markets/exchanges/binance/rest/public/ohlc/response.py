@@ -174,14 +174,16 @@ def validate_raw_result_content_ohlc(
 
 def validate_parsed_result_data_ohlc(
         parsed_result_ohlc: typing.Tuple[pmap],
-        parsed_result_last: PositiveInt
+        parsed_result_last: PositiveInt,
+        raw_json: typing.Any
     ) -> Result[NoobitResponseOhlc, ValidationError]:
 
     try:
         validated = NoobitResponseOhlc(
             ohlc=parsed_result_ohlc,
             #TODO extract last from last candle
-            last=parsed_result_last
+            last=parsed_result_last,
+            rawJson=raw_json
         )
         return Ok(validated)
 

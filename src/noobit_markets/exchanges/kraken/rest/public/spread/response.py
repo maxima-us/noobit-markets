@@ -201,13 +201,15 @@ def validate_base_result_content_spread(
 
 def validate_parsed_result_data_spread(
         parsed_result_spread: typing.Tuple[pmap],
-        parsed_result_last: PositiveInt
+        parsed_result_last: PositiveInt,
+        raw_json: typing.Any
     ) -> Result[NoobitResponseSpread, ValidationError]:
 
     try:
         validated = NoobitResponseSpread(
             spread=parsed_result_spread,
-            last=parsed_result_last
+            last=parsed_result_last,
+            rawJson=raw_json
         )
         return Ok(validated)
 

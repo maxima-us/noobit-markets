@@ -104,11 +104,13 @@ def validate_raw_result_content_orderbook(
 
 def validate_parsed_result_data_orderbook(
         parsed_result: typing.Tuple[pmap],
+        raw_json: typing.Any
     ) -> Result[NoobitResponseOrderBook, ValidationError]:
 
     try:
         validated = NoobitResponseOrderBook(
-            **parsed_result
+            **parsed_result,
+            rawJson=raw_json
         )
         return Ok(validated)
 

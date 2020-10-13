@@ -109,13 +109,15 @@ def validate_raw_result_content_spread(
 
 def validate_parsed_result_data_spread(
         parsed_result: typing.Tuple[pmap],
+        raw_json: typing.Any
     ) -> Result[NoobitResponseSpread, ValidationError]:
 
     try:
         validated = NoobitResponseSpread(
            spread=parsed_result,
            #FIXME should we even keep all these `last` fields ==> specific to kraken
-           last=1
+           last=1,
+           rawJson=raw_json
         )
         return Ok(validated)
 

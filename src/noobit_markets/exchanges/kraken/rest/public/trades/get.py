@@ -24,7 +24,6 @@ async def get_trades_kraken(
         symbol: ntypes.SYMBOL,
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         since: ntypes.TIMESTAMP,
-        logger_func=None,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.trades,
     ) -> Result[NoobitResponseTrades, Exception]:
@@ -32,19 +31,19 @@ async def get_trades_kraken(
 
     # output: Result[NoobitRequestOhlc, ValidationError]
     valid_req = validate_base_request_trades(symbol, symbol_to_exchange, since)
-    logger_func("valid raw req // ", valid_req)
+    # logger_func("valid raw req // ", valid_req)
     if valid_req.is_err():
         return valid_req
 
 
     # output: pmap
     parsed_req = parse_request_trades(valid_req.value)
-    logger_func("parsed req // ", parsed_req)
+    # logger_func("parsed req // ", parsed_req)
 
 
     # output: Result[KrakenRequestOhlc, ValidationError]
     valid_kraken_req = validate_parsed_request_trades(parsed_req)
-    logger_func("validated req // ", valid_kraken_req)
+    # logger_func("validated req // ", valid_kraken_req)
     if valid_kraken_req.is_err():
         return valid_kraken_req
 
@@ -79,5 +78,5 @@ async def get_trades_kraken(
     parsed_result_last = parse_result_data_last(result_data_last)
 
     # input: typing.Tuple[pmap] //  output: Result[NoobitResponseOhlc, ValidationError]
-    valid_parsed_response_data = validate_parsed_result_data_trades(parsed_result_trades, parsed_result_last)
+    valid_parsed_response_data = validate_parsed_result_data_trades(parsed_result_trades, parsed_result_last, result_content.value)
     return valid_parsed_response_data
