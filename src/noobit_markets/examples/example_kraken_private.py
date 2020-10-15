@@ -25,7 +25,7 @@ try:
             loop=None,
             client=httpx.AsyncClient(),
             # logger_func= lambda *args: print("========> ", *args, "\n\n")
-            logger_func= lambda *args: print("")
+            # logger_func= lambda *args: print("")
         )
     )
     if symbol_to_exch.is_err():

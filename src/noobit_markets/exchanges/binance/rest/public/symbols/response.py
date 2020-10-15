@@ -177,7 +177,7 @@ def parse_result_data_assets(
 ) -> pmap:
 
     parsed = {
-        data.baseAsset: data.baseAsset
+        (data.baseAsset if not data.baseAsset == "BTC" else "XBT"): data.baseAsset
         for data in result_data.symbols
     }
 

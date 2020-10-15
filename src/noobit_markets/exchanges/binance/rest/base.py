@@ -125,23 +125,14 @@ async def get_result_content_from_private_req(
     # input: pmap // output: pmap
     resp = await send_private_request(client, make_req)
 
-    # input: pmap // output: Result[PositiveInt, str]
-    valid_status = get_response_status_code(resp)
-    if valid_status.is_err():
-        return valid_status
-
-    # input: pmap // output: frozenset
-    err_content = get_error_content(resp)
-    if  err_content:
-        # input: tuple // output: Err[typing.Tuple[BaseError]]
-        #TODO map errors
-        # parsed_err_content = parse_error_content(err_content, get_sent_request(resp))
-        # print("//////", parsed_err_content.value[0].accept)
-        return err_content
-
     # input: pmap // output: pmap
     result_content = get_result_content(resp)
 
+    # input: pmap // output: Result[PositiveInt, str]
+    valid_status = get_response_status_code(resp)
+    if valid_status.is_err():
+        err_content = get_error_content(resp)
+        parsed_err_content = parse_error_content(err_content, get_sent_request(resp))
+        return parsed_err_content
+
     return Ok(result_content)
-
-

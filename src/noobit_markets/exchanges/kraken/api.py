@@ -4,6 +4,11 @@ import httpx
 
 from noobit_markets.exchanges.kraken.interface import KRAKEN
 
+# look at code below for a nice example of how to merge rest and ws
+# https://github.com/asmodehn/aiokraken/blob/develop/aiokraken/ohlcv.py
+#   ==> basically call `OHLC.1H()`` for rest or `async for msg in OHLC` for ws`
+
+
 
 class KrakenAPI:
 

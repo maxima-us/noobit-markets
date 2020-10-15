@@ -10,7 +10,9 @@ from noobit_markets.base import ntypes
 
 class ExchangePrivateRequest(FrozenBaseModel):
 
-    nonce: PositiveInt
+    # FIXME binance requires `timestamp`, not none
+    # TODO to move inside exchange level
+    timestamp: PositiveInt
 
 
 

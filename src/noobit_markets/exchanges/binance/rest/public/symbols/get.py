@@ -21,7 +21,7 @@ async def get_symbols_binance(
         client: ntypes.CLIENT,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.symbols,
-    ) -> Result[NoobitResponseOhlc, Exception]:
+    ) -> Result[NoobitResponseSymbols, Exception]:
 
 
     # no query params but needs to wrapped in a result that contains an instance of FrozenBaseModel
