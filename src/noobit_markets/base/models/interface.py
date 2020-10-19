@@ -7,7 +7,7 @@ from noobit_markets.base.models.rest import endpoints
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base import ntypes
 
-from noobit_markets.exchanges.kraken.rest.auth import Auth
+from noobit_markets.base.auth import BaseAuth as Auth
 
 # response models
 from noobit_markets.base.models.rest.response import (

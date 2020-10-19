@@ -8,12 +8,6 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base import ntypes
 
 
-class ExchangePrivateRequest(FrozenBaseModel):
-
-    # FIXME binance requires `timestamp`, not none
-    # TODO to move inside exchange level
-    timestamp: PositiveInt
-
 
 
 # ============================================================
@@ -82,6 +76,20 @@ class NoobitRequestSpread(FrozenBaseModel):
     symbol: ntypes.SYMBOL
     symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
     since: typing.Optional[ntypes.TIMESTAMP]
+
+
+
+
+# ============================================================
+# Orders
+# ============================================================
+
+
+# TODO we need Order Requests to contain a symbol / symbol_mapping param
+class NoobitRequestClosedOrders(FrozenBaseModel):
+
+    symbol: ntypes.SYMBOL
+    symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
 
 
 

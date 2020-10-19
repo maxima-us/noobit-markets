@@ -43,8 +43,6 @@ class BinanceRequestOhlc(FrozenBaseModel):
 # ============================================================
 
 
-
-
 def parse_request_ohlc(
         valid_request: NoobitRequestOhlc
     ) -> pmap:
@@ -60,6 +58,8 @@ def parse_request_ohlc(
 
 
     return pmap(payload)
+
+
 
 
 # ============================================================

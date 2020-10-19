@@ -10,9 +10,19 @@ from pydantic import AnyHttpUrl
 
 from noobit_markets.base.request import *
 from noobit_markets.base.auth import BaseAuth, make_base
+from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 
 load_dotenv()
+
+
+#Kraken Private Request Model
+#always needs nonce param to authenticate 
+class KrakenPrivateRequest(FrozenBaseModel):
+
+    nonce: PositiveInt
+
+
 
 # necessary so we do not share same class attributes/methods across all exchanges
 KrakenBase = make_base("KrakenBase")

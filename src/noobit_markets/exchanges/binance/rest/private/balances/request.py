@@ -1,17 +1,16 @@
-from noobit_markets.base.models.rest.request import ExchangePrivateRequest
+import typing
+
 from pydantic.types import PositiveInt
 
-import typing
+from noobit_markets.exchanges.binance.rest.auth import BinancePrivateRequest
 
 
 # ============================================================
 # KRAKEN MODEL
 # ============================================================
 
-class BinanceRequestBalances(ExchangePrivateRequest):
-    timestamp: PositiveInt
-    signature: typing.Any
-
+class BinanceRequestBalances(BinancePrivateRequest):
+    pass
 
 # ============================================================
 # PARSE

@@ -110,7 +110,7 @@ async def get_result_content_from_public_req(
     return Ok(result_content)
 
 
-# TODO fix
+# TODO fix (and rename to ...from_post_req ??)
 async def get_result_content_from_private_req(
         client: ntypes.CLIENT,
         valid_binance_req: FrozenBaseModel,

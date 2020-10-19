@@ -56,7 +56,7 @@ from typing_extensions import Literal
 # }
 
 
-class NoobitResponseItemBalances(FrozenBaseModel):
+class BinanceResponseItemBalances(FrozenBaseModel):
     asset: constr(regex=r'[A-Z]+')
     free: Decimal
     locked: Decimal
@@ -73,7 +73,7 @@ class BinanceResponseBalances(FrozenBaseModel):
     canWithdraw: bool
     updateTime: conint(gt=0)
     accountType: Literal["SPOT", "MARGIN"]
-    balances: typing.Tuple[NoobitResponseItemBalances, ...] 
+    balances: typing.Tuple[BinanceResponseItemBalances, ...] 
     permissions: typing.List[Literal["SPOT", "MARGIN"]]
 
 

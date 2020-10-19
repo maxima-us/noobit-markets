@@ -233,7 +233,7 @@ try:
             side="buy",
             ordType="market",
             clOrdID=10101010,
-            orderQty=0.001,
+            orderQty=0.1,
             price=0,
             marginRatio=None,
             effectiveTime=None,

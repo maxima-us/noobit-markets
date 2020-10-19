@@ -1,4 +1,4 @@
-from noobit_markets.base.models.rest.request import ExchangePrivateRequest
+from noobit_markets.exchanges.kraken.rest.auth import KrakenPrivateRequest
 
 
 
@@ -7,7 +7,7 @@ from noobit_markets.base.models.rest.request import ExchangePrivateRequest
 # KRAKEN MODEL
 # ============================================================
 
-class KrakenRequestOpenOrders(ExchangePrivateRequest):
+class KrakenRequestOpenOrders(KrakenPrivateRequest):
     trades: bool = True
 
 

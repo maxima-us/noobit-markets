@@ -3,15 +3,17 @@ from datetime import date
 from decimal import Decimal
 
 from pyrsistent import pmap
-from pydantic import BaseModel, PositiveInt, ValidationError, constr, validator, conint, Field
+
+from pydantic import PositiveInt, ValidationError, conint, constr, validator
 from typing_extensions import Literal
 
-from noobit_markets.base import ntypes, mappings
-from noobit_markets.base.models.frozenbase import FrozenBaseModel
-from noobit_markets.base.models.rest.request import NoobitRequestAddOrder
-from noobit_markets.base.models.rest.request import ExchangePrivateRequest
 
+from noobit_markets.base import ntypes
+from noobit_markets.base.models.rest.request import NoobitRequestAddOrder
 from noobit_markets.base.models.result import Ok, Err, Result
+
+from noobit_markets.exchanges.kraken.rest.auth import KrakenPrivateRequest
+
 
 
 # ============================================================
@@ -62,7 +64,7 @@ from noobit_markets.base.models.result import Ok, Err, Result
 
 # TODO what does the last part mean ??
 
-class KrakenRequestNewOrder(ExchangePrivateRequest):
+class KrakenRequestNewOrder(KrakenPrivateRequest):
 
     pair: constr(regex=r'[A-Z]+')
     type: Literal["buy", "sell"]

@@ -13,6 +13,15 @@ from noobit_markets.base.auth import BaseAuth, make_base
 
 load_dotenv()
 
+
+#Binance Private Request Model
+#always needs timestamp and signature param to authenticate 
+class BinancePrivateRequest(FrozenBaseModel):
+
+    timestamp: PositiveInt
+    signature: str
+
+
 # necessary so we do not share same class attributes/methods across all exchanges
 BinanceBase = make_base("BinanceBase")
 
@@ -39,7 +48,7 @@ class BinanceAuth(BinanceBase):
         return auth_headers
 
 
-    def _sign(self, request_args: pmap):
+    def _sign(self, request_args: dict):
         """Sign request data according to Kraken's scheme.
         Args:
             data (dict): API request parameters
@@ -47,6 +56,7 @@ class BinanceAuth(BinanceBase):
         Returns
             signature digest
         """
+        # request_args["timestamp"] = self.nonce
         postdata = urllib.parse.urlencode(request_args)
 
         # Unicode-objects must be encoded before hashing
@@ -61,8 +71,10 @@ class BinanceAuth(BinanceBase):
         )
         # sigdigest = base64.b64encode(signature.digest())
 
+        # dict isntead of pmap since pmap doesnt support assignment
         request_args["signature"] = signature.hexdigest()
-
+        # setattr(request_args, "signature", signature.hexdigest())
+        
         return request_args
 
         
