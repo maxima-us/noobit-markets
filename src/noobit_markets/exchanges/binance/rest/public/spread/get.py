@@ -21,7 +21,6 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_p
 async def get_spread_binance(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        # FIXME keep since in model ?
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.spread,

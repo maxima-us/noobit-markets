@@ -13,7 +13,7 @@ from noobit_markets.base import ntypes
 
 
 # ============================================================
-# OHLC
+# BASE
 # ============================================================
 
 
@@ -48,17 +48,19 @@ class NoobitResponseItemOhlc(FrozenBaseModel):
 class NoobitResponseOhlc(NoobitBaseResponse):
 
     ohlc: typing.Tuple[NoobitResponseItemOhlc, ...]
-    last: PositiveInt
 
-    @validator('last')
-    def check_year_from_timestamp(cls, v):
-        # timestamp should be in milliseconds
-        y = date.fromtimestamp(v/1000).year
-        if not y > 2009 and y < 2050:
-            # FIXME we should raise
-            raise ValueError(f'TimeStamp year : {y} not within [2009, 2050]')
-        # return v * 10**3
-        return v
+    # TODO remove from endpoints
+    # last: PositiveInt
+
+    # @validator('last')
+    # def check_year_from_timestamp(cls, v):
+    #     # timestamp should be in milliseconds
+    #     y = date.fromtimestamp(v/1000).year
+    #     if not y > 2009 and y < 2050:
+    #         # FIXME we should raise
+    #         raise ValueError(f'TimeStamp year : {y} not within [2009, 2050]')
+    #     # return v * 10**3
+    #     return v
 
 
 # ============================================================
@@ -233,7 +235,9 @@ class NoobitResponseTrades(NoobitBaseResponse):
     """
 
     trades: typing.Tuple[NoobitResponseItemTrade, ...]
-    last: typing.Optional[ntypes.TIMESTAMP] = Field(...)
+
+    # TODO remove in endpoints
+    # last: typing.Optional[ntypes.TIMESTAMP] = Field(...)
 
 
 
@@ -296,7 +300,9 @@ class NoobitResponseItemSpread(FrozenBaseModel):
 class NoobitResponseSpread(NoobitBaseResponse):
 
     spread: typing.Tuple[NoobitResponseItemSpread, ...]
-    last: ntypes.TIMESTAMP
+    
+    # TODO remove in endpoints
+    # last: ntypes.TIMESTAMP
 
 
 
@@ -605,7 +611,9 @@ class NoobitResponseOpenOrders(NoobitBaseResponse):
 class NoobitResponseClosedOrders(NoobitBaseResponse):
 
     orders: typing.Tuple[NoobitResponseItemOrder, ...]
-    count: conint(ge=0)
+
+    # TODO useless, remove from endpoints
+    # count: conint(ge=0)
 
 
 

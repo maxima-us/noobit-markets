@@ -78,5 +78,5 @@ async def get_spread_kraken(
     parsed_result_last = parse_result_data_last(result_data_last)
 
     # input: typing.Tuple[pmap] //  output: Result[NoobitResponseOhlc, ValidationError]
-    valid_parsed_response_data = validate_parsed_result_data_spread(parsed_result_spread, parsed_result_last, result_content.value)
+    valid_parsed_response_data = validate_parsed_result_data_spread(parsed_result_spread, result_content.value)
     return valid_parsed_response_data

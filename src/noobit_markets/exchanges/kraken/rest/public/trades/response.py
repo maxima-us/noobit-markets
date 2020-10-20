@@ -223,14 +223,12 @@ def validate_base_result_content_trades(
 
 def validate_parsed_result_data_trades(
         parsed_result_trades: typing.Tuple[pmap],
-        parsed_result_last: PositiveFloat,
         raw_json: typing.Any
     ) -> Result[NoobitResponseTrades, ValidationError]:
 
     try:
         validated = NoobitResponseTrades(
             trades=parsed_result_trades,
-            last=parsed_result_last,
             rawJson=raw_json
         )
         return Ok(validated)
