@@ -161,7 +161,7 @@ def parse_result_data_instrument(
 
 
 # FIXME not entirely sure how to properly type hint
-def validate_base_result_content_instrument(
+def validate_raw_result_content_instrument(
         result_content: pmap,
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE

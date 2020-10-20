@@ -14,7 +14,6 @@ if __name__ == "__main__":
             "XBT-USD",
             {"XBT-USD": "XXBTZUSD"},
             500,
-            lambda *args: print("====>", *args)
         )
     )
 

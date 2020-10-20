@@ -90,7 +90,7 @@ def parse_result_data_exposure(
 # ============================================================
 
 
-def validate_base_result_content_exposure(
+def validate_raw_result_content_exposure(
         result_content: pmap,
     ) -> Result[KrakenResponseExposure, ValidationError]:
 

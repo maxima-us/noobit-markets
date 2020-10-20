@@ -56,7 +56,7 @@ async def get_instrument_kraken(
         return valid_symbol
 
     # input: pmap // output: Result[KrakenResponseOhlc, ValidationError]
-    valid_result_content = validate_base_result_content_instrument(result_content.value, symbol, symbol_to_exchange)
+    valid_result_content = validate_raw_result_content_instrument(result_content.value, symbol, symbol_to_exchange)
     if valid_result_content.is_err():
         return valid_result_content
     # logger_func("valid result_content // ", valid_result_content)

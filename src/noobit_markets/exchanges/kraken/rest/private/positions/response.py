@@ -156,7 +156,7 @@ def _single_position(key: str, info: OpenPositionInfo, symbol_mapping: ntypes.SY
 # ============================================================
 
 
-def validate_base_result_content_openpositions(
+def validate_raw_result_content_openpositions(
         result_content: pmap,
     ) -> Result[KrakenResponseOpenPositions, ValidationError]:
 

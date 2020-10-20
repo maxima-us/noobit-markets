@@ -202,7 +202,7 @@ def parse_result_data_last(
 
 
 # FIXME not entirely sure how to properly type hint
-def validate_base_result_content_trades(
+def validate_raw_result_content_trades(
         result_content: pmap,
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE

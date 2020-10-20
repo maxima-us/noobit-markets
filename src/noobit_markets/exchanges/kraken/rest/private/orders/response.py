@@ -420,7 +420,7 @@ def _single_order(
 # ============================================================
 
 
-def validate_base_result_content(
+def validate_raw_result_content(
         result_content: pmap,
         model: FrozenBaseModel,
     ) -> Result[FrozenBaseModel, ValidationError]:
@@ -436,12 +436,12 @@ def validate_base_result_content(
         raise e
 
 
-validate_base_result_content_closedorders = partial(
-    validate_base_result_content, 
+validate_raw_result_content_closedorders = partial(
+    validate_raw_result_content, 
     model=KrakenResponseClosedOrders
 )
-validate_base_result_content_openorders = partial(
-    validate_base_result_content, 
+validate_raw_result_content_openorders = partial(
+    validate_raw_result_content, 
     model=KrakenResponseOpenOrders
 )
 

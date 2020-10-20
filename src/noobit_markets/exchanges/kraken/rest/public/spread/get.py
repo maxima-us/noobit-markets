@@ -60,7 +60,7 @@ async def get_spread_kraken(
         return valid_symbol
 
     # input: pmap // output: Result[KrakenResponseOhlc, ValidationError]
-    valid_result_content = validate_base_result_content_spread(result_content.value, symbol, symbol_to_exchange)
+    valid_result_content = validate_raw_result_content_spread(result_content.value, symbol, symbol_to_exchange)
     # logger_func("validated resp result content", valid_result_content)
     if valid_result_content.is_err():
         return valid_result_content

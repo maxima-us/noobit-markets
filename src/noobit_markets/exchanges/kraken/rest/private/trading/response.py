@@ -69,7 +69,7 @@ def parse_result_data_neworder(
 # ============================================================
 
 
-def validate_base_result_content(
+def validate_raw_result_content(
         result_content: pmap,
         model: FrozenBaseModel
     ) -> Result[FrozenBaseModel, ValidationError]:
@@ -86,7 +86,7 @@ def validate_base_result_content(
 
 
 validate_raw_result_content_neworder = partial(
-    validate_base_result_content, 
+    validate_raw_result_content, 
     model=KrakenResponseNewOrder
 )
 

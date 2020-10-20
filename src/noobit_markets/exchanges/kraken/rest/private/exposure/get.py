@@ -56,7 +56,7 @@ async def get_exposure_kraken(
     # step 9: compare received symbol to passed symbol (!!!!! Not Applicable)
 
     # step 10: validate result content ==> output: Result[KrakenResponseBalances, ValidationError]
-    valid_result_content = validate_base_result_content_exposure(result_content.value)
+    valid_result_content = validate_raw_result_content_exposure(result_content.value)
     if valid_result_content.is_err():
         return valid_result_content
 

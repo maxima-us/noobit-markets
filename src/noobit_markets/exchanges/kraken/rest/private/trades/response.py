@@ -175,7 +175,7 @@ def _single_trade(
 # ============================================================
 
 
-def validate_base_result_content_usertrades(
+def validate_raw_result_content_usertrades(
         result_content: pmap,
     ) -> Result[KrakenResponseUserTrades, ValidationError]:
 
