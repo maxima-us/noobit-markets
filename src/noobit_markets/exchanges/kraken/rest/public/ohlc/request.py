@@ -28,12 +28,13 @@ class KrakenRequestOhlc(FrozenBaseModel):
     interval: Literal[1, 5, 15, 30, 60, 240, 1440, 10080, 21600]
 
     # needs to be in s like <last> timestamp in ohlc response
-    since: conint(ge=0) = 0
+    since: typing.Optional[PositiveInt]
 
     @validator('since')
     def check_year_from_timestamp(cls, v):
-        if v == 0:
-            return v
+        if not v: return
+
+        if v == 0: return v
 
         y = date.fromtimestamp(v).year
         if not y > 2009 and y < 2050:
@@ -56,7 +57,7 @@ def parse_request_ohlc(
         "pair": valid_request.symbol_mapping[valid_request.symbol],
         "interval": mappings.TIMEFRAME[valid_request.timeframe],
         # noobit ts are in ms vs ohlc kraken ts in s
-        "since": valid_request.since * 10**-3
+        "since": valid_request.since * 10**-3 if valid_request.since else None
     }
 
 

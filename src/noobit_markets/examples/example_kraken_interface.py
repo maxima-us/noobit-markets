@@ -21,11 +21,12 @@ try:
         func_symbols(
             loop=None,
             client=httpx.AsyncClient(),
-            logger_func= lambda *args: print("")
         )
     )
-    if symbol_to_exch.is_err:
-        print(symbol_to_exch)
+    if symbol_to_exch.is_err():
+        print("Error fetching symbols", symbol_to_exch.value.msg)
+    else:
+        print("Successfuly fetched Symbols")
 except Exception as e:
     raise e
 
@@ -53,11 +54,13 @@ ohlc = asyncio.run(
         symbol="XBT-USD",
         symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
         timeframe="1H",
-        since=0
+        since=None
     )
 )
 if ohlc.is_err():
-    print(ohlc)
+    print(ohlc, "\n")
+else:
+    print("Successfuly fetched OHLC")
 
 
 
@@ -75,12 +78,13 @@ trades = asyncio.run(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
         symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
-        since=0,
-        logger_func= lambda *args: print("")
+        since=None,
     )
 )
 if trades.is_err():
-    print(trades)
+    print(trades, "\n")
+else:
+    print("Successfuly fetched Trades")
 
 
 
@@ -98,11 +102,12 @@ instrument = asyncio.run(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
         symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
-        logger_func= lambda *args: print("")
     )
 )
 if instrument.is_err():
-    print(instrument)
+    print(instrument, "\n")
+else:
+    print("Successfuly fetched Instrument")
 
 
 
@@ -119,10 +124,11 @@ spread = asyncio.run(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
         symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
-        since=0,
-        logger_func= lambda *args: print("")
+        since=None,
     )
 )
 
 if spread.is_err():
-    print(spread)
+    print(spread, "\n")
+else:
+    print("Successfuly fetched Spread")

@@ -1,4 +1,6 @@
+import typing
 from datetime import date
+from pydantic.types import PositiveInt
 
 from pyrsistent import pmap
 from pydantic import ValidationError, constr, conint, validator
@@ -24,12 +26,14 @@ class KrakenRequestSpread(FrozenBaseModel):
 
     pair: constr(regex=r'[A-Z]+')
     # needs to be given in s (same as spread <last> timestamp from spread response)
-    since: conint(ge=0) = 0
+    since: typing.Optional[PositiveInt]
 
     @validator('since')
     def check_year_from_timestamp(cls, v):
-        if v == 0:
-            return v
+
+        if not v: return
+
+        if v == 0: return v
 
         y = date.fromtimestamp(v).year
         if not y > 2009 and y < 2050:
