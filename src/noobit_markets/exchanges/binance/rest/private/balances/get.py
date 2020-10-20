@@ -50,6 +50,8 @@ async def get_balances_binance(
 
     headers = auth.headers()
 
+    print("data : ", data)
+
     signed_params = auth._sign(data)
 
     try:

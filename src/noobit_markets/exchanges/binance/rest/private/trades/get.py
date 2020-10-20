@@ -24,7 +24,7 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_p
 
 
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
-async def get_closedorders_binance(
+async def get_trades_binance(
         loop: asyncio.BaseEventLoop,
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
@@ -32,8 +32,8 @@ async def get_closedorders_binance(
         auth=BinanceAuth(),
         # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.private.url,
-        endpoint: str = endpoints.BINANCE_ENDPOINTS.private.endpoints.closed_orders
-    ) -> Result[NoobitResponseClosedOrders, Exception]:
+        endpoint: str = endpoints.BINANCE_ENDPOINTS.private.endpoints.trades_history
+    ) -> Result[NoobitResponseTrades, Exception]:
 
     # step 1: validate base request ==> output: Result[NoobitRequestTradeBalance, ValidationError]
     # step 2: parse valid base req ==> output: pmap
@@ -46,18 +46,18 @@ async def get_closedorders_binance(
 
     headers = auth.headers()
 
-    valid_req = validate_request_closedorders(symbol, symbols_to_exchange)
+    valid_req = validate_request_trades(symbol, symbols_to_exchange)
     if valid_req.is_err():
         return valid_req 
 
-    parsed_req = parse_request_closedorders(valid_req.value)
+    parsed_req = parse_request_trades(valid_req.value)
     parsed_req["timestamp"] = auth.nonce
 
 
     signed_req = auth._sign(parsed_req)
     # signed_req["timestamp"] = auth.nonce
 
-    valid_binance_req = validate_parsed_request_closedorders(signed_req)
+    valid_binance_req = validate_parsed_request_trades(signed_req)
     if valid_binance_req.is_err():
         return valid_binance_req
     
@@ -71,7 +71,7 @@ async def get_closedorders_binance(
 
 
     # input: pmap // output: Result[BinanceResponseOhlc, ValidationError]
-    valid_result_content = validate_raw_result_content_closedorders(result_content.value) 
+    valid_result_content = validate_raw_result_content_trades(result_content.value) 
     if valid_result_content.is_err():
         return valid_result_content
     
@@ -79,11 +79,11 @@ async def get_closedorders_binance(
     symbols_from_exchange = {v: k for k, v in symbols_to_exchange.items()}
 
     # input: typing.Tuple[tuple] // output: typing.Tuple[pmap]
-    parsed_result = parse_result_data_orders(valid_result_content.value, symbols_from_exchange) 
+    parsed_result = parse_result_data_trades(valid_result_content.value, symbols_from_exchange) 
 
-    closed_orders = [item for item in parsed_result if item["ordStatus"] in ["closed", "canceled"]]
+    # closed_orders = [item for item in parsed_result if item["ordStatus"] in ["filled"]]
     
     # input: typing.Tuple[pmap] //  output: Result[NoobitResponseOhlc, ValidationError]
-    valid_parsed_response_data = validate_parsed_result_data_closedorders(closed_orders, result_content.value)
+    valid_parsed_response_data = validate_parsed_result_data_trades(parsed_result, result_content.value)
     return valid_parsed_response_data
 

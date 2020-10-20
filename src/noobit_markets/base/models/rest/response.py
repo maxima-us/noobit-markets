@@ -209,6 +209,7 @@ class NoobitResponseItemTrade(FrozenBaseModel):
     # CCXT equivalence: fee
     # FIX Definition: https://fixwiki.org/fixwiki/Commission
     #   Commission
+    #! according to exchange this may be in quote or base asset
     commission: typing.Optional[Decimal]
 
     # CCXT equivalence: lastTradeTimestamp
@@ -604,7 +605,7 @@ class NoobitResponseOpenOrders(NoobitBaseResponse):
 class NoobitResponseClosedOrders(NoobitBaseResponse):
 
     orders: typing.Tuple[NoobitResponseItemOrder, ...]
-    count: PositiveInt
+    count: conint(ge=0)
 
 
 

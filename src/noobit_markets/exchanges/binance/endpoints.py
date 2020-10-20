@@ -38,14 +38,16 @@ BINANCE_ENDPOINTS = endpoints.RESTEndpoints(**{
 
             # https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#all-orders-user_data
             "closed_orders": "api/v3/allOrders", #get only canceled orders #requires symbol
-            "trades_history": "api/v3/allOrders", #get only filled order #requires symbol
+            # "trades_history": "api/v3/allOrders", #get only filled order #requires symbol
+            "trades_history": "api/v3/myTrades", #get only filled order #requires symbol
 
             # https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#current-open-orders-user_data 
             "open_orders": "api/v3/openOrders", #requires symbol
 
             # https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#query-order-user_data 
             "order_info": "api/v3/order", #check single order
-            
+
+            # not updated yet 
             "open_positions": "OpenPositions",
             "closed_positions": "TradesHistory",
             "ledger": "Ledgers",

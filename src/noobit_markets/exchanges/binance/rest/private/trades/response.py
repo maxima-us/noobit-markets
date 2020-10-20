@@ -1,3 +1,5 @@
+"""exactly same as closed orders"""
+
 
 import typing
 from decimal import Decimal
@@ -14,7 +16,7 @@ from pydantic import conint, ValidationError, validator, constr
 from noobit_markets.base import ntypes
 from noobit_markets.base.errors import BaseError
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
-from noobit_markets.base.models.rest.response import NoobitResponseClosedOrders, NoobitResponseItemOrder
+from noobit_markets.base.models.rest.response import NoobitResponseTrades
 from noobit_markets.base.models.result import Ok, Err, Result
 
 # noobit kraken
@@ -54,31 +56,26 @@ from typing_extensions import Literal
 # ]
 
 
-class BinanceResponseItemOrders(FrozenBaseModel):
+class BinanceResponseItemTrades(FrozenBaseModel):
 
     symbol: constr(regex=r'[A-Z]+')
-    orderId: PositiveInt
+    id: str
+    orderId: str
     orderListId: conint(ge=-1)
-    clientOrderId: str
     price: Decimal
-    origQty: Decimal
-    executedQty: Decimal
-    cummulativeQuoteQty: Decimal
-    status: Literal["NEW", "FILLED", "CANCELED", "PENDING_CANCEL", "REJECTED", "EXPIRED"]
-    timeInForce: Literal["GTC", "FOK", "IOC"]
-    type: Literal["LIMIT", "MARKET", "STOP_LOSS", "STOP_LOSS_LIMIT", "TAKE_PROFIT", "TAKE_PROFIT_LIMIT", "LIMIT_MAKER"]
-    side: Literal["BUY", "SELL"]
-    stopPrice: Decimal
-    icebergQty: Decimal
+    qty: Decimal
+    quoteQty: Decimal
+    commission: Decimal
+    commissionAsset: str
     time: PositiveInt
-    updateTime: PositiveInt
-    isWorking: bool
-    origQuoteOrderQty: Decimal
+    isBuyer: bool 
+    isMaker: bool
+    isBestMatch: bool
 
 
-class BinanceResponseOrders(FrozenBaseModel):
+class BinanceResponseTrades(FrozenBaseModel):
 
-    orders: typing.Tuple[BinanceResponseItemOrders, ...]
+    trades: typing.Tuple[BinanceResponseItemTrades, ...]
 
 
 
@@ -95,49 +92,30 @@ class BinanceResponseOrders(FrozenBaseModel):
 # ============================================================
 
 
-def parse_result_data_orders(
-        result_data: BinanceResponseOrders, 
+def parse_result_data_trades(
+        result_data: BinanceResponseTrades, 
         # FIXME commented out just for testing
         symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE
     ) -> typing.Tuple[pmap]:
 
-    parsed = [_single_order(item, symbol_mapping) for item in result_data.orders]
+    parsed = [_single_order(item, symbol_mapping) for item in result_data.trades]
 
     return tuple(parsed)
 
 
-def _single_order(item: BinanceResponseItemOrders, symbol_mapping) -> pmap:
+def _single_order(item: BinanceResponseItemTrades, symbol_mapping) -> pmap:
 
     parsed = {
-        "orderID": item.orderId,
         "symbol":symbol_mapping[item.symbol],
-        "currency": symbol_mapping[item.symbol].split("-")[1],
-        "side": item.side.lower(),
-        "ordType": item.type.replace("_", "-").lower(),
-        "execInst": None,
-        "clOrdID": None,
-        "account": None,
-        "cashMargin": "cash",
-        "ordStatus": item.status.replace("_", "-").lower(),
-        "workingIndicator": item.isWorking,
-        "ordRejReason": None,
-        "timeInForce": {
-            "GTC": "good-til-cancel",
-            "FOK": "fill-or-kill",
-            "IOC": "immediate-or-cancel"
-        }.get(item.timeInForce, None),
-        "transactTime": item.time,
-        "sendingTime": item.updateTime,
-        "grossTradeAmt": item.origQuoteOrderQty,
-        "orderQty": item.origQty,
-        "cashOrderQty": item.origQuoteOrderQty,
-        "cumQty": item.executedQty,
-        "leavesQty": item.origQty - item.executedQty,
-        "commission": 0,
-        "price": item.price,
-        "stopPx": item.stopPrice,
+        "trdMatchID": item.id,
+        "orderID": item.orderId,
+        "side": "buy" if item.isBuyer else "sell",
+        "ordType": "limit" if item.isMaker else "market", 
         "avgPx": item.price,
-
+        "cumQty": item.qty,
+        "grossTradeAmt": item.quoteQty,
+        "commission": item.commission,
+        "transactTime": item.time,
     }
 
     return pmap(parsed)
@@ -150,12 +128,12 @@ def _single_order(item: BinanceResponseItemOrders, symbol_mapping) -> pmap:
 # ============================================================
 
 
-def validate_raw_result_content_closedorders(
+def validate_raw_result_content_trades(
         result_content: tuple,
-    ) -> Result[BinanceResponseOrders, ValidationError]:
+    ) -> Result[BinanceResponseTrades, ValidationError]:
 
     try:
-        validated = BinanceResponseOrders(orders=result_content)
+        validated = BinanceResponseTrades(trades=result_content)
         return Ok(validated)
 
     except ValidationError as e:
@@ -165,15 +143,16 @@ def validate_raw_result_content_closedorders(
         raise e
 
 
-def validate_parsed_result_data_closedorders(
+def validate_parsed_result_data_trades(
         parsed_result_data: typing.Mapping[ntypes.ASSET, Decimal],
         raw_json=typing.Any
-    ) -> Result[NoobitResponseClosedOrders, ValidationError]:
+    ) -> Result[NoobitResponseTrades, ValidationError]:
 
     try:
-        validated = NoobitResponseClosedOrders(
-            orders=parsed_result_data, 
-            count=len(parsed_result_data),
+        validated = NoobitResponseTrades(
+            trades=parsed_result_data, 
+            # TODO get last ts
+            last=1,
             rawJson=raw_json
         )
         return Ok(validated)

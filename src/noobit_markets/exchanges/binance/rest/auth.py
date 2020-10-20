@@ -19,8 +19,7 @@ load_dotenv()
 class BinancePrivateRequest(FrozenBaseModel):
 
     timestamp: PositiveInt
-    signature: str
-
+    signature: typing.Any
 
 # necessary so we do not share same class attributes/methods across all exchanges
 BinanceBase = make_base("BinanceBase")
@@ -43,7 +42,7 @@ class BinanceAuth(BinanceBase):
             # "API-Sign": self._sign(data, url_wo_domain)
         }
 
-        self.rotate_keys()
+        # self.rotate_keys()
 
         return auth_headers
 
@@ -57,8 +56,9 @@ class BinanceAuth(BinanceBase):
             signature digest
         """
         # request_args["timestamp"] = self.nonce
-        postdata = urllib.parse.urlencode(request_args)
-
+        sorted_req_args = sorted([(k, v) for k, v in request_args.items()], reverse=True)
+        postdata = urllib.parse.urlencode(sorted_req_args)
+        print("req string : ", postdata)
         # Unicode-objects must be encoded before hashing
         # ! Nonce must be same as self.nonce
         # encoded = (s + postdata).encode()
@@ -74,7 +74,10 @@ class BinanceAuth(BinanceBase):
         # dict isntead of pmap since pmap doesnt support assignment
         request_args["signature"] = signature.hexdigest()
         # setattr(request_args, "signature", signature.hexdigest())
-        
+
+        # binance calls header and sign only later (2 steps) so we rotate here and not in header
+        self.rotate_keys()
+
         return request_args
 
         
