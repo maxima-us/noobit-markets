@@ -23,7 +23,7 @@ class BinanceRequestOhlc(FrozenBaseModel):
     interval: Literal["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"]
 
     # needs to be in ms
-    startTime: typing.Optional[conint(ge=0)]
+    startTime: typing.Optional[PositiveInt]
 
     # @validator('startTime')
     # def check_year_from_timestamp(cls, v):
@@ -53,7 +53,7 @@ def parse_request_ohlc(
         #FIXME mapping cant be at base level, dependent on every exchange
         "interval": valid_request.timeframe.lower(),
         # noobit ts are in ms vs ohlc kraken ts in s
-        "startTime": None if valid_request.since == 0 else valid_request.since
+        "startTime": valid_request.since
     }
 
 

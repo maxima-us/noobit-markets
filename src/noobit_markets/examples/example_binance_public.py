@@ -16,7 +16,7 @@ res = asyncio.run(
         symbol="XBT-USD",
         symbol_to_exchange={"XBT-USD": "BTCUSDT"},
         timeframe="15M",
-        since=0
+        since=None
     )
 )
 if res.is_err():

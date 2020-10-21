@@ -2,6 +2,7 @@ from pyrsistent import pmap
 
 
 # frozendict is hashable, whereas MappingProxyType is not
+# TODO this is specific to kraken
 TIMEFRAME = pmap({
     "1M": 1,
     "5M": 5,
