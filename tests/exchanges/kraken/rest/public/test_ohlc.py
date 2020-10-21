@@ -30,7 +30,7 @@ async def test_ohlc():
             symbol="XBT-USD",
             symbol_to_exchange=symbol_mapping["asset_pairs"],
             timeframe="1H",
-            since=0
+            since=None
         )
 
         assert isinstance(symbols, Ok)
