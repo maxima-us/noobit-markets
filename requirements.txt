@@ -7,3 +7,4 @@ pytest-recording==0.9.0
 python-dotenv==0.14.0
 stackprinter==0.2.4
 typing_extensions==3.7.4.2
+websockets==8.1
