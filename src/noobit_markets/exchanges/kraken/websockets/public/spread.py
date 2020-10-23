@@ -35,10 +35,14 @@ def validate_sub(symbol_mapping: SYMBOL_TO_EXCHANGE, symbol: SYMBOL) -> KrakenSu
             feed="spread",
             msg=msg
         )
+        return Ok(submodel)
+
     except ValidationError as e:
+        return Err(e)
+
+    except Exception as e:
         raise e
 
-    return submodel
 
 
 def validate_parsed(msg, parsed_msg):

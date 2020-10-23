@@ -8,6 +8,8 @@ import pydantic
 from websockets import WebSocketClientProtocol
 from websockets.exceptions import ConnectionClosed
 
+from noobit_markets.base.models.result import Result, Ok, Err
+
 
 
 class SubModel(pydantic.BaseModel):
@@ -28,12 +30,23 @@ class KrakenSubModel(SubModel):
 
 
 
-async def subscribe(client, subscription: SubModel, q_maxsize = 0):
+async def subscribe(client: WebSocketClientProtocol, sub_model: SubModel, q_maxsize = 0):
   
   # TODO sub_msg = parse_sub(subscription)
-  await client.send((subscription.msg).json())
+  await client.send((sub_model.msg).json())
+  return Ok()
+  # msg = await client.recv()
+  # if "subscription" in msg:
+  #   print("subscription status : ", msg)
+  #   print("subscribed to : ", sub_model.feed)
+  #   return Ok(sub_model.feed)
 
-  return {subscription.feed: asyncio.Queue(q_maxsize)}
+  # else:
+  #   return Err(sub_model.feed)
+  
+  # TODO poll client right after subscription, check message to see if Ok or Err, and return Result
+
+  # return {subscription.feed: asyncio.Queue(q_maxsize)}
 
 
 
