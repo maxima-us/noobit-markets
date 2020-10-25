@@ -53,7 +53,7 @@ class KrakenWsApi:
         "orderbook": set()
     }
 
-    _pending_tasks = set()
+    _pending_tasks = deque()
     _running_tasks = dict()
 
     _count: int = 0
@@ -93,6 +93,7 @@ class KrakenWsApi:
     async def _watcher(self):
         while True:
             try:
+                # print("Running :", self._running_tasks)
                 if self._terminate: break
 
                 elem = self._pending_tasks.popleft()
@@ -102,8 +103,9 @@ class KrakenWsApi:
                     coro, kwargs = elem
                     task = asyncio.ensure_future(coro, **kwargs)
 
+            # no item in dq
             except IndexError:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.5)
 
 
     async def _dispatch(self):
@@ -131,12 +133,17 @@ class KrakenWsApi:
             except Exception as e:
                 raise e
 
+
     async def iterq_status(self, feed):
         while True:
             try:
                 yield await self._status_queues[feed].get()
             except Exception as e:
                 raise e
+
+    
+    def schedule(self, coro):
+        self._pending_tasks.append(coro)
 
 
     async def connection(self):
@@ -250,10 +257,12 @@ class KrakenWsApi:
                 pair = msg.value.symbol
                 if _count == 0:
                     # snapshot
+                    print("orderbook snapshot")
                     self._full_books[pair] = dict()
                     self._full_books[pair]["asks"] = msg.value.asks
                     self._full_books[pair]["bids"] = msg.value.bids
                 else:
+                    print("orderbook update")
                     # update
                     self._full_books[pair]["asks"].update(msg.value.asks)
                     self._full_books[pair]["bids"].update(msg.value.bids)
@@ -331,12 +340,23 @@ if __name__ == "__main__":
 
             async def coro3():
                 #! valid option are 10, 25, 100, 500, 1000
-                async for msg in kws.orderbook(symbol_mapping, symbol, 10):
+                async for msg in kws.orderbook(symbol_mapping, symbol, 10, True):
+                    pass
+                    # for full book
                     # print("orderbook asks update :", msg["asks"])
                     # print("orderbook bids update :", msg["bids"])
-                    print("new orderbook update : ", msg)
 
-            results = await asyncio.gather(coro1(), coro2(), coro3())
+                    # just for update msg
+                    # print("new orderbook update : ", msg)
+
+            async def print_test():
+                print("Testing scheduler")
+
+            async def coro4():
+                await asyncio.sleep(10)
+                kws.schedule(print_test())
+
+            results = await asyncio.gather(coro1(), coro2(), coro3(), coro4())
             return results
 
 
