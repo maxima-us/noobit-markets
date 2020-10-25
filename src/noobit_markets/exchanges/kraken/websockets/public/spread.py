@@ -18,9 +18,6 @@ from noobit_markets.base.models.result import Result, Ok, Err
 
 
 
-
-
-
 def validate_sub(symbol_mapping: SYMBOL_TO_EXCHANGE, symbol: SYMBOL) -> KrakenSubModel:
     
     msg = {
@@ -42,7 +39,6 @@ def validate_sub(symbol_mapping: SYMBOL_TO_EXCHANGE, symbol: SYMBOL) -> KrakenSu
 
     except Exception as e:
         raise e
-
 
 
 def validate_parsed(msg, parsed_msg):
