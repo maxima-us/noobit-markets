@@ -15,12 +15,13 @@ from noobit_markets.base.models.result import Result, Ok, Err
 class SubModel(pydantic.BaseModel):
 
   exchange: str
-  feed: Literal["spread", "orderbook", "trade"]
+  feed: Literal["spread", "orderbook", "trade", "user_trades", "user_orders"]
   
 
 class KrakenSubMsg(pydantic.BaseModel):
   event: Literal["subscribe", "unsubscribe"]
-  pair: typing.List[str]
+  reqid: typing.Optional[int]
+  pair: typing.Optional[typing.List[str]] = pydantic.Field(...)
   subscription: typing.Dict[str, typing.Any]
 
 
