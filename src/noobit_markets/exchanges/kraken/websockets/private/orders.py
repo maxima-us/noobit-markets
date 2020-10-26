@@ -3,13 +3,12 @@ import asyncio
 from decimal import Decimal
 
 from pydantic import ValidationError
-import websockets
 
 import stackprinter
 stackprinter.set_excepthook(style="darkbg2")
 
 from noobit_markets.base.ntypes import SYMBOL_TO_EXCHANGE, SYMBOL
-from noobit_markets.base.websockets import consume_feed, KrakenSubModel
+from noobit_markets.base.websockets import KrakenSubModel
 
 from noobit_markets.base.models.rest.response import NoobitResponseOpenOrders
 from noobit_markets.base.models.result import Result, Ok, Err
@@ -68,7 +67,6 @@ def parse_msg(message):
 
 
 def _parse_single(key, info):
-    #!!!!! FINISH PARSING ORDERBOO
     try:
         parsed_info = {
 
@@ -84,7 +82,8 @@ def _parse_single(key, info):
             "cashMargin": "cash" if (info["descr"]["leverage"] is None) else "margin",
             "marginRatio": 0 if info["descr"]["leverage"] is None else 1/int(info["descr"]["leverage"][0]),
             "marginAmt": 0 if info["descr"]["leverage"] is None else Decimal(info["cost"])/int(info["descr"]["leverage"][0]),
-            "ordStatus": MAP_ORDER_STATUS[info["status"]],
+            # "ordStatus": MAP_ORDER_STATUS[info["status"]],
+            "ordStatus": "new", 
             "workingIndicator": True if (info["status"] in ["pending", "open"]) else False,
             "ordRejReason": info.get("reason", None),
 

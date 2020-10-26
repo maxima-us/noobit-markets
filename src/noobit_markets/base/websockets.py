@@ -32,9 +32,11 @@ class KrakenSubModel(SubModel):
 
 
 async def subscribe(client: WebSocketClientProtocol, sub_model: SubModel, q_maxsize = 0):
-  
+
+  payload = (sub_model.msg).dict(exclude_none=True)
+
   # TODO sub_msg = parse_sub(subscription)
-  await client.send((sub_model.msg).json())
+  await client.send(json.dumps(payload))
   return Ok()
   # msg = await client.recv()
   # if "subscription" in msg:

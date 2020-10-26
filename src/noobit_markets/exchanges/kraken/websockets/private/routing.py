@@ -46,11 +46,11 @@ async def msg_handler(msg, data_queues, status_queues):
             parsed_msg = trades.parse_msg(msg)
             valid_parsed_msg = trades.validate_parsed(msg, parsed_msg)
             if valid_parsed_msg.is_ok():
-                await data_queues["trade"].put(valid_parsed_msg)
+                await data_queues["user_trades"].put(valid_parsed_msg)
 
         if feed == "openOrders":
             parsed_msg = orders.parse_msg(msg)
             valid_parsed_msg = orders.validate_parsed(msg, parsed_msg)
             if valid_parsed_msg.is_ok():
-                await data_queues["order"].put(valid_parsed_msg)
+                await data_queues["user_orders"].put(valid_parsed_msg)
 

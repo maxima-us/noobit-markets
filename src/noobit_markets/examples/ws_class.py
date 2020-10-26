@@ -133,6 +133,7 @@ class KrakenWsApi:
 
     async def iterq_data(self, feed):
         while True:
+            if self._terminate: break
             try:
                 yield await self._data_queues[feed].get()
             except Exception as e:
@@ -141,6 +142,7 @@ class KrakenWsApi:
 
     async def iterq_status(self, feed):
         while True:
+            if self._terminate: break
             try:
                 yield await self._status_queues[feed].get()
             except Exception as e:
@@ -291,7 +293,7 @@ class KrakenWsApi:
 
     def shutdown(self, sig, frame):
         self._terminate = True
-
+        
         # print(self._running_tasks)
 
         for name, task in self._running_tasks.items():
@@ -330,8 +332,8 @@ class KrakenWsApi:
 class KrakenWsPrivate:
 
     _data_queues = {
-        "trade": asyncio.Queue(),
-        "order": asyncio.Queue(),
+        "user_trades": asyncio.Queue(),
+        "user_orders": asyncio.Queue(),
     }
 
     _status_queues = {
@@ -341,10 +343,10 @@ class KrakenWsPrivate:
     }
 
     _subd_feeds = {
-        "trade": False,
-        "order": False,
-        "new": False,
-        "cancel": False
+        "user_trades": False,
+        "user_orders": False,
+        "user_new": False,
+        "user_cancel": False
     }
 
     _pending_tasks = deque()
@@ -423,6 +425,7 @@ class KrakenWsPrivate:
 
     async def iterq_data(self, feed):
         while True:
+            if self._terminate: break
             try:
                 yield await self._data_queues[feed].get()
             except Exception as e:
@@ -431,6 +434,7 @@ class KrakenWsPrivate:
 
     async def iterq_status(self, feed):
         while True:
+            if self._terminate: break
             try:
                 yield await self._status_queues[feed].get()
             except Exception as e:
@@ -454,15 +458,16 @@ class KrakenWsPrivate:
     async def subscription(self):
 
         feed_map = {
-            "trade": "ownTrades",
-            "order": "openOrders",
-            "new": "addOrder",
-            "cancel": "cancelOrder"
+            "user_trades": "ownTrades",
+            "user_orders": "openOrders",
+            "user_new": "addOrder",
+            "user_cancel": "cancelOrder"
         }
 
         while True:
 
             async for msg in self.iterq_status("subscription"):
+                print(msg)
                 
                 if self._terminate: break
 
@@ -475,8 +480,14 @@ class KrakenWsPrivate:
                     self._subd_feeds[feed_map[feed]].add(pair)
                     print("We are now succesfully subscribed to :", feed, pair)
 
-                if msg["status"] == "unsubscribed":
+                elif msg["status"] == "unsubscribed":
                     self._subd_feeds[feed_map[feed]].remove(pair)
+
+                elif msg["status"] == "error":
+                    print(msg["errorMessage"])
+
+                else:
+                    print(msg)
 
 
     async def trade(self):
@@ -485,16 +496,17 @@ class KrakenWsPrivate:
 
         valid_sub_model = user_trades.validate_sub(self.auth_token)
         if valid_sub_model.is_err():
+            print(valid_sub_model)
             yield valid_sub_model
 
         sub_result = await subscribe(self.client, valid_sub_model.value)
         if sub_result.is_err():
             yield sub_result
 
-        self._subd_feeds["trade"] = True
+        self._subd_feeds["user_trades"] = True
         
         # async for msg in self._queues["spread"]:
-        async for msg in self.iterq_data("trade"):
+        async for msg in self.iterq_data("user_trades"):
             yield msg
 
         
@@ -504,16 +516,17 @@ class KrakenWsPrivate:
 
         valid_sub_model = user_orders.validate_sub(self.auth_token)
         if valid_sub_model.is_err():
+            print(valid_sub_model)
             yield valid_sub_model
 
         sub_result = await subscribe(self.client, valid_sub_model.value)
         if sub_result.is_err():
             yield sub_result
 
-        self._subd_feeds["order"] = True
+        self._subd_feeds["user_orders"] = True
         
         # async for msg in self._queues["spread"]:
-        async for msg in self.iterq_data("order"):
+        async for msg in self.iterq_data("user_orders"):
             yield msg
 
 
@@ -577,20 +590,19 @@ if __name__ == "__main__":
                 else:
                     raise ValueError(result)
 
-            kwp = KrakenWsPrivate(w_client, private_handler, loop, token)
+                kwp = KrakenWsPrivate(w_client, private_handler, loop, token)
 
             async def coro1():
                 print("launching user trades coro")
                 async for msg in kwp.trade():
-                    print(msg)
+                    pass
 
             async def coro2():
                 print("launching user orders coro")
                 async for msg in kwp.order():
-                    print(msg)
-
+                    pass
             
-            results = await asyncio.gather(coro1(), coro2())
+            results = await asyncio.gather(coro2(), coro1())
             return results
 
 
@@ -601,7 +613,7 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
 
     # run public coros
-    # loop.run_until_complete(main(loop))
+    loop.run_until_complete(main(loop))
 
     # run private coros
     loop.run_until_complete(p_main(loop))

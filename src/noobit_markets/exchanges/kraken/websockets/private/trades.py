@@ -3,13 +3,12 @@ import asyncio
 from decimal import Decimal
 
 from pydantic import ValidationError
-import websockets
 
 import stackprinter
 stackprinter.set_excepthook(style="darkbg2")
 
 from noobit_markets.base.ntypes import SYMBOL_TO_EXCHANGE, SYMBOL
-from noobit_markets.base.websockets import consume_feed, KrakenSubModel
+from noobit_markets.base.websockets import KrakenSubModel
 
 from noobit_markets.base.models.rest.response import NoobitResponseTrades
 from noobit_markets.base.models.result import Result, Ok, Err
