@@ -1,5 +1,3 @@
-import asyncio
-
 import pydantic
 
 from .request import *
@@ -9,7 +7,7 @@ from .response import *
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.request import retry_request
-from noobit_markets.base.models.rest.response import NoobitResponseOhlc
+from noobit_markets.base.models.rest.response import NoobitResponseOrderBook
 
 # binance
 from noobit_markets.exchanges.binance import endpoints
@@ -25,7 +23,7 @@ async def get_orderbook_binance(
         depth: ntypes.DEPTH,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.orderbook,
-    ) -> Result[NoobitResponseOhlc, Exception]:
+    ) -> Result[NoobitResponseOrderBook, Exception]:
 
 
     # output: Result[NoobitRequestOhlc, ValidationError]

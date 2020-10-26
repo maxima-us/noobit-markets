@@ -1,5 +1,3 @@
-import asyncio
-
 import pydantic
 
 from .request import *
@@ -9,7 +7,7 @@ from .response import *
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.request import retry_request
-from noobit_markets.base.models.rest.response import NoobitResponseOhlc
+from noobit_markets.base.models.rest.response import NoobitResponseInstrument
 
 # binance
 from noobit_markets.exchanges.binance import endpoints
@@ -24,7 +22,7 @@ async def get_instrument_binance(
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.instrument,
-    ) -> Result[NoobitResponseOhlc, Exception]:
+    ) -> Result[NoobitResponseInstrument, Exception]:
 
 
     # output: Result[NoobitRequestOhlc, ValidationError]

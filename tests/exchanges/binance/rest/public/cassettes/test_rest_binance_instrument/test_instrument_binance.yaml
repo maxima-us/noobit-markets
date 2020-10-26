@@ -1,0 +1,62 @@
+interactions:
+- request:
+    body: ''
+    headers: {}
+    method: GET
+    uri: https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT
+  response:
+    content: '{"symbol":"BTCUSDT","priceChange":"-87.55000000","priceChangePercent":"-0.673","weightedAvgPrice":"13052.72198404","prevClosePrice":"13007.06000000","lastPrice":"12919.50000000","lastQty":"0.01000000","bidPrice":"12919.63000000","bidQty":"5.04551300","askPrice":"12919.64000000","askQty":"0.00900000","openPrice":"13007.05000000","highPrice":"13238.81000000","lowPrice":"12780.00000000","volume":"52956.35361700","quoteVolume":"691224561.05144348","openTime":1603646145275,"closeTime":1603732545275,"firstId":442261556,"lastId":442988972,"count":727417}'
+    headers:
+      access-control-allow-methods:
+      - GET, HEAD, OPTIONS
+      access-control-allow-origin:
+      - '*'
+      cache-control:
+      - no-cache, no-store, must-revalidate
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-length:
+      - '297'
+      content-security-policy:
+      - default-src 'self'
+      content-type:
+      - application/json;charset=UTF-8
+      date:
+      - Mon, 26 Oct 2020 17:15:45 GMT
+      expires:
+      - '0'
+      pragma:
+      - no-cache
+      server:
+      - nginx
+      strict-transport-security:
+      - max-age=31536000; includeSubdomains
+      via:
+      - 1.1 2d905d2c9a6d0b833a673c4fbaea5b54.cloudfront.net (CloudFront)
+      x-amz-cf-id:
+      - K9zrqJr3EW2OWbYmZgRtqlhSxyp-eTYv40G6RVPMYCKMRQXo4DT4tA==
+      x-amz-cf-pop:
+      - NRT12-C2
+      x-cache:
+      - Miss from cloudfront
+      x-content-security-policy:
+      - default-src 'self'
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-mbx-used-weight:
+      - '1'
+      x-mbx-used-weight-1m:
+      - '1'
+      x-mbx-uuid:
+      - e3e64f8d-34a3-4a7c-81f7-00d41782d3ba
+      x-webkit-csp:
+      - default-src 'self'
+      x-xss-protection:
+      - 1; mode=block
+    http_version: HTTP/1.1
+    status_code: 200
+version: 1

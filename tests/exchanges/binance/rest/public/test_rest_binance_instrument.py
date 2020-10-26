@@ -1,7 +1,7 @@
 import pytest
 import httpx
 
-from noobit_markets.exchanges.kraken.rest.public.instrument.get import get_instrument_kraken
+from noobit_markets.exchanges.binance.rest.public.instrument.get import get_instrument_binance
 
 from noobit_markets.base.models.result import Ok, Err, Result
 from noobit_markets.base.models.rest.response import NoobitResponseInstrument
@@ -9,22 +9,22 @@ from noobit_markets.base.models.rest.response import NoobitResponseInstrument
 
 @pytest.mark.asyncio
 @pytest.mark.vcr()
-async def test_instrument():
+async def test_instrument_binance():
 
     async with httpx.AsyncClient() as client:
 
         symbol_mapping = {
             "asset_pairs": {
-                "XBT-USD": "XXBTZUSD"
+                "XBT-USD": "BTCUSDT"
             },
             "assets": {
-                "XBT": "XXBT",
-                "USD": "ZUSD"
+                "XBT": "BTC",
+                "USD": "USD"
             }
         }
 
-        symbols = await get_instrument_kraken(
-            None,
+        symbols = await get_instrument_binance(
+            # None,
             client,
             "XBT-USD",
             symbol_mapping["asset_pairs"],
@@ -35,6 +35,6 @@ async def test_instrument():
 
 
 if __name__ == '__main__':
-    # pytest.main(['-s', __file__, '--block-network'])
+    pytest.main(['-s', __file__, '--block-network'])
     # record run
-    pytest.main(['-s', __file__, '--record-mode=new_episodes'])
+    # pytest.main(['-s', __file__, '--record-mode=new_episodes'])

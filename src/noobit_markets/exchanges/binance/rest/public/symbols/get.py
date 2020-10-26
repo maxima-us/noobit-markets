@@ -8,7 +8,7 @@ from .response import *
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.request import retry_request
-from noobit_markets.base.models.rest.response import NoobitResponseOhlc
+from noobit_markets.base.models.rest.response import NoobitResponseSymbols
 
 # binance
 from noobit_markets.exchanges.binance import endpoints
