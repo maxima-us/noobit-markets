@@ -22,7 +22,6 @@ from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_pr
 
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_wstoken_kraken(
-        loop: asyncio.BaseEventLoop,
         client: ntypes.CLIENT,
         auth=KrakenAuth(),
         # FIXME get from endpoint dict

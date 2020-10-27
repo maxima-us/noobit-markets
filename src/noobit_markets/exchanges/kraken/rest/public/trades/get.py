@@ -19,7 +19,6 @@ from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_pu
 
 @retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_trades_kraken(
-        loop: asyncio.BaseEventLoop,
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,

@@ -15,7 +15,6 @@ async def test_symbols():
     async with httpx.AsyncClient() as client:
 
         symbols = await get_symbols(
-            None,
             client,
         )
 

@@ -32,12 +32,10 @@ from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_pr
 
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_closedorders_kraken(
-        loop: asyncio.BaseEventLoop,
         client: ntypes.CLIENT,
         symbols_to_exchange: ntypes.ASSET_TO_EXCHANGE,
         symbols_from_altname,
         # FIXME what to do with logger
-        logger_func,
         auth=KrakenAuth(),
         #! FIXME CORRECT ENDPOINTS
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
@@ -92,11 +90,9 @@ async def get_closedorders_kraken(
 
 
 async def get_openorders_kraken(
-        loop: asyncio.BaseEventLoop,
         client: ntypes.CLIENT,
         symbols_to_exchange: ntypes.ASSET_TO_EXCHANGE,
         symbols_from_altname,
-        logger_func,
         auth=KrakenAuth(),
         #! FIXME CORRECT ENDPOINTS
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,

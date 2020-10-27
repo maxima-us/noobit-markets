@@ -4,7 +4,7 @@ import copy
 from datetime import date
 
 from pyrsistent import pmap
-from pydantic import PositiveInt, PositiveFloat, create_model, ValidationError, validator
+from pydantic import PositiveInt, PositiveFloat, create_model, ValidationError, validator, conint
 
 # noobit base
 from noobit_markets.base import ntypes
@@ -48,7 +48,7 @@ def make_kraken_model_ohlc(
             # tuple : timestamp, open, high, low, close, vwap, volume, count
             typing.Tuple[
                 typing.Tuple[
-                    Decimal, Decimal, Decimal, Decimal, Decimal, Decimal, Decimal, PositiveInt
+                    Decimal, Decimal, Decimal, Decimal, Decimal, Decimal, Decimal, conint(ge=0)
                 ],
                 ...
             ],

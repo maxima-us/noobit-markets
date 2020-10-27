@@ -1,16 +1,15 @@
 import pytest
 import httpx
-from pydantic import ValidationError
 
-from noobit_markets.exchanges.kraken.rest.public.trades.get import get_trades_kraken
+from noobit_markets.exchanges.kraken.rest.public.instrument.get import get_instrument_kraken
 
 from noobit_markets.base.models.result import Ok, Err, Result
-from noobit_markets.base.models.rest.response import NoobitResponseTrades
+from noobit_markets.base.models.rest.response import NoobitResponseInstrument
 
 
 @pytest.mark.asyncio
 @pytest.mark.vcr()
-async def test_trades():
+async def test_instrument():
 
     async with httpx.AsyncClient() as client:
 
@@ -24,19 +23,17 @@ async def test_trades():
             }
         }
 
-        symbols = await get_trades_kraken(
-            None,
+        symbols = await get_instrument_kraken(
             client,
             "XBT-USD",
             symbol_mapping["asset_pairs"],
-            None,
         )
 
         assert isinstance(symbols, Ok)
-        assert isinstance(symbols.value, NoobitResponseTrades)
+        assert isinstance(symbols.value, NoobitResponseInstrument)
 
 
 if __name__ == '__main__':
     pytest.main(['-s', __file__, '--block-network'])
-    # uncomment below to record cassette
+    # record run
     # pytest.main(['-s', __file__, '--record-mode=new_episodes'])

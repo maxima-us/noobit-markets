@@ -22,7 +22,6 @@ func_symbols = interface.KRAKEN.rest.public.symbols
 try:
     symbol_to_exch = asyncio.run(
         func_symbols(
-            loop=None,
             client=httpx.AsyncClient(),
             # logger_func= lambda *args: print("========> ", *args, "\n\n")
             # logger_func= lambda *args: print("")
@@ -50,10 +49,8 @@ func_balances = interface.KRAKEN.rest.private.balances
 try:
     balances = asyncio.run(
         func_balances(
-            loop=None,
             client=httpx.AsyncClient(),
             asset_to_exchange=asset_to_exchange,
-            logger_func= lambda *args: print("========> ", *args, "\n\n")
         )
     )
     if balances.is_err():
@@ -79,10 +76,8 @@ func_exposure = interface.KRAKEN.rest.private.exposure
 try:
     exposure = asyncio.run(
         func_exposure(
-            loop=None,
             client=httpx.AsyncClient(),
             asset_to_exchange=asset_to_exchange,
-            logger_func= lambda *args: print("========> ", *args, "\n\n")
         )
     )
     if exposure.is_err():
@@ -110,10 +105,8 @@ func_trades = interface.KRAKEN.rest.private.trades
 try:
     trades = asyncio.run(
         func_trades(
-            loop=None,
             client=httpx.AsyncClient(),
             symbols_to_exchange=symbols_to_exchange,
-            logger_func= lambda *args: print("========> ", *args, "\n\n")
         )
     )
     if trades.is_err():
@@ -138,10 +131,8 @@ func_op = interface.KRAKEN.rest.private.open_positions
 try:
     open_pos = asyncio.run(
         func_op(
-            loop=None,
             client=httpx.AsyncClient(),
             symbols_to_exchange=symbols_to_exchange,
-            logger_func= lambda *args: print("========> ", *args, "\n\n")
         )
     )
     if open_pos.is_err():
@@ -167,11 +158,9 @@ func_op = interface.KRAKEN.rest.private.open_orders
 try:
     open_ord = asyncio.run(
         func_op(
-            loop=None,
             client=httpx.AsyncClient(),
             symbols_to_exchange=symbols_to_exchange,
             symbols_from_altname=symbols_to_shit,
-            logger_func= lambda *args: print("========> ", *args, "\n\n")
         )
     )
     if open_ord.is_err():
@@ -196,11 +185,9 @@ func_op = interface.KRAKEN.rest.private.closed_orders
 try:
     cl_ord = asyncio.run(
         func_op(
-            loop=None,
             client=httpx.AsyncClient(),
             symbols_to_exchange=symbols_to_exchange,
             symbols_from_altname=symbols_to_shit,
-            logger_func= lambda *args: print("========> ", *args, "\n\n")
         )
     )
     if cl_ord.is_err():
@@ -226,7 +213,6 @@ func_no = interface.KRAKEN.rest.private.new_order
 try:
     new_ord = asyncio.run(
         func_no(
-            loop=None,
             client=httpx.AsyncClient(),
             symbol="XBT-USD",
             symbols_to_exchange=symbols_to_exchange,

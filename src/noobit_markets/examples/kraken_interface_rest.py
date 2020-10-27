@@ -19,7 +19,6 @@ func_symbols = interface.KRAKEN.rest.public.symbols
 try:
     symbol_to_exch = asyncio.run(
         func_symbols(
-            loop=None,
             client=httpx.AsyncClient(),
         )
     )
@@ -59,6 +58,7 @@ ohlc = asyncio.run(
 )
 if ohlc.is_err():
     print(ohlc, "\n")
+
 else:
     print("Successfuly fetched OHLC")
 
@@ -74,7 +74,6 @@ func_trades = interface.KRAKEN.rest.public.trades
 
 trades = asyncio.run(
     func_trades(
-        loop=None,
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
         symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
@@ -98,7 +97,6 @@ func_instrument = interface.KRAKEN.rest.public.instrument
 
 instrument = asyncio.run(
     func_instrument(
-        loop=None,
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
         symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
@@ -120,7 +118,6 @@ else:
 func_spread = interface.KRAKEN.rest.public.spread
 spread = asyncio.run(
     func_spread(
-        loop=None,
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
         symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
@@ -132,3 +129,4 @@ if spread.is_err():
     print(spread, "\n")
 else:
     print("Successfuly fetched Spread")
+

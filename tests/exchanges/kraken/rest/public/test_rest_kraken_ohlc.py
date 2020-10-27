@@ -2,15 +2,15 @@ import pytest
 import httpx
 from pydantic import ValidationError
 
-from noobit_markets.exchanges.kraken.rest.public.orderbook.get import get_orderbook_kraken
+from noobit_markets.exchanges.kraken.rest.public.ohlc.get import get_ohlc_kraken
 
 from noobit_markets.base.models.result import Ok, Err, Result
-from noobit_markets.base.models.rest.response import NoobitResponseOrderBook
+from noobit_markets.base.models.rest.response import NoobitResponseOhlc
 
 
 @pytest.mark.asyncio
 @pytest.mark.vcr()
-async def test_orderbook():
+async def test_ohlc():
 
     async with httpx.AsyncClient() as client:
 
@@ -24,16 +24,16 @@ async def test_orderbook():
             }
         }
 
-        symbols = await get_orderbook_kraken(
-            None,
-            client,
-            "XBT-USD",
-            symbol_mapping["asset_pairs"],
-            500,
+        symbols = await get_ohlc_kraken(
+            client=client,
+            symbol="XBT-USD",
+            symbol_to_exchange=symbol_mapping["asset_pairs"],
+            timeframe="1H",
+            since=None
         )
 
         assert isinstance(symbols, Ok)
-        assert isinstance(symbols.value, NoobitResponseOrderBook)
+        assert isinstance(symbols.value, NoobitResponseOhlc)
 
 
 if __name__ == '__main__':

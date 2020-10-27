@@ -42,7 +42,7 @@ class NoobitResponseItemOhlc(FrozenBaseModel):
     close: Decimal
 
     volume: Decimal
-    trdCount: PositiveInt
+    trdCount: conint(ge=0)
 
 
 class NoobitResponseOhlc(NoobitBaseResponse):

@@ -21,10 +21,8 @@ from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_pr
 
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_exposure_kraken(
-        loop: asyncio.BaseEventLoop,
         client: ntypes.CLIENT,
         asset_to_exchange: ntypes.ASSET_TO_EXCHANGE,
-        logger_func,
         auth=KrakenAuth(),
         # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,

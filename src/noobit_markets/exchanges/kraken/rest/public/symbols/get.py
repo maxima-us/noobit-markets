@@ -20,7 +20,6 @@ from noobit_markets.exchanges.kraken import endpoints
 
 
 async def get_symbols(
-        loop: asyncio.BaseEventLoop,
         client: ntypes.CLIENT,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.symbols
