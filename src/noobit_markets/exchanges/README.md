@@ -1,19 +1,20 @@
-#Adding an exchange endpoint
+# Adding an exchange endpoint
 
 
-##Exchange folder
+## Exchange folder
 
 Should contain the following files:
 - `interface.py` mapping coroutines. Should instantiate `ExchangeInterface` from base to make sure all coros are correctly mapped, and that interfaces are exactly the same for every exchange.
 - `endpoints.py` mapping base api urls and endpoint suffixes. Should instantiate `endpoints.RESTEndpoints` from base to make sure all endpoints are correctly mapped.
 - `errors.py` mapping exchange errors to noobit errors.
 
-##Rest folder
+## Rest folder
+
 Will usually contain the following files:
 - `auth.py` handling authentication. Must inherit from a base class returned by the `make_base` function from base, which only takes in the name of the class to return as an arg.
 - `base.py` containing all functions that handle the raw response returned by the exchange (and are therefore independent of the request)
 
-##Endpoint folder
+## Endpoint folder
 
 Should contain the following files:
 - `request.py` declaring the exchange request model and functions to parse to it (from unified request model) and validate against it.
@@ -102,4 +103,4 @@ async def get_ohlc_kraken(
 
 
 
-##Testing
+## Testing
