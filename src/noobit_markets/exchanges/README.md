@@ -19,10 +19,10 @@ Will usually contain the following files:
 Should contain the following files:
 - `request.py` declaring the exchange request model and functions to parse to it (from unified request model) and validate against it.
 - `response.py` declaring the exchange response model and functions to parse from it (to unified response model) and validate against it.
-- `get.py` or `post.py` depending on the request method. Only serves to bundle functions from `request.py` and `response.py` into a more convenient coroutine. 
+- `get.py` or `post.py` depending on the request method. Only serves to bundle functions from `request.py` and `response.py` into a more convenient coroutine.
 
 
-Below is an example of a `get.py` file for the kraken OHLC endpoint, with extensive annotations. 
+Below is an example of a `get.py` file for the kraken OHLC endpoint, with extensive annotations.
 
 You'll note that we try to follow the "railway programming" principles and therefore wrap most function returns in a `Result` object.
 
@@ -39,7 +39,7 @@ from .response import *
 
 # noobit Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.request import retry_request                       
+from noobit_markets.base.request import retry_request
 from noobit_markets.base.models.rest.response import NoobitResponseOhlc
 
 # noobit Kraken
