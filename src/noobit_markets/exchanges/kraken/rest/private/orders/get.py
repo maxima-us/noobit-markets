@@ -33,11 +33,11 @@ from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_pr
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_closedorders_kraken(
         client: ntypes.CLIENT,
+        symbol: ntypes.SYMBOL,
         symbols_to_exchange: NoobitResponseSymbols, #?? should we pass in a model ?? eg NoobitResponseSymbols ?
         # symbols_from_altname,
         # FIXME what to do with logger
         auth=KrakenAuth(),
-        #! FIXME CORRECT ENDPOINTS
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.closed_orders
     ) -> Result[NoobitResponseClosedOrders, Exception]:
@@ -78,7 +78,7 @@ async def get_closedorders_kraken(
     symbols_from_altname = {v.ws_name.replace("/", ""): k for k, v in symbols_to_exchange.asset_pairs.items()}
     
     # step 12: parse result data ==> output: pmap
-    parsed_result_data = parse_result_data_closedorders(result_data_balances, symbols_from_altname)
+    parsed_result_data = parse_result_data_closedorders(result_data_balances, symbols_from_altname, symbol)
 
     # get count
     count = get_result_data_count(valid_result_content.value)

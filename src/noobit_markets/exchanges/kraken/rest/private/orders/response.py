@@ -326,15 +326,18 @@ def get_result_data_count(
 
 def parse_result_data_closedorders(
         result_data: typing.Mapping[str, SingleClosedOrder],
-        symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE
+        symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE,
+        symbol: ntypes.SYMBOL
     ) -> typing.Tuple[dict]:
 
     parsed = [
         _single_order(key, order, symbol_mapping)
         for key, order in result_data.items()
     ]
+
+    filtered = [item for item in parsed if parsed["symbol"] == symbol]
     
-    return tuple(parsed)
+    return tuple(filtered)
 
 
 def parse_result_data_openorders(
