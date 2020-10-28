@@ -22,6 +22,7 @@ async def get_trades_binance(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        since: typing.Optional[ntypes.TIMESTAMP] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.trades,
     ) -> Result[NoobitResponseTrades, Exception]:
