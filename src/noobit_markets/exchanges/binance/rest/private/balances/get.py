@@ -25,9 +25,9 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_p
 
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_balances_binance(
-        loop: asyncio.BaseEventLoop,
+        # loop: asyncio.BaseEventLoop,
         client: ntypes.CLIENT,
-        assets_from_exchange: ntypes.ASSET_FROM_EXCHANGE,
+        asset_from_exchange: ntypes.ASSET_FROM_EXCHANGE,
         auth=BinanceAuth(),
         # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.private.url,
@@ -72,7 +72,7 @@ async def get_balances_binance(
         return valid_result_content
 
     # input: typing.Tuple[tuple] // output: typing.Tuple[pmap]
-    parsed_result = parse_result_data_balances(valid_result_content.value, assets_from_exchange) 
+    parsed_result = parse_result_data_balances(valid_result_content.value, asset_from_exchange) 
 
 
     # input: typing.Tuple[pmap] //  output: Result[NoobitResponseOhlc, ValidationError]

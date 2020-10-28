@@ -22,7 +22,7 @@ from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_pr
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_balances_kraken(
         client: ntypes.CLIENT,
-        asset_to_exchange: ntypes.ASSET_TO_EXCHANGE,
+        asset_from_exchange: ntypes.ASSET_FROM_EXCHANGE,
         auth=KrakenAuth(),
         # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
@@ -63,7 +63,7 @@ async def get_balances_kraken(
     result_data_balances = get_result_data_balances(valid_result_content.value)
 
     # step 12: parse result data ==> output: pmap
-    parsed_result_data = parse_result_data_balances(result_data_balances, asset_to_exchange)
+    parsed_result_data = parse_result_data_balances(result_data_balances, asset_from_exchange)
 
     # step 13: validate parsed result data ==> output: Result[NoobitResponseTradeBalance, ValidationError]
     valid_parsed_result_data = validate_parsed_result_data_balances(parsed_result_data, result_content.value)
