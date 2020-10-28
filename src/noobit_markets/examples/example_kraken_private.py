@@ -106,6 +106,7 @@ try:
     trades = asyncio.run(
         func_trades(
             client=httpx.AsyncClient(),
+            symbol="XBT-USD",
             symbols_to_exchange=symbols_to_exchange,
         )
     )
@@ -115,6 +116,7 @@ try:
         print("is ok result : ", trades.is_ok())
         print("is pydantic model  : ", isinstance(trades.value, FrozenBaseModel)) 
         print("Fetching Trades : Success")
+        # print(trades.value.trades)
 except Exception as e:
     raise e
 
@@ -159,8 +161,8 @@ try:
     open_ord = asyncio.run(
         func_op(
             client=httpx.AsyncClient(),
-            symbols_to_exchange=symbols_to_exchange,
-            symbols_from_altname=symbols_to_shit,
+            symbols_to_exchange=symbol_to_exch.value,
+            # symbols_from_altname=symbols_to_shit,
         )
     )
     if open_ord.is_err():
@@ -169,6 +171,7 @@ try:
         print("is ok result : ", open_ord.is_ok())
         print("is pydantic model  : ", isinstance(open_ord.value, FrozenBaseModel)) 
         print("Fetch Open Orders : Success")
+        # print(open_ord.value)
 except Exception as e:
     raise e
 
@@ -186,8 +189,8 @@ try:
     cl_ord = asyncio.run(
         func_op(
             client=httpx.AsyncClient(),
-            symbols_to_exchange=symbols_to_exchange,
-            symbols_from_altname=symbols_to_shit,
+            symbols_to_exchange=symbol_to_exch.value,
+            # symbols_from_altname=symbols_to_shit,
         )
     )
     if cl_ord.is_err():
@@ -196,7 +199,7 @@ try:
         print("is ok result : ", cl_ord.is_ok())
         print("is pydantic model  : ", isinstance(cl_ord.value, FrozenBaseModel)) 
         print("Fetching Closed Orders : Succes")
-        print(cl_ord.value)
+        # print(cl_ord.value)
 except Exception as e:
     raise e
 

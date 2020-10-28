@@ -31,11 +31,11 @@ else:
 
 res = asyncio.run(
     get_closedorders_binance(
-        None,
         client=httpx.AsyncClient(),
         # get_symbols.assets is TO_EXCH
         symbol="BTC-USDT",
-        symbols_to_exchange={k:v.exchange_name for k, v in sym.value.asset_pairs.items()}
+        # symbols_to_exchange={k:v.exchange_name for k, v in sym.value.asset_pairs.items()}
+        symbols_to_exchange=sym.value
     )
 )
 
@@ -47,7 +47,6 @@ else:
 
 res = asyncio.run(
     get_trades_binance(
-        None,
         client=httpx.AsyncClient(),
         # get_symbols.assets is TO_EXCH
         symbol="BTC-USDT",

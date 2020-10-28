@@ -25,7 +25,7 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_p
 
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_trades_binance(
-        loop: asyncio.BaseEventLoop,
+        # loop: asyncio.BaseEventLoop,
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbols_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,

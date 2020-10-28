@@ -11,7 +11,7 @@ from .response import *
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.request import retry_request
-from noobit_markets.base.models.rest.response import NoobitResponseClosedOrders
+from noobit_markets.base.models.rest.response import NoobitResponseClosedOrders, NoobitResponseSymbols
 from noobit_markets.base.models.result import Result, Ok, Err
 
 
@@ -25,10 +25,10 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_p
 
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_closedorders_binance(
-        loop: asyncio.BaseEventLoop,
+        # loop: asyncio.BaseEventLoop,
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbols_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbols_to_exchange: NoobitResponseSymbols,
         auth=BinanceAuth(),
         # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.private.url,
@@ -46,7 +46,9 @@ async def get_closedorders_binance(
 
     headers = auth.headers()
 
-    valid_req = validate_request_closedorders(symbol, symbols_to_exchange)
+    pairs_to_exchange = {k: v.exchange_name for k, v in symbols_to_exchange.asset_pairs.items()}
+
+    valid_req = validate_request_closedorders(symbol, pairs_to_exchange)
     if valid_req.is_err():
         return valid_req 
 
@@ -76,10 +78,10 @@ async def get_closedorders_binance(
         return valid_result_content
     
 
-    symbols_from_exchange = {v: k for k, v in symbols_to_exchange.items()}
+    reverse_pairs = {v: k for k, v in pairs_to_exchange.items()}
 
     # input: typing.Tuple[tuple] // output: typing.Tuple[pmap]
-    parsed_result = parse_result_data_orders(valid_result_content.value, symbols_from_exchange) 
+    parsed_result = parse_result_data_orders(valid_result_content.value, reverse_pairs) 
 
     closed_orders = [item for item in parsed_result if item["ordStatus"] in ["closed", "canceled"]]
     

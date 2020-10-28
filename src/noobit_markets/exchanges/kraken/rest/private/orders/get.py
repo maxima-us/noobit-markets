@@ -20,7 +20,7 @@ from .response import *
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.request import retry_request
-from noobit_markets.base.models.rest.response import NoobitResponseOpenOrders, NoobitResponseClosedOrders
+from noobit_markets.base.models.rest.response import NoobitResponseOpenOrders, NoobitResponseClosedOrders, NoobitResponseSymbols
 
 # Kraken
 from noobit_markets.exchanges.kraken.rest.auth import KrakenAuth
@@ -33,8 +33,8 @@ from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_pr
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_closedorders_kraken(
         client: ntypes.CLIENT,
-        symbols_to_exchange: ntypes.ASSET_TO_EXCHANGE,
-        symbols_from_altname,
+        symbols_to_exchange: NoobitResponseSymbols, #?? should we pass in a model ?? eg NoobitResponseSymbols ?
+        # symbols_from_altname,
         # FIXME what to do with logger
         auth=KrakenAuth(),
         #! FIXME CORRECT ENDPOINTS
@@ -75,6 +75,8 @@ async def get_closedorders_kraken(
     #   example of pmap: {"eb":"46096.0029","tb":"29020.9951","m":"0.0000","n":"0.0000","c":"0.0000","v":"0.0000","e":"29020.9951","mf":"29020.9951"}
     result_data_balances = get_result_data_closedorders(valid_result_content.value)
 
+    symbols_from_altname = {v.ws_name.replace("/", ""): k for k, v in symbols_to_exchange.asset_pairs.items()}
+    
     # step 12: parse result data ==> output: pmap
     parsed_result_data = parse_result_data_closedorders(result_data_balances, symbols_from_altname)
 
@@ -91,8 +93,8 @@ async def get_closedorders_kraken(
 
 async def get_openorders_kraken(
         client: ntypes.CLIENT,
-        symbols_to_exchange: ntypes.ASSET_TO_EXCHANGE,
-        symbols_from_altname,
+        symbols_to_exchange: NoobitResponseSymbols, #?? change to NoobitResponseSymbol instead ??
+        # symbols_from_altname,
         auth=KrakenAuth(),
         #! FIXME CORRECT ENDPOINTS
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
@@ -132,6 +134,8 @@ async def get_openorders_kraken(
     #   example of pmap: {"eb":"46096.0029","tb":"29020.9951","m":"0.0000","n":"0.0000","c":"0.0000","v":"0.0000","e":"29020.9951","mf":"29020.9951"}
     result_data_balances = get_result_data_openorders(valid_result_content.value)
 
+    symbols_from_altname = {v.ws_name.replace("/", ""): k for k, v in symbols_to_exchange.asset_pairs.items()}
+    
     # step 12: parse result data ==> output: pmap
     parsed_result_data = parse_result_data_openorders(result_data_balances, symbols_from_altname)
 

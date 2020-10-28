@@ -128,7 +128,8 @@ def get_result_data_usertrades(
 
 def parse_result_data_usertrades(
         result_data: typing.Mapping[str, SingleTradeInfo],
-        symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE
+        symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE,
+        symbol: ntypes.SYMBOL
     ) -> typing.Tuple[dict]:
 
 
@@ -138,7 +139,9 @@ def parse_result_data_usertrades(
         for key, info in result_data.items()
     ]
 
-    return tuple(parsed)
+    filtered = [item for item in parsed if item["symbol"] == symbol]
+
+    return tuple(filtered)
 
 
 def _single_trade(

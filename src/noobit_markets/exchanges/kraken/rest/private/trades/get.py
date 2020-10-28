@@ -22,7 +22,8 @@ from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_pr
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_usertrades_kraken(
         client: ntypes.CLIENT,
-        symbols_to_exchange: ntypes.ASSET_TO_EXCHANGE,
+        symbol: ntypes.SYMBOL,
+        symbols_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         auth=KrakenAuth(),
         # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
@@ -64,7 +65,9 @@ async def get_usertrades_kraken(
 
     # step 12: parse result data ==> output: pmap
     symbols_from_exchange = {v: k for k, v in symbols_to_exchange.items()}
-    parsed_result_data = parse_result_data_usertrades(result_data_balances, symbols_from_exchange)
+
+    # TODO need to filter out only requested symbol
+    parsed_result_data = parse_result_data_usertrades(result_data_balances, symbols_from_exchange, symbol)
 
     # step 13: validate parsed result data ==> output: Result[NoobitResponseTradeBalance, ValidationError]
     valid_parsed_result_data = validate_parsed_result_data_usertrades(parsed_result_data, result_content.value)
