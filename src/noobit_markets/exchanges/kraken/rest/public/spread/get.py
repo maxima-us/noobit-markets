@@ -22,14 +22,15 @@ async def get_spread_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
-        since: ntypes.TIMESTAMP,
+        # since: ntypes.TIMESTAMP,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.spread,
     ) -> Result[NoobitResponseSpread, Exception]:
 
 
     # output: Result[NoobitRequestOhlc, ValidationError]
-    valid_req = validate_request_spread(symbol, symbol_to_exchange, since)
+    # valid_req = validate_request_spread(symbol, symbol_to_exchange, since)
+    valid_req = validate_request_spread(symbol, symbol_to_exchange)
     #  logger_func("valid raw req // ", valid_req)
     if valid_req.is_err():
         return valid_req

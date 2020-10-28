@@ -73,14 +73,14 @@ def parse_request_spread(
 def validate_request_spread(
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
-        since: ntypes.TIMESTAMP
+        # since: ntypes.TIMESTAMP
     ) -> Result[NoobitRequestSpread, ValidationError]:
 
     try:
         valid_req = NoobitRequestSpread(
             symbol=symbol,
             symbol_mapping=symbol_mapping,
-            since=since
+            # since=since
         )
         return Ok(valid_req)
 

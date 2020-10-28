@@ -121,7 +121,7 @@ spread = asyncio.run(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
         symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
-        since=None,
+        # since=None,
     )
 )
 
