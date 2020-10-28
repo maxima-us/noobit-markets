@@ -3,29 +3,42 @@ import inspect
 import pytest
 import httpx
 
-#instrument
+#public instrument
 from noobit_markets.exchanges.binance.rest.public.instrument.get import get_instrument_binance
 from noobit_markets.exchanges.kraken.rest.public.instrument.get import get_instrument_kraken
 
-#ohlc
+#public ohlc
 from noobit_markets.exchanges.binance.rest.public.ohlc.get import get_ohlc_binance
 from noobit_markets.exchanges.kraken.rest.public.ohlc.get import get_ohlc_kraken
 
-#orderbook
+#public orderbook
 from noobit_markets.exchanges.binance.rest.public.orderbook.get import get_orderbook_binance
 from noobit_markets.exchanges.kraken.rest.public.orderbook.get import get_orderbook_kraken
 
-#symbols
+#public symbols
 from noobit_markets.exchanges.binance.rest.public.symbols.get import get_symbols_binance
 from noobit_markets.exchanges.kraken.rest.public.symbols.get import get_symbols
 
-#spread
+#public spread
 from noobit_markets.exchanges.binance.rest.public.spread.get import get_spread_binance
 from noobit_markets.exchanges.kraken.rest.public.spread.get import get_spread_kraken
 
-#spread
+#public trades
 from noobit_markets.exchanges.binance.rest.public.trades.get import get_trades_binance
 from noobit_markets.exchanges.kraken.rest.public.trades.get import get_trades_kraken
+
+#private balances
+from noobit_markets.exchanges.binance.rest.private.balances.get import get_balances_binance
+from noobit_markets.exchanges.kraken.rest.private.balances.get import get_balances_kraken
+
+#private orders
+from noobit_markets.exchanges.binance.rest.private.orders.get import get_closedorders_binance
+from noobit_markets.exchanges.kraken.rest.private.orders.get import get_closedorders_kraken
+
+#private trades
+from noobit_markets.exchanges.binance.rest.private.trades.get import get_trades_binance as get_usertrades_binance
+from noobit_markets.exchanges.kraken.rest.private.trades.get import get_usertrades_kraken
+
 
 from noobit_markets.base.models.result import Ok, Err, Result
 from noobit_markets.base.models.rest.response import NoobitResponseInstrument
@@ -38,8 +51,8 @@ def _util_test_sigs(sig_kraken: inspect.Signature, sig_binance: inspect.Signatur
     kn_set = set(name for name, param in sig_kraken.parameters.items())
     bn_set = set(name for name, param in sig_kraken.parameters.items())
 
-    kp_set = set([param for name, param in sig_kraken.parameters.items() if name not in ["base_url", "endpoint"]])
-    bp_set = set([param for name, param in sig_binance.parameters.items() if name not in ["base_url", "endpoint"]])
+    kp_set = set([param for name, param in sig_kraken.parameters.items() if name not in ["base_url", "endpoint", "auth"]])
+    bp_set = set([param for name, param in sig_binance.parameters.items() if name not in ["base_url", "endpoint", "auth"]])
 
     # test we have same names
     assert kn_set == bn_set
@@ -109,5 +122,29 @@ def test_trades_signature():
 
     sig_kraken = inspect.signature(get_trades_kraken)
     sig_binance = inspect.signature(get_trades_binance)
+
+    _util_test_sigs(sig_kraken, sig_binance)
+
+
+def test_balances_signature():
+    
+    sig_kraken = inspect.signature(get_balances_kraken)
+    sig_binance = inspect.signature(get_balances_binance)
+
+    _util_test_sigs(sig_kraken, sig_binance)
+
+
+def test_orders_signature():
+    
+    sig_kraken = inspect.signature(get_closedorders_kraken)
+    sig_binance = inspect.signature(get_closedorders_binance)
+
+    _util_test_sigs(sig_kraken, sig_binance)
+
+
+def test_usertrades_signature():
+    
+    sig_kraken = inspect.signature(get_usertrades_kraken)
+    sig_binance = inspect.signature(get_usertrades_binance)
 
     _util_test_sigs(sig_kraken, sig_binance)
