@@ -57,13 +57,13 @@ async def post_neworder_kraken(
     if valid_req.is_err():
         return valid_req
     
-    print("Valid Noobit req : ", valid_req.value)
+    # print("Valid Noobit req : ", valid_req.value)
 
 
     # output: pmap
     parsed_req = parse_request_neworder(valid_req.value)
 
-    print("Parsed req : ", parsed_req)
+    # print("Parsed req : ", parsed_req)
 
     req_args = {
         "nonce": auth.nonce,
@@ -76,7 +76,7 @@ async def post_neworder_kraken(
         return valid_kraken_req
 
     # pass api keys
-    print("Valid kraken req : ", valid_kraken_req.value.dict())
+    # print("Valid kraken req : ", valid_kraken_req.value.dict())
     headers = auth.headers(endpoint, valid_kraken_req.value.dict())
     
     result_content = await get_result_content_from_private_req(client, valid_kraken_req.value, headers, base_url, endpoint)
