@@ -125,8 +125,6 @@ def _single_candle(
 # FIXME not entirely sure how to properly type hint
 def validate_raw_result_content_ohlc(
         result_content: pmap,
-        symbol: ntypes.SYMBOL,
-        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
     ) -> Result[FtxResponseOhlc, ValidationError]:
 
 
@@ -143,7 +141,7 @@ def validate_raw_result_content_ohlc(
 
 def validate_parsed_result_data_ohlc(
         parsed_result_ohlc: typing.Tuple[pmap],
-        raw_json
+        raw_json: typing.Any
     ) -> Result[NoobitResponseOhlc, ValidationError]:
 
     try:

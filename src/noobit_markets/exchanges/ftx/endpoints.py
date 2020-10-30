@@ -12,8 +12,8 @@ FTX_ENDPOINTS = endpoints.RESTEndpoints(**{
             "assets": "Assets",
             "symbols": "AssetPairs",
             "instrument": "Ticker",
-            "ohlc": "markets",
-            "orderbook": "Depth",
+            "ohlc": "candles",          #? done
+            "orderbook": "orderbook",
             "trades": "Trades",
             "spread": "Spread"
         }
