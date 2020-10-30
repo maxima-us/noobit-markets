@@ -45,7 +45,7 @@ def get_error_content(response_json: pmap) -> list:
 
 
 #! not applicable to binance (no "result" key)
-def get_result_content(response_json: pmap) -> pmap:
+def get_result_content(response_json: pmap) -> typing.Any:
 
     try:
         result_content = json.loads(response_json["_content"])

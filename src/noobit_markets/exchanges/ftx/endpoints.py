@@ -1,9 +1,10 @@
 from noobit_markets.base.models.rest import endpoints
 
 
-KRAKEN_ENDPOINTS = endpoints.RESTEndpoints(**{
+FTX_ENDPOINTS = endpoints.RESTEndpoints(**{
     "public": {
-        "url": "https://api.kraken.com/0/public/",
+        "url": "https://ftx.com/api",
+
 
         "endpoints": {
             "time": "Time",
@@ -11,7 +12,7 @@ KRAKEN_ENDPOINTS = endpoints.RESTEndpoints(**{
             "assets": "Assets",
             "symbols": "AssetPairs",
             "instrument": "Ticker",
-            "ohlc": "OHLC",
+            "ohlc": "markets",
             "orderbook": "Depth",
             "trades": "Trades",
             "spread": "Spread"

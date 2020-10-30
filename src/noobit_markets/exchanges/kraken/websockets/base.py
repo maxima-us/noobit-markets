@@ -24,8 +24,6 @@ from noobit_markets.exchanges.kraken.websockets.private.routing import msg_handl
 
 
 
-
-
 # ============================================================
 # BASE CLASS 
 # ============================================================

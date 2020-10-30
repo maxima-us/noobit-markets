@@ -47,6 +47,7 @@ def make_httpx_get_request(
         valid_request_model: FrozenBaseModel
     ) -> pmap:
 
+    # wont work if some dynamic param is part of url (like for ftx api)
     full_url = urljoin(base_url, endpoint)
 
     # ? MODEL ??
