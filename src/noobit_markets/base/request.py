@@ -129,12 +129,16 @@ def retry_request(
                 if result.is_ok():
                     return result
                 elif result.is_err():
-                    # no retries if we had a validation error
-                    if isinstance(result.value, ValidationError):
-                        return result
-                    # FIXME return without retries if several errors
-                    if len(result.value) > 1:
-                        return result
+                    try:
+                        if len(result.value)>1:
+                            return result
+                    except TypeError:
+                        # no len() ==> we have a single Error
+                        if isinstance(result, ValidationError):
+                            return result
+                    except Exception as e:
+                        return e
+
                     #! returns a tuple of errors
                     #FIXME kraken returns a tuple of errors
                     #   binance for examples returns a dict

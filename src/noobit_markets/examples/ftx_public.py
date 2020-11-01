@@ -1,5 +1,7 @@
 import asyncio
+
 import httpx
+import aiohttp
 
 from noobit_markets.exchanges.ftx.rest.public.ohlc.get import get_ohlc_ftx
 from noobit_markets.exchanges.ftx.rest.public.orderbook.get import get_orderbook_ftx
@@ -39,15 +41,16 @@ if res.is_err():
 # else:
 #     print("OK :", res.value)
 
+async def trades():
+    async with aiohttp.ClientSession() as client:
+        return await get_trades_ftx(
+            client=client,
+            symbol="XBT-USD",
+            symbol_to_exchange={"XBT-USD": "BTC/USB"},
+            since=None
+        )
 
-res = asyncio.run(
-    get_trades_ftx(
-        client=httpx.AsyncClient(),
-        symbol="XBT-USD",
-        symbol_to_exchange={"XBT-USD": "BTC/USD"},
-        since=None
-    )
-)
+res = asyncio.run(trades())
 
 if res.is_err():
     print(res)
