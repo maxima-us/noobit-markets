@@ -7,7 +7,7 @@ from noobit_markets.exchanges.ftx.rest.public.ohlc.get import get_ohlc_ftx
 from noobit_markets.exchanges.ftx.rest.public.orderbook.get import get_orderbook_ftx
 from noobit_markets.exchanges.ftx.rest.public.trades.get import get_trades_ftx
 # from noobit_markets.exchanges.binance.rest.public.instrument.get import get_instrument_binance
-# from noobit_markets.exchanges.binance.rest.public.symbols.get import get_symbols_binance
+from noobit_markets.exchanges.ftx.rest.public.symbols.get import get_symbols_ftx
 # from noobit_markets.exchanges.binance.rest.public.spread.get import get_spread_binance
 
 
@@ -46,7 +46,7 @@ async def trades():
         return await get_trades_ftx(
             client=client,
             symbol="XBT-USD",
-            symbol_to_exchange={"XBT-USD": "BTC/USB"},
+            symbol_to_exchange={"XBT-USD": "BTC/USD"},
             since=None
         )
 
@@ -70,14 +70,16 @@ else:
 #     print(res)
 
 
-# res = asyncio.run(
-#     get_symbols_binance(
-#         client=httpx.AsyncClient(),
-#     )
-# )
+res = asyncio.run(
+    get_symbols_ftx(
+        client=httpx.AsyncClient(),
+    )
+)
 
-# if res.is_err():
-#     print(res)
+if res.is_err():
+    print(res)
+# else:
+#     print("FTX Symbols request successful : \n", res)
 
 
 # res = asyncio.run(

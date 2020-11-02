@@ -9,13 +9,13 @@ FTX_ENDPOINTS = endpoints.RESTEndpoints(**{
         "endpoints": {
             "time": "Time",
             # ? needed, now that symbols returns both assets and asset_pairs mappings ?
-            "assets": "Assets",
-            "symbols": "AssetPairs",
-            "instrument": "Ticker",
+            "assets": "Not implemented",
+            "symbols": "markets",
+            "instrument": "Not implemented",
             "ohlc": "candles",          #? done
             "orderbook": "orderbook",
             "trades": "trades",
-            "spread": "Spread"
+            "spread": "Not implemented"
         }
 
     },

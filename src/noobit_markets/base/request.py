@@ -134,8 +134,16 @@ def retry_request(
                             return result
                     except TypeError:
                         # no len() ==> we have a single Error
-                        if isinstance(result, ValidationError):
+                        if isinstance(result.value, ValidationError):
                             return result
+                        if result.value.accept:
+                            return result
+                        else:
+                            msg = f"Retrying in {result.value[0].sleep} seconds - Retry Attempts: {retried}"
+                            logger(msg)
+                            #! returns a tuple of errors
+                            await asyncio.sleep(result.value[0].sleep)
+                            retried += 1
                     except Exception as e:
                         return e
 
@@ -143,14 +151,14 @@ def retry_request(
                     #FIXME kraken returns a tuple of errors
                     #   binance for examples returns a dict
                     #   containing error code and error message
-                    if result.value[0].accept:
-                        return result
-                    else:
-                        msg = f"Retrying in {result.value[0].sleep} seconds - Retry Attempts: {retried}"
-                        logger(msg)
-                        #! returns a tuple of errors
-                        await asyncio.sleep(result.value[0].sleep)
-                        retried += 1
+                    # if result.value[0].accept:
+                    #     return result
+                    # else:
+                    #     msg = f"Retrying in {result.value[0].sleep} seconds - Retry Attempts: {retried}"
+                    #     logger(msg)
+                    #     #! returns a tuple of errors
+                    #     await asyncio.sleep(result.value[0].sleep)
+                    #     retried += 1
             else:
                 return result
 
