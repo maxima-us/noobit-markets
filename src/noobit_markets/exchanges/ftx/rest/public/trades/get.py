@@ -23,7 +23,7 @@ async def get_trades_ftx(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
-        since: ntypes.TIMESTAMP,
+        since: typing.Optional[ntypes.TIMESTAMP] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.FTX_ENDPOINTS.public.url,
         endpoint: str = endpoints.FTX_ENDPOINTS.public.endpoints.trades,
     ) -> Result[NoobitResponseTrades, Exception]:

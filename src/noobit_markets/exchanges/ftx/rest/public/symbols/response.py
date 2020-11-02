@@ -112,7 +112,7 @@ def parse_result_data_symbols(
     ) -> tuple:
 
     list_assetpairs = [_single_assetpair(item) for item in result_data.symbols if item.type == "spot"]
-    indexed_assetpairs = {item["exchange_name"]: item for item in list_assetpairs}
+    indexed_assetpairs = {item["exchange_name"].replace("/", "-"): item for item in list_assetpairs}
 
 
     return {
@@ -126,7 +126,7 @@ def _single_assetpair(
 ) -> pmap:
 
     parsed = {
-        "exchange_name": f"{data.baseCurrency}-{data.quoteCurrency}",
+        "exchange_name": f"{data.baseCurrency}/{data.quoteCurrency}",
         # FIXME should this be same as exchange name ?
         "ws_name": None,
         "base": data.baseCurrency,

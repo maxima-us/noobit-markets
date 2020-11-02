@@ -2,7 +2,6 @@ import asyncio
 
 import pydantic
 
-from .request import *
 from .response import *
 
 # Base
