@@ -1,12 +1,17 @@
 import pydantic
 
-from .response import *
+from .response import (
+    validate_raw_result_content_balances,
+    validate_parsed_result_data_balances,
+    parse_result_data_balances
+)
 
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.request import retry_request
 from noobit_markets.base.models.rest.response import NoobitResponseBalances
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
+from noobit_markets.base.models.result import Result, Ok
 
 # FTX
 from noobit_markets.exchanges.ftx import endpoints
@@ -22,7 +27,6 @@ async def get_balances_ftx(
         base_url: pydantic.AnyHttpUrl = endpoints.FTX_ENDPOINTS.private.url,
         endpoint: str = endpoints.FTX_ENDPOINTS.private.endpoints.balances,
     ) -> Result[NoobitResponseBalances, Exception]:
-
 
     method = "GET"
     req_url = "/".join([base_url, "wallet", "balances"])

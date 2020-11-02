@@ -1,11 +1,9 @@
 import typing
-from datetime import date
 
 from pyrsistent import pmap
-from pydantic import BaseModel, PositiveInt, ValidationError, constr, validator, conint
-from typing_extensions import Literal
+from pydantic import PositiveInt, ValidationError, conint
 
-from noobit_markets.base import ntypes, mappings
+from noobit_markets.base import ntypes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.request import NoobitRequestTrades
 

@@ -1,15 +1,23 @@
-import asyncio
+import typing
 
 import pydantic
 
-from .request import *
-from .response import *
-
+from .request import (
+    validate_request_trades,
+    validate_parsed_request_trades,
+    parse_request_trades
+)
+from .response import (
+    validate_raw_result_content_trades,
+    validate_parsed_result_data_trades,
+    parse_result_data_trades
+)
 
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.request import retry_request
 from noobit_markets.base.models.rest.response import NoobitResponseTrades
+from noobit_markets.base.models.rest import Result
 
 # Kraken
 from noobit_markets.exchanges.ftx import endpoints
@@ -57,7 +65,7 @@ async def get_trades_ftx(
         return result_content
 
     # input: pmap // output: Result[FtxResponseOhlc, ValidationError]
-    valid_result_content = validate_raw_result_content_trades(result_content.value) 
+    valid_result_content = validate_raw_result_content_trades(result_content.value)
     if valid_result_content.is_err():
         return valid_result_content
 
@@ -67,18 +75,3 @@ async def get_trades_ftx(
     # input: typing.Tuple[pmap] //  output: Result[NoobitResponseOhlc, ValidationError]
     valid_parsed_response_data = validate_parsed_result_data_trades(parsed_result, result_content.value)
     return valid_parsed_response_data
-
-
-
-
-import httpx
-
-if __name__ == "__main__":
-
-    async def get():
-
-        async with httpx.AsyncClient() as client:
-            result = await get_ohlc_ftx(client, "XBT-USD", {"XBT-USD": "BTC/USD"}, "1H", None)
-            print(result)
-
-    asyncio.run(get())

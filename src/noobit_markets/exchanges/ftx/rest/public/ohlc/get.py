@@ -1,16 +1,22 @@
 
-import asyncio
-
 import pydantic
 
-from .request import *
-from .response import *
-
+from .request import (
+    validate_parsed_request_ohlc,
+    validate_request_ohlc,
+    parse_request_ohlc,
+)
+from .response import (
+    validate_raw_result_content_ohlc,
+    validate_parsed_result_data_ohlc,
+    parse_result_data_ohlc
+)
 
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.request import retry_request
 from noobit_markets.base.models.rest.response import NoobitResponseOhlc
+from noobit_markets.base.models.result import Result
 
 # Kraken
 from noobit_markets.exchanges.ftx import endpoints
@@ -59,12 +65,9 @@ async def get_ohlc_ftx(
         return result_content
 
     # input: pmap // output: Result[FtxResponseOhlc, ValidationError]
-    valid_result_content = validate_raw_result_content_ohlc(result_content.value) 
+    valid_result_content = validate_raw_result_content_ohlc(result_content.value)
     if valid_result_content.is_err():
         return valid_result_content
-
-    #! NOT NEEDED
-    # result_data_ohlc = get_result_data_ohlc(valid_result_content.value, symbol, symbol_to_exchange)
 
     # input: typing.Tuple[tuple] // output: typing.Tuple[pmap]
     parsed_result_ohlc = parse_result_data_ohlc(valid_result_content.value.ohlc, symbol)
@@ -72,18 +75,3 @@ async def get_ohlc_ftx(
     # input: typing.Tuple[pmap] //  output: Result[NoobitResponseOhlc, ValidationError]
     valid_parsed_response_data = validate_parsed_result_data_ohlc(parsed_result_ohlc, result_content.value)
     return valid_parsed_response_data
-
-
-
-
-import httpx
-
-if __name__ == "__main__":
-
-    async def get():
-
-        async with httpx.AsyncClient() as client:
-            result = await get_ohlc_ftx(client, "XBT-USD", {"XBT-USD": "BTC/USD"}, "1H", None)
-            print(result)
-
-    asyncio.run(get())

@@ -1,15 +1,10 @@
-import decimal
 import typing
 from decimal import Decimal
-from datetime import datetime
-import time
-from collections import Counter
 
 from pyrsistent import pmap
-from pydantic import PositiveInt, PositiveFloat, create_model, ValidationError, validator, conint
+from pydantic import ValidationError
 
 # noobit base
-from noobit_markets.base import ntypes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.response import NoobitResponseSymbols
 from noobit_markets.base.models.result import Ok, Err, Result
@@ -47,25 +42,25 @@ from noobit_markets.base.models.result import Ok, Err, Result
 # }
 
 # RECORDED RESPONSE
-#  {'ask': 2.337, 
-#   'baseCurrency': 'UNI', 
-#   'bid': 2.332, 
-#   'change1h': 0.014354066985645933, 
-#   'change24h': 0.008214440121054907, 
-#   'changeBod': 0.025505716798592787, 
-#   'enabled': True, 
-#   'last': 2.332, 
-#   'minProvideSize': 0.05, 
-#   'name': 'UNI/USDT', 
-#   'postOnly': False, 
-#   'price': 2.332, 
-#   'priceIncrement': 0.001, 
-#   'quoteCurrency': 'USDT', 
-#   'quoteVolume24h': 141880.3198, 
-#   'restricted': False, 
-#   'sizeIncrement': 0.05, 
-#   'type': 'spot', 
-#   'underlying': None, 
+#  {'ask': 2.337,
+#   'baseCurrency': 'UNI',
+#   'bid': 2.332,
+#   'change1h': 0.014354066985645933,
+#   'change24h': 0.008214440121054907,
+#   'changeBod': 0.025505716798592787,
+#   'enabled': True,
+#   'last': 2.332,
+#   'minProvideSize': 0.05,
+#   'name': 'UNI/USDT',
+#   'postOnly': False,
+#   'price': 2.332,
+#   'priceIncrement': 0.001,
+#   'quoteCurrency': 'USDT',
+#   'quoteVolume24h': 141880.3198,
+#   'restricted': False,
+#   'sizeIncrement': 0.05,
+#   'type': 'spot',
+#   'underlying': None,
 #   'volumeUsd24h': 142²056.33794354709},
 
 
@@ -134,13 +129,13 @@ def _single_assetpair(
         "volume_decimals": _get_dec_places(data.sizeIncrement),      #! will not be same as price decimals (eg. 0.01 vs 8)
         "price_decimals": _get_dec_places(data.priceIncrement),      #! will not be same as volume decimals (e.g 0.01 vs 8)
         "leverage_available": None,                                  #! not available
-        "order_min": data.minProvideSize            
+        "order_min": data.minProvideSize
     }
 
     return pmap(parsed)
 
 
-def _get_dec_places(float): return float - int(float)
+def _get_dec_places(n: float): return n - int(n)
 
 
 

@@ -2,27 +2,18 @@ import typing
 import inspect
 
 import httpx
-from pyrsistent import pmap
 from pydantic import PositiveInt, AnyHttpUrl
 
 import stackprinter
 stackprinter.set_excepthook(style="darkbg2")
 
-
-
 # base
 from noobit_markets.base import ntypes
 from noobit_markets.base.errors import BadRequest, BaseError
-from noobit_markets.base.request import (
-    make_httpx_get_request,
-    send_public_request,
-    make_httpx_post_request,
-    send_private_request
-)
 from noobit_markets.base.models.result import Ok, Err, Result
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
-# kraken
+# Ftx
 from noobit_markets.exchanges.ftx.errors import ERRORS_FROM_EXCHANGE
 
 

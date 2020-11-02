@@ -1,16 +1,13 @@
-import urllib
 import hashlib
-import base64
 import hmac
-from copy import deepcopy, copy
 import json
+import typing
 
+from typing_extensions import Literal
 from dotenv import load_dotenv
 from pyrsistent import pmap
-from pydantic import AnyHttpUrl
 
-from noobit_markets.base.request import *
-from noobit_markets.base.auth import BaseAuth, make_base
+from noobit_markets.base.auth import make_base
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 
@@ -18,7 +15,7 @@ load_dotenv()
 
 
 #Kraken Private Request Model
-#always needs nonce param to authenticate 
+#always needs nonce param to authenticate
 class FtxPrivateRequest(FrozenBaseModel):
 
     pass
@@ -35,12 +32,12 @@ class FtxAuth(FtxBase):
 
     # FTX-KEY: Which is your API key.
     # FTX-TS: Which is the number of milliseconds since Unix epoch.
-    # FTX-SIGN: Which is the SHA256 HMAC of the following four strings, 
-    #       using your API secret, as a hex string: Request timestamp (same as above), 
+    # FTX-SIGN: Which is the SHA256 HMAC of the following four strings,
+    #       using your API secret, as a hex string: Request timestamp (same as above),
     #       HTTP method in uppercase (e.g. GET or POST), Request path, including
-    #       leading slash and any URL parameters but not including the hostname 
+    #       leading slash and any URL parameters but not including the hostname
     #       (e.g. /account), Request body (JSON-encoded) only for POST requests
-    # FTX-SUBACCOUNT (optional): URI-encoded name of the subaccount to use. 
+    # FTX-SUBACCOUNT (optional): URI-encoded name of the subaccount to use.
     #       Omit if not using subaccounts.
 
     def __init__(self):
@@ -64,7 +61,7 @@ class FtxAuth(FtxBase):
 
 
     def _sign(self, method: Literal["GET", "POST"], req_path, body, timestamp: int):
-        
+
         message = f"{timestamp}{method}{req_path}"
         if method == "POST": message += json.dumps(body)
         sig_payload = message.encode()

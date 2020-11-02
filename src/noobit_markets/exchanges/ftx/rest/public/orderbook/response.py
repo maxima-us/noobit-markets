@@ -1,12 +1,10 @@
-import decimal
 import typing
 from decimal import Decimal
-from datetime import datetime
 import time
 from collections import Counter
 
 from pyrsistent import pmap
-from pydantic import PositiveInt, PositiveFloat, create_model, ValidationError, validator, conint
+from pydantic import ValidationError
 
 # noobit base
 from noobit_markets.base import ntypes
@@ -70,9 +68,9 @@ def parse_result_data_orderbook(
     parsed_orderbook = {
         "symbol": symbol,
         "utcTime": (time.time()) * 10**3,
-        "asks": Counter({item[0]: item[1] for item in result_data.asks}), 
-        "bids": Counter({item[0]: item[1] for item in result_data.bids}), 
-    } 
+        "asks": Counter({item[0]: item[1] for item in result_data.asks}),
+        "bids": Counter({item[0]: item[1] for item in result_data.bids}),
+    }
 
     return pmap(parsed_orderbook)
 

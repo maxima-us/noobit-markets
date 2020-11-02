@@ -1,8 +1,7 @@
 import typing
-from datetime import date
 
 from pyrsistent import pmap
-from pydantic import BaseModel, PositiveInt, ValidationError, constr, validator, conint
+from pydantic import PositiveInt, ValidationError, conint
 from typing_extensions import Literal
 
 from noobit_markets.base import ntypes, mappings
@@ -56,7 +55,7 @@ def parse_request_ohlc(
 # VALIDATE
 # ============================================================
 
-
+# TODO duplicate across all exchanges ???
 def validate_request_ohlc(
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
