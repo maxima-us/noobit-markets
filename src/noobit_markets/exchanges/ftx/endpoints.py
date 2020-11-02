@@ -21,10 +21,10 @@ FTX_ENDPOINTS = endpoints.RESTEndpoints(**{
     },
 
     "private": {
-        "url": "https://api.kraken.com/0/private/",
+        "url": "https://ftx.com/api",
 
         "endpoints": {
-            'balances': "Balance",
+            'balances': "wallet/balances",
             "account_balance": "Balance",
             "exposure": "TradeBalance",
             "open_positions": "OpenPositions",
