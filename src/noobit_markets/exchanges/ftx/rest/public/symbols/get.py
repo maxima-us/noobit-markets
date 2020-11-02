@@ -10,7 +10,7 @@ from .response import (
 from noobit_markets.base import ntypes
 from noobit_markets.base.request import retry_request
 from noobit_markets.base.models.rest.response import NoobitResponseSymbols
-from noobit_markets.base.models.result import Result
+from noobit_markets.base.models.result import Result, Ok
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 # Kraken
