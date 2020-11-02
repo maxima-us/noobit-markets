@@ -1,6 +1,6 @@
 aiohttp==3.7.2
 httpx==0.14.1
-hypothesis==5.27.0
+# hypothesis==5.27.0
 pydantic==1.6.1
 pyrsistent==0.16.0
 pytest-asyncio==0.14.0
