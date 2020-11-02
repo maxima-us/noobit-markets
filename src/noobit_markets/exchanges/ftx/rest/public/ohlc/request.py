@@ -9,7 +9,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.request import NoobitRequestOhlc
 
 from noobit_markets.base.request import (
-    _validate_parsed_req_ohlc
+    _validate_parsed_req
 )
 
 from noobit_markets.base.models.result import Result
@@ -89,7 +89,7 @@ def validate_parsed_request_ohlc(
     parsed_request: pmap
 ) -> Result[FtxRequestOhlc, ValidationError]:
 
-    return _validate_parsed_req_ohlc(FtxRequestOhlc, parsed_request)
+    return _validate_parsed_req(FtxRequestOhlc, parsed_request)
 
 
 # # TODO duplicate except model

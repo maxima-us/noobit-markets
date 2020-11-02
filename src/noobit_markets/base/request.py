@@ -16,7 +16,9 @@ from noobit_markets.base.models.result import Ok, Err, Result
 
 # response models 
 from noobit_markets.base.models.rest.request import (
-    NoobitRequestOhlc
+    NoobitRequestOhlc,
+    NoobitRequestTrades,
+    NoobitRequestOrderBook
 )
 
 
@@ -170,8 +172,34 @@ def retry_request(
 
 
 
+
 # ============================================================
-# OHLC
+# GENERAL PURPOSE VALIDATION
+# ============================================================
+
+
+def _validate_parsed_req(
+        exchange_req_model: FrozenBaseModel,
+        parsed_request: pmap
+    ):
+
+    try:
+        validated = exchange_req_model(
+            **parsed_request
+        )
+        return Ok(validated)
+
+    except ValidationError as e:
+        return Err(e)
+
+    except Exception as e:
+        raise e
+
+
+
+
+# ============================================================
+# OHLC VALIDATION
 # ============================================================
 
 
@@ -198,17 +226,54 @@ def validate_request_ohlc(
         raise e
 
 
-def _validate_parsed_req_ohlc(
-        exchange_req_model: FrozenBaseModel,
-        parsed_request: pmap
-    ):
 
+
+# ============================================================
+# TRADES VALIDATION
+# ============================================================
+
+
+def validate_raw_request_trades(
+        symbol: ntypes.SYMBOL,
+        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
+        since: ntypes.TIMESTAMP
+    ) -> Result[NoobitRequestTrades, ValidationError]:
 
     try:
-        validated = exchange_req_model(
-            **parsed_request
+        valid_req = NoobitRequestTrades(
+            symbol=symbol,
+            symbol_mapping=symbol_mapping,
+            since=since
         )
-        return Ok(validated)
+        return Ok(valid_req)
+
+    except ValidationError as e:
+        return Err(e)
+
+    except Exception as e:
+        raise e
+
+
+
+
+# ============================================================
+# ORDERBOOK VALIDATION
+# ============================================================
+
+
+def validate_nreq_orderbook(
+        symbol: ntypes.SYMBOL,
+        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
+        depth: ntypes.DEPTH
+    ) -> Result[NoobitRequestOrderBook, ValidationError]:
+
+    try:
+        valid_req = NoobitRequestOrderBook(
+            symbol=symbol,
+            symbol_mapping=symbol_mapping,
+            depth=depth
+        )
+        return Ok(valid_req)
 
     except ValidationError as e:
         return Err(e)

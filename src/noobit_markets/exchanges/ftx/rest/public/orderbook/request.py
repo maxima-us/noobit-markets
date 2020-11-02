@@ -1,11 +1,12 @@
 from pyrsistent import pmap
 from pydantic import ValidationError, conint
 
-from noobit_markets.base import ntypes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.request import NoobitRequestOrderBook
 
-from noobit_markets.base.models.result import Ok, Err, Result
+from noobit_markets.base.models.result import Result
+
+from noobit_markets.base.request import _validate_parsed_req
 
 
 
@@ -49,39 +50,8 @@ def parse_request_orderbook(
 # ============================================================
 
 
-def validate_request_orderbook(
-        symbol: ntypes.SYMBOL,
-        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
-        depth: ntypes.DEPTH
-    ) -> Result[NoobitRequestOrderBook, ValidationError]:
-
-    try:
-        valid_req = NoobitRequestOrderBook(
-            symbol=symbol,
-            symbol_mapping=symbol_mapping,
-            depth=depth
-        )
-        return Ok(valid_req)
-
-    except ValidationError as e:
-        return Err(e)
-
-    except Exception as e:
-        raise e
-
-
 def validate_parsed_request_orderbook(
         parsed_request: pmap
     ) -> Result[FtxRequestOrderBook, ValidationError]:
 
-    try:
-        validated = FtxRequestOrderBook(
-            **parsed_request
-        )
-        return Ok(validated)
-
-    except ValidationError as e:
-        return Err(e)
-
-    except Exception as e:
-        raise e
+    return _validate_parsed_req(FtxRequestOrderBook, parsed_request)

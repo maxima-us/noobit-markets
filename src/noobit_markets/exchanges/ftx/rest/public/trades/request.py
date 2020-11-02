@@ -3,11 +3,14 @@ import typing
 from pyrsistent import pmap
 from pydantic import PositiveInt, ValidationError, conint
 
-from noobit_markets.base import ntypes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.request import NoobitRequestTrades
 
-from noobit_markets.base.models.result import Ok, Err, Result
+from noobit_markets.base.models.result import Result
+
+from noobit_markets.base.request import (
+    _validate_parsed_req
+)
 
 
 
@@ -54,39 +57,8 @@ def parse_request_trades(
 # ============================================================
 
 
-def validate_request_trades(
-        symbol: ntypes.SYMBOL,
-        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
-        since: ntypes.TIMESTAMP
-    ) -> Result[NoobitRequestTrades, ValidationError]:
-
-    try:
-        valid_req = NoobitRequestTrades(
-            symbol=symbol,
-            symbol_mapping=symbol_mapping,
-            since=since
-        )
-        return Ok(valid_req)
-
-    except ValidationError as e:
-        return Err(e)
-
-    except Exception as e:
-        raise e
-
-
 def validate_parsed_request_trades(
         parsed_request: pmap
     ) -> Result[FtxRequestTrades, ValidationError]:
 
-    try:
-        validated = FtxRequestTrades(
-            **parsed_request
-        )
-        return Ok(validated)
-
-    except ValidationError as e:
-        return Err(e)
-
-    except Exception as e:
-        raise e
+    return _validate_parsed_req(FtxRequestTrades, parsed_request)
