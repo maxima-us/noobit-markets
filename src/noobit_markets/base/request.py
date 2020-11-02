@@ -1,11 +1,9 @@
 import typing
 import types
 from urllib.parse import urljoin
-import json
 import asyncio
 from functools import wraps
 
-from typing_extensions import Literal
 from pyrsistent import pmap
 import httpx
 from pydantic import AnyHttpUrl, PositiveInt, ValidationError
@@ -16,6 +14,10 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 from noobit_markets.base.models.result import Ok, Err, Result
 
+# response models 
+from noobit_markets.base.models.rest.request import (
+    NoobitRequestOhlc
+)
 
 
 #? Do we still need this
@@ -169,7 +171,47 @@ def retry_request(
 
 
 # ============================================================
-# VALIDATE PARSED REQUEST
+# OHLC
 # ============================================================
 
-# probably better to not have a general func as we cant type hint it properly
+
+def validate_request_ohlc(
+        symbol: ntypes.SYMBOL,
+        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
+        timeframe: ntypes.TIMEFRAME,
+        since: ntypes.TIMESTAMP
+    ) -> Result[NoobitRequestOhlc, ValidationError]:
+
+    try:
+        valid_req = NoobitRequestOhlc(
+            symbol=symbol,
+            symbol_mapping=symbol_mapping,
+            timeframe=timeframe,
+            since=since
+        )
+        return Ok(valid_req)
+
+    except ValidationError as e:
+        return Err(e)
+
+    except Exception as e:
+        raise e
+
+
+def _validate_parsed_req_ohlc(
+        exchange_req_model: FrozenBaseModel,
+        parsed_request: pmap
+    ):
+
+
+    try:
+        validated = exchange_req_model(
+            **parsed_request
+        )
+        return Ok(validated)
+
+    except ValidationError as e:
+        return Err(e)
+
+    except Exception as e:
+        raise e

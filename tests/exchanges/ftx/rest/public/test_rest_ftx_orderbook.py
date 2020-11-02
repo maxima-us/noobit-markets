@@ -4,7 +4,7 @@ import aiohttp
 
 from noobit_markets.exchanges.ftx.rest.public.orderbook.get import get_orderbook_ftx
 
-from noobit_markets.base.models.result import Ok, Err, Result
+from noobit_markets.base.models.result import Ok
 from noobit_markets.base.models.rest.response import NoobitResponseOrderBook
 
 
@@ -24,7 +24,7 @@ async def fetch(client):
         client,
         "XBT-USD",
         symbol_mapping["asset_pairs"],
-        #! max is 100 
+        #! max is 100
         #? change model max to 100 ??
         100,
     )

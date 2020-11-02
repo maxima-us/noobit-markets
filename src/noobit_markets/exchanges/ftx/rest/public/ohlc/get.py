@@ -3,7 +3,6 @@ import pydantic
 
 from .request import (
     validate_parsed_request_ohlc,
-    validate_request_ohlc,
     parse_request_ohlc,
 )
 from .response import (
@@ -12,13 +11,17 @@ from .response import (
     parse_result_data_ohlc
 )
 
+from noobit_markets.base.request import (
+    retry_request, 
+    validate_request_ohlc
+)
+
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.request import retry_request
 from noobit_markets.base.models.rest.response import NoobitResponseOhlc
 from noobit_markets.base.models.result import Result
 
-# Kraken
+# FTX
 from noobit_markets.exchanges.ftx import endpoints
 from noobit_markets.exchanges.ftx.rest.base import get_result_content_from_req
 

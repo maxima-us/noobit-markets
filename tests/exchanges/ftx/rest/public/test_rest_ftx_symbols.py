@@ -4,8 +4,8 @@ import aiohttp
 
 from noobit_markets.exchanges.ftx.rest.public.symbols.get import get_symbols_ftx
 
-from noobit_markets.base.models.result import Ok, Err, Result
-from noobit_markets.base.models.rest.response import NoobitResponseSymbols, NoobitResponseOhlc
+from noobit_markets.base.models.result import Ok, Result
+from noobit_markets.base.models.rest.response import NoobitResponseSymbols
 
 
 async def fetch(client):

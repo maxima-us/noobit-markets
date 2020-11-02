@@ -4,15 +4,20 @@ from pyrsistent import pmap
 from pydantic import PositiveInt, ValidationError, conint
 from typing_extensions import Literal
 
-from noobit_markets.base import ntypes, mappings
+from noobit_markets.base import mappings
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.request import NoobitRequestOhlc
 
-from noobit_markets.base.models.result import Ok, Err, Result
+from noobit_markets.base.request import (
+    _validate_parsed_req_ohlc
+)
+
+from noobit_markets.base.models.result import Result
+
 
 
 # ============================================================
-# KRAKEN MODEL
+# FTX MODEL
 # ============================================================
 
 
@@ -55,42 +60,51 @@ def parse_request_ohlc(
 # VALIDATE
 # ============================================================
 
-# TODO duplicate across all exchanges ???
-def validate_request_ohlc(
-        symbol: ntypes.SYMBOL,
-        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
-        timeframe: ntypes.TIMEFRAME,
-        since: ntypes.TIMESTAMP
-    ) -> Result[NoobitRequestOhlc, ValidationError]:
+# # TODO duplicate across all exchanges ???
+# def validate_request_ohlc(
+#         symbol: ntypes.SYMBOL,
+#         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
+#         timeframe: ntypes.TIMEFRAME,
+#         since: ntypes.TIMESTAMP
+#     ) -> Result[NoobitRequestOhlc, ValidationError]:
 
-    try:
-        valid_req = NoobitRequestOhlc(
-            symbol=symbol,
-            symbol_mapping=symbol_mapping,
-            timeframe=timeframe,
-            since=since
-        )
-        return Ok(valid_req)
+#     try:
+#         valid_req = NoobitRequestOhlc(
+#             symbol=symbol,
+#             symbol_mapping=symbol_mapping,
+#             timeframe=timeframe,
+#             since=since
+#         )
+#         return Ok(valid_req)
 
-    except ValidationError as e:
-        return Err(e)
+#     except ValidationError as e:
+#         return Err(e)
 
-    except Exception as e:
-        raise e
+#     except Exception as e:
+#         raise e
+
 
 
 def validate_parsed_request_ohlc(
-        parsed_request: pmap
-    ) -> Result[FtxRequestOhlc, ValidationError]:
+    parsed_request: pmap
+) -> Result[FtxRequestOhlc, ValidationError]:
 
-    try:
-        validated = FtxRequestOhlc(
-            **parsed_request
-        )
-        return Ok(validated)
+    return _validate_parsed_req_ohlc(FtxRequestOhlc, parsed_request)
 
-    except ValidationError as e:
-        return Err(e)
 
-    except Exception as e:
-        raise e
+# # TODO duplicate except model
+# def validate_parsed_request_ohlc(
+#         parsed_request: pmap
+#     ) -> Result[FtxRequestOhlc, ValidationError]:
+
+#     try:
+#         validated = FtxRequestOhlc(
+#             **parsed_request
+#         )
+#         return Ok(validated)
+
+#     except ValidationError as e:
+#         return Err(e)
+
+#     except Exception as e:
+#         raise e

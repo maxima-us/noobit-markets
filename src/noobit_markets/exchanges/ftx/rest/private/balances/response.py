@@ -1,6 +1,5 @@
 import typing
 from decimal import Decimal
-from datetime import date
 
 from pyrsistent import pmap
 from pydantic import ValidationError, constr
@@ -11,7 +10,6 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.response import NoobitResponseBalances
 from noobit_markets.base.models.result import Ok, Err, Result
 
-# noobit kraken
 
 
 
@@ -38,7 +36,7 @@ class FtxResponseItemBalances(FrozenBaseModel):
     coin: constr(regex=r'[A-Z]+')
     free: Decimal
     total: Decimal
-    
+
 
 class FtxResponseBalances(FrozenBaseModel):
 
@@ -60,7 +58,7 @@ class FtxResponseBalances(FrozenBaseModel):
 
 
 def parse_result_data_balances(
-        result_data: FtxResponseBalances, 
+        result_data: FtxResponseBalances,
         # FIXME use mapping
         asset_mapping: ntypes.ASSET_FROM_EXCHANGE
     ) -> typing.Mapping[ntypes.ASSET, Decimal]:
