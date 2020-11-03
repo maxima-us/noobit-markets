@@ -178,6 +178,28 @@ def retry_request(
 # ============================================================
 
 
+def _validate_data(
+        model: FrozenBaseModel,
+        fields: dict
+    ) -> Result:
+    try:
+        validated = model(**fields)
+        return Ok(validated)
+    except ValidationError as e:
+        return Err(e)
+    except Exception as e:
+        raise e
+
+def validate_data_against(data: dict, model: FrozenBaseModel):
+    try:
+        validated = model(**data)
+        return Ok(validated)
+    except ValidationError as e:
+        return Err(e)
+    except Exception as e:
+        raise e
+
+
 def _validate_parsed_req(
         exchange_req_model: FrozenBaseModel,
         parsed_request: pmap

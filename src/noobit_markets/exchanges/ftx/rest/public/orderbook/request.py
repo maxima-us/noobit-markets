@@ -12,7 +12,7 @@ from noobit_markets.base.request import _validate_parsed_req
 
 
 # ============================================================
-# KRAKEN MODEL
+# FTX MODEL
 # ============================================================
 
 

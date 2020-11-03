@@ -12,7 +12,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.rest.response import NoobitResponseOrderBook
 from noobit_markets.base.models.result import Ok, Err, Result
 
-
+from noobit_markets.base.request import _validate_data
 
 
 #============================================================
@@ -87,15 +87,16 @@ def validate_raw_result_content_orderbook(
         result_content: pmap,
     ) -> Result[FtxResponseOrderBook, ValidationError]:
 
-    try:
-        validated = FtxResponseOrderBook(**result_content)
-        return Ok(validated)
+    # try:
+    #     validated = FtxResponseOrderBook(**result_content)
+    #     return Ok(validated)
 
-    except ValidationError as e:
-        return Err(e)
+    # except ValidationError as e:
+    #     return Err(e)
 
-    except Exception as e:
-        raise e
+    # except Exception as e:
+    #     raise e
+    return _validate_data(FtxResponseOrderBook, result_content)
 
 
 def validate_parsed_result_data_orderbook(
@@ -103,14 +104,15 @@ def validate_parsed_result_data_orderbook(
         raw_json: typing.Any
     ) -> Result[NoobitResponseOrderBook, ValidationError]:
 
-    try:
-        validated = NoobitResponseOrderBook(
-            rawJson=raw_json,
-            **parsed_result)
-        return Ok(validated)
+    # try:
+    #     validated = NoobitResponseOrderBook(
+    #         rawJson=raw_json,
+    #         **parsed_result)
+    #     return Ok(validated)
 
-    except ValidationError as e:
-        return Err(e)
+    # except ValidationError as e:
+    #     return Err(e)
 
-    except Exception as e:
-        raise e
+    # except Exception as e:
+    #     raise e
+    return _validate_data(NoobitResponseOrderBook, {**parsed_result, "rawJson": raw_json})
