@@ -18,7 +18,9 @@ from noobit_markets.base.models.result import Ok, Err, Result
 from noobit_markets.base.models.rest.request import (
     NoobitRequestOhlc,
     NoobitRequestTrades,
-    NoobitRequestOrderBook
+    NoobitRequestOrderBook,
+    NoobitRequestSpread,
+    NoobitRequestInstrument
 )
 
 
@@ -258,7 +260,7 @@ def validate_nreq_ohlc(
 def validate_nreq_trades(
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
-        since: ntypes.TIMESTAMP
+        since: typing.Optional[ntypes.TIMESTAMP]
     ) -> Result[NoobitRequestTrades, ValidationError]:
 
     try:
@@ -294,6 +296,58 @@ def validate_nreq_orderbook(
             symbol=symbol,
             symbol_mapping=symbol_mapping,
             depth=depth
+        )
+        return Ok(valid_req)
+
+    except ValidationError as e:
+        return Err(e)
+
+    except Exception as e:
+        raise e
+
+
+
+
+# ============================================================
+# SPREAD VALIDATION
+# ============================================================
+
+
+def validate_nreq_spread(
+        symbol: ntypes.SYMBOL,
+        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
+    ) -> Result[NoobitRequestSpread, ValidationError]:
+
+    try:
+        valid_req = NoobitRequestSpread(
+            symbol=symbol,
+            symbol_mapping=symbol_mapping,
+        )
+        return Ok(valid_req)
+
+    except ValidationError as e:
+        return Err(e)
+
+    except Exception as e:
+        raise e
+
+
+
+
+# ============================================================
+# INSTRUMENT VALIDATION
+# ============================================================
+
+
+def validate_nreq_instrument(
+        symbol: ntypes.SYMBOL,
+        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
+    ) -> Result[NoobitRequestInstrument, ValidationError]:
+
+    try:
+        valid_req = NoobitRequestInstrument(
+            symbol=symbol,
+            symbol_mapping=symbol_mapping,
         )
         return Ok(valid_req)
 

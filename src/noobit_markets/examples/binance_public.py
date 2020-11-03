@@ -21,7 +21,8 @@ res = asyncio.run(
 )
 if res.is_err():
     print(res)
-
+else:
+    print("Ohlc ok")
 
 res = asyncio.run(
     get_orderbook_binance(
@@ -34,6 +35,8 @@ res = asyncio.run(
 
 if res.is_err():
     print(res)
+else: 
+    print("OrderBook ok")
 
 
 res = asyncio.run(
@@ -46,6 +49,8 @@ res = asyncio.run(
 
 if res.is_err():
     print(res)
+else:
+    print("Trades ok")
 
 
 res = asyncio.run(
@@ -58,6 +63,8 @@ res = asyncio.run(
 
 if res.is_err():
     print(res)
+else:
+    print("Instrument ok")
 
 
 res = asyncio.run(
@@ -68,6 +75,8 @@ res = asyncio.run(
 
 if res.is_err():
     print(res)
+else:
+    print("Symbols ok")
 
 
 res = asyncio.run(
@@ -78,5 +87,7 @@ res = asyncio.run(
     )
 )
 
-if res:
+if res.is_err():
     print(res)
+else:
+    print("Spread ok")

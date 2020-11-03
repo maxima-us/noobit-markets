@@ -118,6 +118,7 @@ async def get_orderbook_ftx(
 
     # ftx has variable urls besides query params
     # format: https://ftx.com/api/markets/{market_name}/candles
+    # FIXME use urljoin
     req_url = "/".join([base_url, "markets", symbol_to_exchange[symbol], endpoint])
     method = "GET"
     headers = {}
