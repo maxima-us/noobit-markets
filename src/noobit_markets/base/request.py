@@ -225,7 +225,7 @@ def _validate_parsed_req(
 # ============================================================
 
 
-def validate_request_ohlc(
+def validate_nreq_ohlc(
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
         timeframe: ntypes.TIMEFRAME,
@@ -255,7 +255,7 @@ def validate_request_ohlc(
 # ============================================================
 
 
-def validate_raw_request_trades(
+def validate_nreq_trades(
         symbol: ntypes.SYMBOL,
         symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
         since: ntypes.TIMESTAMP

@@ -38,8 +38,8 @@ res = asyncio.run(
 
 if res.is_err():
     print(res)
-else:
-    print("OK :", res.value)
+# else:
+#     print("OK :", res.value)
 
 async def trades():
     async with aiohttp.ClientSession() as client:
