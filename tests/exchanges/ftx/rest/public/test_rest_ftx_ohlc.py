@@ -2,7 +2,7 @@ import pytest
 import httpx
 import aiohttp
 
-from noobit_markets.exchanges.ftx.rest.public.ohlc.get import get_ohlc_ftx
+from noobit_markets.exchanges.ftx.rest.public.ohlc import get_ohlc_ftx
 
 from noobit_markets.base.models.result import Ok
 from noobit_markets.base.models.rest.response import NoobitResponseOhlc

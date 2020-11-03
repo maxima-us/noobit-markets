@@ -3,12 +3,11 @@ import asyncio
 import httpx
 import aiohttp
 
-from noobit_markets.exchanges.ftx.rest.public.ohlc.get import get_ohlc_ftx
-from noobit_markets.exchanges.ftx.rest.public.orderbook.get import get_orderbook_ftx
-from noobit_markets.exchanges.ftx.rest.public.trades.get import get_trades_ftx
-# from noobit_markets.exchanges.binance.rest.public.instrument.get import get_instrument_binance
-from noobit_markets.exchanges.ftx.rest.public.symbols.get import get_symbols_ftx
-# from noobit_markets.exchanges.binance.rest.public.spread.get import get_spread_binance
+from noobit_markets.exchanges.ftx.rest.public.ohlc import get_ohlc_ftx
+from noobit_markets.exchanges.ftx.rest.public.orderbook import get_orderbook_ftx
+from noobit_markets.exchanges.ftx.rest.public.trades import get_trades_ftx
+from noobit_markets.exchanges.ftx.rest.public.symbols import get_symbols_ftx
+
 
 
 
@@ -23,8 +22,8 @@ res = asyncio.run(
 )
 if res.is_err():
     print(res)
-# else:
-#     print("OK :", res.value)
+else:
+    print("OHLC ok")
 
 
 res = asyncio.run(
@@ -38,8 +37,9 @@ res = asyncio.run(
 
 if res.is_err():
     print(res)
-# else:
-#     print("OK :", res.value)
+else:
+    print("Orderbook ok")
+
 
 async def trades():
     async with aiohttp.ClientSession() as client:
@@ -54,8 +54,8 @@ res = asyncio.run(trades())
 
 if res.is_err():
     print(res)
-# else:
-#     print("OK :", res.value)
+else:
+    print("Trades ok")
 
 
 # res = asyncio.run(
@@ -78,8 +78,8 @@ res = asyncio.run(
 
 if res.is_err():
     print(res)
-# else:
-#     print("FTX Symbols request successful : \n", res)
+else:
+    print("Symbols ok")
 
 
 # res = asyncio.run(

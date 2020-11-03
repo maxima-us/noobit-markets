@@ -11,17 +11,17 @@ from noobit_markets.exchanges.kraken.rest.public.instrument.get import get_instr
 #public ohlc
 from noobit_markets.exchanges.binance.rest.public.ohlc.get import get_ohlc_binance
 from noobit_markets.exchanges.kraken.rest.public.ohlc.get import get_ohlc_kraken
-from noobit_markets.exchanges.ftx.rest.public.ohlc.get import get_ohlc_ftx
+from noobit_markets.exchanges.ftx.rest.public.ohlc import get_ohlc_ftx
 
 #public orderbook
 from noobit_markets.exchanges.binance.rest.public.orderbook.get import get_orderbook_binance
 from noobit_markets.exchanges.kraken.rest.public.orderbook.get import get_orderbook_kraken
-from noobit_markets.exchanges.ftx.rest.public.orderbook.get import get_orderbook_ftx
+from noobit_markets.exchanges.ftx.rest.public.orderbook import get_orderbook_ftx
 
 #public symbols
 from noobit_markets.exchanges.binance.rest.public.symbols.get import get_symbols_binance
 from noobit_markets.exchanges.kraken.rest.public.symbols.get import get_symbols
-from noobit_markets.exchanges.ftx.rest.public.symbols.get import get_symbols_ftx
+from noobit_markets.exchanges.ftx.rest.public.symbols import get_symbols_ftx
 
 #public spread
 from noobit_markets.exchanges.binance.rest.public.spread.get import get_spread_binance
@@ -30,7 +30,7 @@ from noobit_markets.exchanges.kraken.rest.public.spread.get import get_spread_kr
 #public trades
 from noobit_markets.exchanges.binance.rest.public.trades.get import get_trades_binance
 from noobit_markets.exchanges.kraken.rest.public.trades.get import get_trades_kraken
-from noobit_markets.exchanges.ftx.rest.public.trades.get import get_trades_ftx
+from noobit_markets.exchanges.ftx.rest.public.trades import get_trades_ftx
 
 #private balances
 from noobit_markets.exchanges.binance.rest.private.balances.get import get_balances_binance
