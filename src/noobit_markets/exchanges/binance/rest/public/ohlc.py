@@ -161,7 +161,7 @@ async def get_ohlc_binance(
     req_url = urljoin(base_url, endpoint)
     method = "GET"
     headers = {}
-    
+
     valid_noobit_req = validate_nreq_ohlc(symbol, symbol_to_exchange, timeframe, since)
     if valid_noobit_req.is_err():
         return valid_noobit_req

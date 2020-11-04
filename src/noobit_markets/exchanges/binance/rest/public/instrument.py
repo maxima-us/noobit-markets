@@ -81,7 +81,7 @@ class BinanceResponseInstrument(FrozenBaseModel):
     priceChange: Decimal
     priceChangePercent: Decimal
     weightedAvgPrice: Decimal
-    prevClosePrice: Decimal 
+    prevClosePrice: Decimal
     lastPrice: Decimal
     lastQty: Decimal
     bidPrice: Decimal
@@ -121,19 +121,19 @@ def parse_result(
         # FIXME revise NoobitResp model so better fit binance data too
         # FIXME below values should be None (model fields are not optional so far)
         "prevLow": 0,
-        "prevHigh": 0, 
-        "prevVwap": 0, 
-        "prevVolume": 0, 
-        "prevTrdCount": 0, 
+        "prevHigh": 0,
+        "prevVwap": 0,
+        "prevVolume": 0,
+        "prevTrdCount": 0,
     }
     return pmap(parsed_instrument)
 
 
 
 
-# ============================================================ 
+# ============================================================
 # FETCH
-# ============================================================ 
+# ============================================================
 
 
 @retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))

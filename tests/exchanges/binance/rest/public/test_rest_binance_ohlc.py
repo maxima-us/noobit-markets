@@ -1,7 +1,7 @@
 import pytest
 import httpx
 
-from noobit_markets.exchanges.binance.rest.public.ohlc.get import get_ohlc_binance
+from noobit_markets.exchanges.binance.rest.public.ohlc import get_ohlc_binance
 
 from noobit_markets.base.models.result import Ok, Err, Result
 from noobit_markets.base.models.rest.response import NoobitResponseOhlc

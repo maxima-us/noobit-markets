@@ -1,33 +1,19 @@
 import functools
-import json
-import inspect
 import typing
 
 import httpx
-from noobit_markets.exchanges.ftx.rest.base import get_result_content_from_req
 from pyrsistent import pmap
-from pydantic import PositiveInt, AnyHttpUrl
 
 import stackprinter
 stackprinter.set_excepthook(style="darkbg2")
 
 # base
-from noobit_markets.base import ntypes
-from noobit_markets.base.errors import BaseError, BadRequest
-from noobit_markets.base.request import (
-    make_httpx_get_request,
-    send_public_request,
-    make_httpx_post_request,
-    send_private_request
-)
+from noobit_markets.base.errors import BaseError
 from noobit_markets.base.response import (
-    get_response_status_code,
-    get_sent_request,
     resp_json,
     get_req_content
 )
 from noobit_markets.base.models.result import Ok, Err, Result
-from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 #binance
 from noobit_markets.exchanges.binance.errors import ERRORS_FROM_EXCHANGE

@@ -1,12 +1,12 @@
 import asyncio
 import httpx
 
-from noobit_markets.exchanges.binance.rest.public.ohlc.get import get_ohlc_binance
-from noobit_markets.exchanges.binance.rest.public.orderbook.get import get_orderbook_binance
-from noobit_markets.exchanges.binance.rest.public.trades.get import get_trades_binance
-from noobit_markets.exchanges.binance.rest.public.instrument.get import get_instrument_binance
-from noobit_markets.exchanges.binance.rest.public.symbols.get import get_symbols_binance
-from noobit_markets.exchanges.binance.rest.public.spread.get import get_spread_binance
+from noobit_markets.exchanges.binance.rest.public.ohlc import get_ohlc_binance
+from noobit_markets.exchanges.binance.rest.public.orderbook import get_orderbook_binance
+from noobit_markets.exchanges.binance.rest.public.trades import get_trades_binance
+from noobit_markets.exchanges.binance.rest.public.instrument import get_instrument_binance
+from noobit_markets.exchanges.binance.rest.public.symbols import get_symbols_binance
+from noobit_markets.exchanges.binance.rest.public.spread import get_spread_binance
 
 
 
