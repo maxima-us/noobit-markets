@@ -1,22 +1,20 @@
 import json
 import typing
+import functools
 
+import httpx
 from pyrsistent import pmap
 from pydantic import PositiveInt, AnyHttpUrl
 
 import stackprinter
 stackprinter.set_excepthook(style="darkbg2")
 
-
-
 # base
 from noobit_markets.base import ntypes
 from noobit_markets.base.errors import BaseError
-from noobit_markets.base.request import (
-    make_httpx_get_request,
-    send_public_request,
-    make_httpx_post_request,
-    send_private_request
+from noobit_markets.base.response import (
+    resp_json,
+    get_req_content
 )
 from noobit_markets.base.models.result import Ok, Err, Result
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
@@ -26,15 +24,36 @@ from noobit_markets.exchanges.kraken.errors import ERRORS_FROM_EXCHANGE
 
 
 
+async def result_or_err(resp_obj: httpx.Response) -> Result:
 
-def get_response_status_code(response_json: pmap) -> Result[PositiveInt, str]:
-    status_code = response_json["status_code"]
-    err_msg = f"HTTP Status Error: {status_code}"
-    return Ok(status_code) if status_code == 200 else Err(err_msg)
+    content = await resp_json(resp_obj)
+
+    err = content.get("error", None)
+
+    if err:
+        err_dict = {err_key: err_msg for err_key, err_msg in err.split(":")}
+        return Err(err_dict)
+    else:
+        # no error
+        return Ok(content["result"])
 
 
-def get_sent_request(response_json: pmap) -> str:
-    return response_json["request"]
+def parse_error_content(
+        error_content: frozenset,
+        sent_request: pmap
+    ) -> Err[typing.Tuple[BaseError]]:
+    """error content returned from result_or_err
+    """
+
+    tupled = frozenset([ERRORS_FROM_EXCHANGE[err_key](error_content, sent_request) for err_key, err_msg in error_content.items()])
+    return Err(tupled)
+
+
+get_result_content_from_req = functools.partial(get_req_content, result_or_err, parse_error_content)
+
+
+
+
 
 
 def get_error_content(response_json: pmap) -> frozenset:
@@ -55,6 +74,15 @@ def parse_error_content(
 
     tupled = tuple([ERRORS_FROM_EXCHANGE[error](error_content, sent_request) for error in error_content])
     return Err(tupled)
+
+
+
+
+
+
+
+
+
 
 
 async def get_result_content_from_public_req(

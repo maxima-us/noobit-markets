@@ -71,7 +71,7 @@ def make_kraken_model_ohlc(
 # UTILS
 #============================================================
 
-
+# TODO no need to abstract this
 def get_result_data_ohlc(
         valid_result_content: make_kraken_model_ohlc,
         symbol: ntypes.SYMBOL,
@@ -98,7 +98,7 @@ def get_result_data_last(
     # we want timestamp in ms
     return valid_result_content.last
 
-
+# TODO this is chedked by the model anyway
 def verify_symbol_ohlc(
         result_content: pmap,
         symbol: ntypes.SYMBOL,

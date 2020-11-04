@@ -2,7 +2,7 @@ import pytest
 import httpx
 from pydantic import ValidationError
 
-from noobit_markets.exchanges.kraken.rest.public.orderbook.get import get_orderbook_kraken
+from noobit_markets.exchanges.kraken.rest.public.orderbook import get_orderbook_kraken
 
 from noobit_markets.base.models.result import Ok, Err, Result
 from noobit_markets.base.models.rest.response import NoobitResponseOrderBook

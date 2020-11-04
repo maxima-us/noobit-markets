@@ -2,7 +2,7 @@ import pytest
 import httpx
 from pydantic import ValidationError
 
-from noobit_markets.exchanges.kraken.rest.public.symbols.get import get_symbols
+from noobit_markets.exchanges.kraken.rest.public.symbols import get_symbols_kraken
 
 from noobit_markets.base.models.result import Ok, Err, Result
 from noobit_markets.base.models.rest.response import NoobitResponseSymbols, NoobitResponseOhlc
@@ -14,7 +14,7 @@ async def test_symbols():
 
     async with httpx.AsyncClient() as client:
 
-        symbols = await get_symbols(
+        symbols = await get_symbols_kraken(
             client,
         )
 
