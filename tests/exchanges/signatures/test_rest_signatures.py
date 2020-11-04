@@ -33,15 +33,15 @@ from noobit_markets.exchanges.kraken.rest.public.trades.get import get_trades_kr
 from noobit_markets.exchanges.ftx.rest.public.trades import get_trades_ftx
 
 #private balances
-# from noobit_markets.exchanges.binance.rest.private.balances.get import get_balances_binance
+from noobit_markets.exchanges.binance.rest.private.balances import get_balances_binance
 from noobit_markets.exchanges.kraken.rest.private.balances.get import get_balances_kraken
 
 #private orders
-# from noobit_markets.exchanges.binance.rest.private.orders.get import get_closedorders_binance
+from noobit_markets.exchanges.binance.rest.private.orders import get_closedorders_binance
 from noobit_markets.exchanges.kraken.rest.private.orders.get import get_closedorders_kraken
 
 #private trades
-# from noobit_markets.exchanges.binance.rest.private.trades.get import get_trades_binance as get_usertrades_binance
+from noobit_markets.exchanges.binance.rest.private.trades import get_trades_binance as get_usertrades_binance
 from noobit_markets.exchanges.kraken.rest.private.trades.get import get_usertrades_kraken
 
 
@@ -170,25 +170,25 @@ def test_trades_signature():
     _util_test_sigs(sig_kraken, sig_binance, sig_ftx)
 
 
-# def test_balances_signature():
+def test_balances_signature():
     
-    # sig_kraken = inspect.signature(get_balances_kraken)
-    # sig_binance = inspect.signature(get_balances_binance)
+    sig_kraken = inspect.signature(get_balances_kraken)
+    sig_binance = inspect.signature(get_balances_binance)
 
-    # _util_test_sigs(sig_kraken, sig_binance)
+    _util_test_sigs(sig_kraken, sig_binance)
 
 
-# def test_orders_signature():
+def test_orders_signature():
     
-#     sig_kraken = inspect.signature(get_closedorders_kraken)
-#     sig_binance = inspect.signature(get_closedorders_binance)
+    sig_kraken = inspect.signature(get_closedorders_kraken)
+    sig_binance = inspect.signature(get_closedorders_binance)
 
-#     _util_test_sigs(sig_kraken, sig_binance)
+    _util_test_sigs(sig_kraken, sig_binance)
 
 
-# def test_usertrades_signature():
+def test_usertrades_signature():
     
-#     sig_kraken = inspect.signature(get_usertrades_kraken)
-#     sig_binance = inspect.signature(get_usertrades_binance)
+    sig_kraken = inspect.signature(get_usertrades_kraken)
+    sig_binance = inspect.signature(get_usertrades_binance)
 
-#     _util_test_sigs(sig_kraken, sig_binance)
+    _util_test_sigs(sig_kraken, sig_binance)
