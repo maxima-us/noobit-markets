@@ -28,10 +28,11 @@ async def result_or_err(resp_obj: httpx.Response) -> Result:
 
     content = await resp_json(resp_obj)
 
-    err = content.get("error", None)
+    errors: list = content.get("error", None)
 
-    if err:
-        err_dict = {err_key: err_msg for err_key, err_msg in err.split(":")}
+    if errors:
+        # err_dict = {err_k: err_v for err in errors for (err_k, err_v) in err.split(":")}
+        err_dict = {err: err.split(":")[1] for err in errors}
         return Err(err_dict)
     else:
         # no error
