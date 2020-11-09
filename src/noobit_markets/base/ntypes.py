@@ -1,9 +1,12 @@
 import typing
+from typing import Union, TypeVar, Type
 from decimal import Decimal
 
 from typing_extensions import Literal
 import httpx
+import aiohttp
 from pydantic import conint, constr, PositiveInt
+import pydantic
 
 
 
@@ -14,8 +17,9 @@ from pydantic import conint, constr, PositiveInt
 
 
 # http clients (need to support async)
-CLIENT = Literal[
-    httpx.AsyncClient
+CLIENT = typing.Union[
+    httpx.AsyncClient,
+    aiohttp.ClientSession
 ]
 
 
@@ -25,7 +29,9 @@ EXCHANGE = Literal[
 ]
 
 
-PERCENT = conint(ge=0, le=100)
+PERCENT: typing.Type[int] = conint(ge=0, le=100)
+# PERCENT = pydantic.ConstrainedInt
+
 
 
 
@@ -34,7 +40,8 @@ PERCENT = conint(ge=0, le=100)
 # ============================================================
 
 
-TIMESTAMP = PositiveInt
+TIMESTAMP = pydantic.PositiveInt
+
 
 TIMEFRAME = Literal[
     "1M",
@@ -59,17 +66,18 @@ TIMEFRAME = Literal[
 ASSET = constr(regex=r'[A-Z]{2,5}')
 
 # same as assetpair
-SYMBOL = constr(regex=r'[A-Z]+-[A-Z]+')
-
+SYMBOL: str = pydantic.ConstrainedStr(regex=r'[A-Z]+-[A-Z]+')
+# SYMBOL: str = constr(regex=r'[A-Z]+-[A-Z]+')
+# SYMBOL= str
 
 # symbol mappings (symbol = assetpair)
-SYMBOL_FROM_EXCHANGE = typing.Mapping[str, SYMBOL]
-SYMBOL_TO_EXCHANGE = typing.Mapping[SYMBOL, str]
+SYMBOL_FROM_EXCHANGE: typing.Mapping[str, SYMBOL]
+SYMBOL_TO_EXCHANGE = typing.Mapping[Type[str], str]
 
 
 # asset mappings
-ASSET_TO_EXCHANGE = typing.Mapping[ASSET, str]
-ASSET_FROM_EXCHANGE = typing.Mapping[str, ASSET]
+ASSET_TO_EXCHANGE = typing.Mapping[Type[str], str]
+ASSET_FROM_EXCHANGE = typing.Mapping[str, Type[str]]
 
 
 
@@ -152,4 +160,3 @@ TRANSACTIONTYPE = Literal[
     "withdrawal",
     "deposit"
 ]
-

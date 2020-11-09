@@ -194,7 +194,7 @@ class RequestTimeout(NetworkError):
 
 
 # __all__ = [
-#     'error_hierarchy',
+#     # 'error_hierarchy',
 #     'UndefinedError',
 #     'ExchangeError',
 #     'AuthenticationError',

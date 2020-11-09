@@ -13,6 +13,10 @@ from noobit_markets.exchanges.kraken.rest.private.trades import get_usertrades_k
 from noobit_markets.exchanges.kraken.rest.private.ws_auth import get_wstoken_kraken
 
 
+from noobit_markets.base._tabulate import pylist_table, pymap_table
+
+
+
 res = asyncio.run(
     get_symbols_kraken(
         client=httpx.AsyncClient(),
@@ -37,6 +41,8 @@ else:
     if res.is_err():
         print(res)
     else:
+        table = pymap_table(res.value.data, headers=["Asset", "Balance"])
+        print(table)
         print("Balances ok")
 
 
@@ -76,6 +82,9 @@ else:
     if res.is_err():
         print(res)
     else:
+        #! table is tooo wide
+        # table = pydantic_table(res.value.orders)
+        # print(table)
         print("CLosed Orders ok")
 
 
@@ -103,6 +112,8 @@ else:
     if res.is_err():
         print(res)
     else:
+        table = pylist_table(res.value.trades)
+        print(table)
         print("User Trades ok")
     
     
