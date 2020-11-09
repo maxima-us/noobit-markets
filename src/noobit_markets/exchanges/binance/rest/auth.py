@@ -1,24 +1,24 @@
 import urllib
 import hashlib
-import base64
 import hmac
+import typing
 
+import pydantic
 from dotenv import load_dotenv
-from pyrsistent import pmap
-from pydantic import AnyHttpUrl
+load_dotenv()
 
 from noobit_markets.base.request import *
-from noobit_markets.base.auth import BaseAuth, make_base
+from noobit_markets.base.auth import make_base
+from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 
-load_dotenv()
 
 
 #Binance Private Request Model
 #always needs timestamp and signature param to authenticate 
 class BinancePrivateRequest(FrozenBaseModel):
 
-    timestamp: PositiveInt
+    timestamp: pydantic.PositiveInt
     signature: typing.Any
 
 # necessary so we do not share same class attributes/methods across all exchanges

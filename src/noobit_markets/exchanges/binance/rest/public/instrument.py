@@ -102,7 +102,7 @@ class BinanceResponseInstrument(FrozenBaseModel):
 
 def parse_result(
         result_data: BinanceResponseInstrument,
-        symbol: ntypes.SYMBOL,
+        symbol: ntypes.PSymbol,
         symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE
     ) -> pmap:
 

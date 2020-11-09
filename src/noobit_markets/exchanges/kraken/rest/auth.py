@@ -2,25 +2,24 @@ import urllib
 import hashlib
 import base64
 import hmac
-from copy import deepcopy, copy
 
+import pydantic
+import pyrsistent
 from dotenv import load_dotenv
-from pyrsistent import pmap
-from pydantic import AnyHttpUrl
+load_dotenv()
 
 from noobit_markets.base.request import *
-from noobit_markets.base.auth import BaseAuth, make_base
+from noobit_markets.base.auth import make_base
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 
-load_dotenv()
 
 
 #Kraken Private Request Model
 #always needs nonce param to authenticate 
 class KrakenPrivateRequest(FrozenBaseModel):
 
-    nonce: PositiveInt
+    nonce: pydantic.PositiveInt
 
 
 
@@ -35,7 +34,7 @@ class KrakenAuth(KrakenBase):
 
 
     # bug if we return pmap
-    def headers(self, endpoint: str, data: pmap) -> dict:
+    def headers(self, endpoint: str, data: pyrsistent.PMap) -> dict:
 
         url_wo_domain = f"/0/private/{endpoint}"
         auth_headers = {
@@ -49,7 +48,7 @@ class KrakenAuth(KrakenBase):
         return auth_headers
 
 
-    def _sign(self, request_args: pmap, endpoint: str):
+    def _sign(self, request_args: pyrsistent.PMap, endpoint: str):
         """Sign request data according to Kraken's scheme.
         Args:
             data (dict): API request parameters

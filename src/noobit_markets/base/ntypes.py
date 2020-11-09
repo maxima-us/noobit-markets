@@ -16,7 +16,7 @@ import pydantic
 # BASE CLASSES
 # ============================================================ 
 
-class NInt(int):
+class NInt(pydantic.ConstrainedInt):
     
     def __init__(self, _value: int):
         self._value = _value
@@ -29,7 +29,7 @@ class NInt(int):
         return f"<{self.__class__.__name__}>:{self._value}"
 
 
-class Nstr(str):
+class Nstr(pydantic.ConstrainedStr):
     
     def __init__(self, _value: str):
         self._value = _value
@@ -62,12 +62,12 @@ EXCHANGE = Literal[
 ]
 
 
-class PPercent(pydantic.ConstrainedInt, NInt):
+class PPercent(NInt):
     ge=0
     le=100
     strict=False
 
-class PCount(pydantic.ConstrainedInt, NInt):
+class PCount(NInt):
     ge=0
     strict=False
 
@@ -105,12 +105,12 @@ TIMEFRAME = Literal[
 
 
 # pydantic symbol
-class PSymbol(pydantic.ConstrainedStr, Nstr):
+class PSymbol(Nstr):
     regex=re.compile(r'[A-Z]+-[A-Z]+')
     strict=True
 
 # pydantic asset
-class PAsset(pydantic.ConstrainedStr, Nstr):
+class PAsset(Nstr):
     regex=re.compile(r'[A-Z]{2,5}')
     strict = True
 
@@ -135,7 +135,7 @@ ASSET_FROM_EXCHANGE = typing.Mapping[str, PAsset]
 # ============================================================
 
 
-class PDepth(pydantic.ConstrainedInt, NInt):
+class PDepth(NInt):
     ge=0
     le=100
     strict=False

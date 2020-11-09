@@ -18,8 +18,8 @@ from noobit_markets.base import ntypes
 class NoobitBaseResponse(FrozenBaseModel):
 
     #? should this be mandatory
-    exchange: ntypes.EXCHANGE
-    rawJson: typing.Mapping
+    exchange: typing.Optional[ntypes.EXCHANGE]
+    rawJson: typing.Any
 
 
 

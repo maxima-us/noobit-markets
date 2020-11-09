@@ -28,7 +28,7 @@ async def test_orderbook():
             client,
             "XBT-USD",
             symbol_mapping["asset_pairs"],
-            500,
+            100,
         )
 
         assert isinstance(symbols, Ok)
