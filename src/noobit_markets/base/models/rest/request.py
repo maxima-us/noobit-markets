@@ -2,7 +2,6 @@ import typing
 from decimal import Decimal
 
 from pydantic import PositiveInt, Field
-from typing_extensions import Literal
 
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base import ntypes

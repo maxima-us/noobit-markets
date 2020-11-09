@@ -25,7 +25,7 @@ class BaseAuth(object):
         self._set_class_var("key_pairs_dq", kp)
 
 
-    def get_exchange_keys(self) -> typing.FrozenSet[typing.Mapping[str, str]]:
+    def get_exchange_keys(self) -> typing.Deque:
         """
         """
         try:

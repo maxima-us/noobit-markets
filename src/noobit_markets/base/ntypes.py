@@ -1,12 +1,45 @@
 import typing
 from typing import Union, TypeVar, Type
 from decimal import Decimal
+import re
 
 from typing_extensions import Literal
 import httpx
 import aiohttp
 from pydantic import conint, constr, PositiveInt
 import pydantic
+
+
+
+
+# ============================================================ 
+# BASE CLASSES
+# ============================================================ 
+
+class NInt(int):
+    
+    def __init__(self, _value: int):
+        self._value = _value
+
+    def __str__(self):
+        # return self.sym
+        return f"<{self.__class__.__name__}>:{self._value}"
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__}>:{self._value}"
+
+
+class Nstr(str):
+    
+    def __init__(self, _value: str):
+        self._value = _value
+
+    def __str__(self):
+        # return self.sym
+        return f"<{self.__class__.__name__}>:{self._value}"
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__}>:{self._value}"
 
 
 
@@ -29,10 +62,17 @@ EXCHANGE = Literal[
 ]
 
 
-PERCENT = conint(ge=0, le=100)
-# PERCENT = pydantic.ConstrainedInt
+class PPercent(pydantic.ConstrainedInt, NInt):
+    ge=0
+    le=100
+    strict=False
 
+class PCount(pydantic.ConstrainedInt, NInt):
+    ge=0
+    strict=False
 
+COUNT = PCount
+PERCENT = PPercent
 
 
 # ============================================================
@@ -58,26 +98,34 @@ TIMEFRAME = Literal[
 
 
 # ============================================================
-# ASSETS
+# ASSETS & SYMBOLS
 # ============================================================
 
+# base class for SYMBOLS and ASSETS
 
-# for Kraken: shortest : SC // longest: WAVES
-ASSET = constr(regex=r'[A-Z]{2,5}')
 
-# same as assetpair
-SYMBOL = constr(regex=r'[A-Z]+-[A-Z]+')
-# SYMBOL: str = constr(regex=r'[A-Z]+-[A-Z]+')
-# SYMBOL= str
+# pydantic symbol
+class PSymbol(pydantic.ConstrainedStr, Nstr):
+    regex=re.compile(r'[A-Z]+-[A-Z]+')
+    strict=True
+
+# pydantic asset
+class PAsset(pydantic.ConstrainedStr, Nstr):
+    regex=re.compile(r'[A-Z]{2,5}')
+    strict = True
+
+# ? should be keep this ??
+SYMBOL = PSymbol
+ASSET = PAsset
 
 # symbol mappings (symbol = assetpair)
-SYMBOL_FROM_EXCHANGE = typing.Mapping[str, SYMBOL]
-SYMBOL_TO_EXCHANGE = typing.Mapping[SYMBOL, str]
+SYMBOL_FROM_EXCHANGE = typing.Mapping[str, PSymbol]
+SYMBOL_TO_EXCHANGE = typing.Mapping[PSymbol, str]
 
 
 # asset mappings
-ASSET_TO_EXCHANGE = typing.Mapping[ASSET, str]
-ASSET_FROM_EXCHANGE = typing.Mapping[str, ASSET]
+ASSET_TO_EXCHANGE = typing.Mapping[PAsset, str]
+ASSET_FROM_EXCHANGE = typing.Mapping[str, PAsset]
 
 
 
@@ -86,12 +134,26 @@ ASSET_FROM_EXCHANGE = typing.Mapping[str, ASSET]
 # ENDPOINTS
 # ============================================================
 
-DEPTH = PositiveInt
 
-# couter means only last value for a given key will be taken
-ASK = BID = ASKS = BIDS = typing.Mapping[Decimal, Decimal]
+class PDepth(pydantic.ConstrainedInt, NInt):
+    ge=0
+    le=100
+    strict=False
 
-# tuple of <best bid>, <best ask>, <timestamp>
+# ? should we keep this ?
+DEPTH = PDepth
+
+
+# counter means only last value for a given key will be taken
+# ASK = BID = ASKS = BIDS = typing.Mapping[float, float]
+ASKS = typing.Mapping[Decimal, Decimal]
+BIDS = typing.Mapping[Decimal, Decimal]
+ASK = typing.Mapping[Decimal, Decimal]
+BID = typing.Mapping[Decimal, Decimal]
+
+# tuple of <best bid>, <best ask>, <timestamp> 
+# ? should this stay a tuple or do we only want last value
+# ? most exchanges dont give historic spread like kraken
 SPREAD = typing.Tuple[Decimal, Decimal, Decimal]
 
 # tuple of <timestamp>, <open>, <high>, <low>, <close>, <volume>

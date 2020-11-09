@@ -1,10 +1,8 @@
 import typing
 from decimal import Decimal
-from datetime import date
-from datetime import datetime
 
 from typing_extensions import Literal
-from pydantic import PositiveInt, conint, validator, Field, constr
+from pydantic import PositiveInt, Field
 
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base import ntypes
@@ -20,8 +18,8 @@ from noobit_markets.base import ntypes
 class NoobitBaseResponse(FrozenBaseModel):
 
     #? should this be mandatory
-    exchange: typing.Optional[constr(regex=r'[A-Z]+')]
-    rawJson: typing.Any
+    exchange: ntypes.EXCHANGE
+    rawJson: typing.Mapping
 
 
 
@@ -42,7 +40,7 @@ class NoobitResponseItemOhlc(FrozenBaseModel):
     close: Decimal
 
     volume: Decimal
-    trdCount: conint(ge=0)
+    trdCount: ntypes.COUNT
 
 
 class NoobitResponseOhlc(NoobitBaseResponse):
@@ -75,8 +73,8 @@ class NoobitResponseItemSymbols(FrozenBaseModel):
     ws_name: typing.Optional[str]
     base: str
     quote: str
-    volume_decimals: conint(ge=0)
-    price_decimals: conint(ge=0)
+    volume_decimals: ntypes.COUNT
+    price_decimals: ntypes.COUNT
     leverage_available: typing.Optional[typing.Tuple[PositiveInt, ...]] = Field(...)
     order_min: typing.Optional[Decimal] = Field(...)
 
@@ -140,11 +138,11 @@ class NoobitResponseExposure(NoobitBaseResponse):
     #   must exceed the cash consideration by 2%.
     # (marginRatio = 1/leverage)
     # (total margin exposure on account)
-    marginRatio: Decimal = 0
+    marginRatio: Decimal = Decimal(0)
 
-    marginAmt: Decimal = 0
+    marginAmt: Decimal = Decimal(0)
 
-    unrealisedPnL: Decimal = 0
+    unrealisedPnL: Decimal = Decimal(0)
 
 
 
@@ -520,13 +518,13 @@ class NoobitResponseItemOrder(FrozenBaseModel):
     #   A MarginRatio of 02% indicates that the value of the collateral (after deducting for "haircut")
     #   must exceed the cash consideration by 2%.
     # (marginRatio = 1/leverage)
-    marginRatio: Decimal = 0
+    marginRatio: Decimal = Decimal(0)
 
-    marginAmt: Decimal = 0
+    marginAmt: Decimal = Decimal(0)
 
-    realisedPnL: Decimal = 0
+    realisedPnL: Decimal = Decimal(0)
 
-    unrealisedPnL: Decimal = 0
+    unrealisedPnL: Decimal = Decimal(0)
 
 
 

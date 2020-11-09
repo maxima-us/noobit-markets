@@ -3,7 +3,6 @@ import asyncio
 
 import pydantic
 
-from noobit_markets.base.models.rest import endpoints
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base import ntypes
 

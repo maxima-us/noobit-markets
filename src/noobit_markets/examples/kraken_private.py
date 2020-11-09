@@ -99,9 +99,9 @@ else:
         print(res)
     else:
         print("Open Positions ok")
-    
-    
-    
+
+
+
     res = asyncio.run(
         get_usertrades_kraken(
             client=httpx.AsyncClient(),
@@ -115,9 +115,9 @@ else:
         table = pylist_table(res.value.trades)
         print(table)
         print("User Trades ok")
-    
-    
-    
+
+
+
     res = asyncio.run(
         get_wstoken_kraken(
             client=httpx.AsyncClient(),
