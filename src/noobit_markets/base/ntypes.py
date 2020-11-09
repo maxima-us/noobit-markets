@@ -29,7 +29,7 @@ EXCHANGE = Literal[
 ]
 
 
-PERCENT: typing.Type[int] = conint(ge=0, le=100)
+PERCENT = conint(ge=0, le=100)
 # PERCENT = pydantic.ConstrainedInt
 
 
@@ -66,18 +66,18 @@ TIMEFRAME = Literal[
 ASSET = constr(regex=r'[A-Z]{2,5}')
 
 # same as assetpair
-SYMBOL: str = pydantic.ConstrainedStr(regex=r'[A-Z]+-[A-Z]+')
+SYMBOL = constr(regex=r'[A-Z]+-[A-Z]+')
 # SYMBOL: str = constr(regex=r'[A-Z]+-[A-Z]+')
 # SYMBOL= str
 
 # symbol mappings (symbol = assetpair)
-SYMBOL_FROM_EXCHANGE: typing.Mapping[str, SYMBOL]
-SYMBOL_TO_EXCHANGE = typing.Mapping[Type[str], str]
+SYMBOL_FROM_EXCHANGE = typing.Mapping[str, SYMBOL]
+SYMBOL_TO_EXCHANGE = typing.Mapping[SYMBOL, str]
 
 
 # asset mappings
-ASSET_TO_EXCHANGE = typing.Mapping[Type[str], str]
-ASSET_FROM_EXCHANGE = typing.Mapping[str, Type[str]]
+ASSET_TO_EXCHANGE = typing.Mapping[ASSET, str]
+ASSET_FROM_EXCHANGE = typing.Mapping[str, ASSET]
 
 
 
