@@ -2,6 +2,7 @@ import urllib
 import hashlib
 import base64
 import hmac
+import typing
 
 import pydantic
 import pyrsistent
@@ -9,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from noobit_markets.base.request import *
-from noobit_markets.base.auth import make_base
+from noobit_markets.base.auth import BaseAuth, make_base
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 
@@ -24,9 +25,12 @@ class KrakenPrivateRequest(FrozenBaseModel):
 
 
 # necessary so we do not share same class attributes/methods across all exchanges
-KrakenBase = make_base("KrakenBase")
+KrakenBase: typing.Any = make_base("KrakenBase")
 
-class KrakenAuth(KrakenBase):
+# base class is dynamically generated and therefore is considered as invalid by mypy
+# except if we type it as Any
+# TODO see if we can improve on this
+class KrakenAuth(KrakenBase):   
 
 
     def __init__(self):

@@ -1,7 +1,11 @@
+import typing
+
 from noobit_markets.base.errors import *
 
+
 # see: https://support.kraken.com/hc/en-us/articles/360001491786-API-Error-Codes
-ERRORS_FROM_EXCHANGE = {
+# typing.Type makes mypy accept subclasses of Exception as well
+ERRORS_FROM_EXCHANGE: typing.Mapping[str, typing.Type[Exception]] = {
 
         # Errors related to rate limits
         'EOrder:Rate limit exceeded': DDoSProtection,

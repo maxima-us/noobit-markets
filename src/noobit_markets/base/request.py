@@ -7,7 +7,7 @@ from functools import wraps
 
 from pyrsistent import pmap
 import httpx
-from pydantic import AnyHttpUrl, PositiveInt, ValidationError
+from pydantic import AnyHttpUrl, PositiveInt, ValidationError, BaseModel
 
 from noobit_markets.base import ntypes
 from noobit_markets.base.errors import BaseError
@@ -115,8 +115,8 @@ def retry_request(
 
 
 def _validate_data(
-        model: FrozenBaseModel,
-        fields: dict
+        model: typing.Type[BaseModel],
+        fields: pyrsistent.PMap     # PRecord sublasses PMap so its also acceptable
     ) -> Result:
     try:
         validated = model(**fields)     #type: ignore

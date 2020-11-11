@@ -1,10 +1,12 @@
 import typing
+from typing import Any
 from decimal import Decimal
 from urllib.parse import urljoin
 
 # import httpx
 import pydantic
 from pyrsistent import pmap
+from typing_extensions import TypedDict
 
 from noobit_markets.base.request import (
     retry_request,
@@ -39,9 +41,9 @@ class KrakenResponseItemSymbols(FrozenBaseModel):
     aclass_quote: str
     quote: str
     lot: str
-    pair_decimals: pydantic.conint(ge=0)
-    lot_decimals: pydantic.conint(ge=0)
-    lot_multiplier: pydantic.conint(ge=0)
+    pair_decimals: ntypes.COUNT
+    lot_decimals: ntypes.COUNT 
+    lot_multiplier: ntypes.COUNT
     leverage_buy: typing.Tuple[int, ...]
     leverage_sell: typing.Tuple[int, ...]
     fees: typing.Tuple[typing.Tuple[Decimal, Decimal], ...]
@@ -57,33 +59,51 @@ class KrakenResponseSymbols(FrozenBaseModel):
     symbols: typing.Mapping[str, KrakenResponseItemSymbols]
 
 
+# TODO move this to base/models/response.py
+class _AssetPairValue(TypedDict):
+    exchange_name: Any
+    ws_name: Any
+    base: Any
+    quote: Any
+    volume_decimals: Any
+    price_decimals: Any
+    leverage_available: Any
+    order_min: Any
+
+
+# TODO move this to base/models/response.py
+class _ParsedRes(TypedDict):
+    asset_pairs: typing.Dict[str, _AssetPairValue]
+    assets: ntypes.ASSET_TO_EXCHANGE
+
+
 def parse_result(
         result_data: typing.Dict[str, KrakenResponseItemSymbols]
-    ) -> pmap:
+    ) -> _ParsedRes:
 
-    parsed = {
+    parsed: _ParsedRes = {
         "asset_pairs": parse_result_data_assetpairs(result_data),
         "assets": parse_result_data_assets(result_data)
     }
 
-    return pmap(parsed)
+    return parsed
 
 
 def parse_result_data_assetpairs(
         result_data: typing.Dict[str, KrakenResponseItemSymbols],
         # symbol: ntypes.SYMBOL
-    ) -> typing.Mapping[ntypes.SYMBOL, pmap]:
+    ) -> typing.Dict[str, _AssetPairValue]:
 
-    parsed_assetpairs = {data.wsname.replace("/", "-"): _single_assetpair(data, exch_symbol) for exch_symbol, data in result_data.items()}
-    return pmap(parsed_assetpairs)
+    parsed_assetpairs: typing.Dict[str, _AssetPairValue] = {data.wsname.replace("/", "-"): _single_assetpair(data, exch_symbol) for exch_symbol, data in result_data.items()}
+    return parsed_assetpairs
 
 
 def _single_assetpair(
-    data: pmap,
+    data: KrakenResponseItemSymbols,
     exchange_symbol: str
-) -> pmap:
+) -> _AssetPairValue:
 
-    parsed = {
+    parsed: _AssetPairValue = {
         "exchange_name": exchange_symbol,
         "ws_name": data.wsname,
         "base": data.base,
@@ -94,23 +114,23 @@ def _single_assetpair(
         "order_min": data.ordermin
     }
 
-    return pmap(parsed)
+    return parsed
 
 
 def parse_result_data_assets(
         result_data: typing.Dict[str, KrakenResponseItemSymbols]
     ) -> ntypes.ASSET_TO_EXCHANGE:
 
-    asset_to_exchange = {}
+    asset_to_exchange: ntypes.ASSET_TO_EXCHANGE = {}
     for _, v in result_data.items():
         kbase = v.base
         kquote = v.quote
         nbase, nquote = v.wsname.split("/")
 
-        asset_to_exchange[nbase] = kbase
-        asset_to_exchange[nquote] = kquote
+        asset_to_exchange[ntypes.PAsset(nbase)] = kbase
+        asset_to_exchange[ntypes.PAsset(nquote)] = kquote
 
-    return pmap(asset_to_exchange)
+    return asset_to_exchange
 
 
 
@@ -124,11 +144,11 @@ async def get_symbols_kraken(
         client: ntypes.CLIENT,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.symbols
-    ) -> Result[NoobitResponseSymbols, Exception]:
+    ) -> Result[NoobitResponseSymbols, typing.Type[Exception]]:
 
     req_url = urljoin(base_url, endpoint)
     method = "GET"
-    headers = {}
+    headers: typing.Dict = {}
 
     valid_kraken_req = Ok(FrozenBaseModel())
 
@@ -141,13 +161,13 @@ async def get_symbols_kraken(
         # filter out darkpools and pairs with numerical chars
         filtered_result = {k: v for k, v in result_content.value.items() if ".d" not in k and "REPV2" not in k}
 
-    valid_result_content = _validate_data(KrakenResponseSymbols, {"symbols": filtered_result})
+    valid_result_content = _validate_data(KrakenResponseSymbols, pmap({"symbols": filtered_result}))
     if valid_result_content.is_err():
         return valid_result_content
 
     # ? or should we pass in entire model ? (not passing data attribute)
     parsed_result_data = parse_result(valid_result_content.value.symbols)
 
-    valid_parsed_result_data = _validate_data(NoobitResponseSymbols, {**parsed_result_data, "rawJson": result_content.value})
+    valid_parsed_result_data = _validate_data(NoobitResponseSymbols, pmap({**parsed_result_data, "rawJson": result_content.value}))
     return valid_parsed_result_data
 

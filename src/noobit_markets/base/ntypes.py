@@ -124,7 +124,7 @@ SYMBOL_TO_EXCHANGE = typing.Mapping[PSymbol, str]
 
 
 # asset mappings
-ASSET_TO_EXCHANGE = typing.Mapping[PAsset, str]
+ASSET_TO_EXCHANGE = typing.Dict[PAsset, str]
 ASSET_FROM_EXCHANGE = typing.Mapping[str, PAsset]
 
 

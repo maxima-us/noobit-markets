@@ -6,9 +6,6 @@ import time
 from pyrsistent import pmap
 
 
-def make_base(class_name: str):
-    return type(class_name, BaseAuth.__bases__, dict(BaseAuth.__dict__))
-
 
 class BaseAuth(object):
 
@@ -86,3 +83,8 @@ class BaseAuth(object):
         valid_nonce = ts if ts > self.last_nonce else self.last_nonce + 1
         self._set_class_var("last_nonce", valid_nonce)
         return valid_nonce
+
+
+
+def make_base(class_name: str) -> typing.Type[BaseAuth]:
+    return type(class_name, BaseAuth.__bases__, dict(BaseAuth.__dict__))
