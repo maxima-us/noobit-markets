@@ -76,6 +76,10 @@ class _ParsedRes(TypedDict):
     asset_pairs: typing.Dict[str, _AssetPairValue]
     assets: ntypes.ASSET_TO_EXCHANGE
 
+# FIXME above two classes are exactly the same as our pydantic response models,
+#       minus the type declarations and the serialization
+#       ? how to avoid repeating ourselves ?
+
 
 def parse_result(
         result_data: typing.Dict[str, KrakenResponseItemSymbols]

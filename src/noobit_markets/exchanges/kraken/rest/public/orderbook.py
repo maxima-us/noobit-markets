@@ -134,7 +134,7 @@ async def get_orderbook_kraken(
         depth: ntypes.DEPTH,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.orderbook,
-    ) -> Result[NoobitResponseOrderBook, Exception]:
+    ) -> Result[NoobitResponseOrderBook, typing.Type[Exception]]:
 
 
     req_url = urljoin(base_url, endpoint)

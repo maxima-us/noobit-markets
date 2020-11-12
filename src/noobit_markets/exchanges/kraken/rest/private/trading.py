@@ -1,23 +1,34 @@
-import typing
-from datetime import date
+import asyncio
 from decimal import Decimal
+from datetime import date
+import typing
+from typing import Any
+from urllib.parse import urljoin
 
+import pydantic
 from pyrsistent import pmap
+from typing_extensions import Literal, TypedDict
 
-from pydantic import PositiveInt, ValidationError, conint, constr, validator
-from typing_extensions import Literal
+from noobit_markets.base.request import (
+    retry_request,
+    _validate_data,
+)
 
-
+# Base
 from noobit_markets.base import ntypes
+from noobit_markets.base.models.result import Result
+from noobit_markets.base.models.rest.response import NoobitResponseNewOrder
 from noobit_markets.base.models.rest.request import NoobitRequestAddOrder
-from noobit_markets.base.models.result import Ok, Err, Result
+from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
-from noobit_markets.exchanges.kraken.rest.auth import KrakenPrivateRequest
-
+# Kraken
+from noobit_markets.exchanges.kraken.rest.auth import KrakenAuth, KrakenPrivateRequest
+from noobit_markets.exchanges.kraken import endpoints
+from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
 
 
 # ============================================================
-# KRAKEN MODEL
+# KRAKEN REQUEST
 # ============================================================
 
 # KRAKEN PAYLOAD
@@ -62,11 +73,11 @@ from noobit_markets.exchanges.kraken.rest.auth import KrakenPrivateRequest
 #     close[price] = price
 #     close[price2] = secondary price
 
-# TODO what does the last part mean ??
+# TODO what does the last part mean (above) ??
 
 class KrakenRequestNewOrder(KrakenPrivateRequest):
 
-    pair: constr(regex=r'[A-Z]+')
+    pair: str 
     type: Literal["buy", "sell"]
     ordertype: Literal[
         "market", "limit", "stop-loss", "take-profit", "take-profit-limit", 
@@ -81,10 +92,13 @@ class KrakenRequestNewOrder(KrakenPrivateRequest):
     oflags: typing.Optional[typing.Tuple[Literal["viqc", "fcib", "fciq", "nompp", "post"]]]
     
     # FIXME Noobit model doesnt allow "+ timestmap" only aboslute timestamps or None
-    starttm: typing.Union[conint(ge=0), constr(regex=r'^[+-][1-9]+')]
-    expiretm: typing.Union[conint(ge=0), constr(regex=r'^[+-][1-9]+')]
+    # starttm: typing.Union[conint(ge=0), constr(regex=r'^[+-][1-9]+')]
+    # expiretm: typing.Union[conint(ge=0), constr(regex=r'^[+-][1-9]+')]
+    # TODO Add Timestamp to ntype
+    starttm: typing.Union[ntypes.TIMESTAMP, str]
+    expiretm: typing.Union[ntypes.TIMESTAMP, str]
     #FIXME keep this as str or int ?
-    userref: typing.Optional[PositiveInt]
+    userref: typing.Optional[pydantic.PositiveInt]
 
     #! validate field doesnt work
     # validation: typing.Optional[bool] = Field(True, alias="validate")
@@ -100,11 +114,11 @@ class KrakenRequestNewOrder(KrakenPrivateRequest):
             raise ValueError(err_msg)
         return v
 
-    validator("starttm", allow_reuse=True)(_check_year_from_timestamp)
-    validator("expiretm", allow_reuse=True)(_check_year_from_timestamp)
+    pydantic.validator("starttm", allow_reuse=True)(_check_year_from_timestamp)
+    pydantic.validator("expiretm", allow_reuse=True)(_check_year_from_timestamp)
 
 
-    @validator("leverage")
+    @pydantic.validator("leverage")
     def v_leverage(cls, v):
         if v == None:
             return "none"
@@ -119,7 +133,7 @@ class KrakenRequestNewOrder(KrakenPrivateRequest):
     #         return float(v)
 
     
-    @validator("oflags")
+    @pydantic.validator("oflags")
     def v_oflags(cls, v):
         try:
             if len(v) > 1:
@@ -130,20 +144,29 @@ class KrakenRequestNewOrder(KrakenPrivateRequest):
             raise e
 
 
+# only type hint fields for mypy
+class _ParsedReq(TypedDict):
+    pair: Any
+    type: Any
+    ordertype: Any
+    price: Any
+    price2: Any
+    volume: Any
+    leverage: Any
+    oflags: Any
+    starttm: Any
+    expiretm: Any
+    userref: Any
 
 
-# ============================================================
-# PARSE
-# ============================================================
 
-
-def parse_request_neworder(
+def parse_request(
         valid_request: NoobitRequestAddOrder
-    ) -> pmap:
+    ) -> _ParsedReq:
 
     #FIXME check which values correspond to None for kraken
     # e.g leverage needs to be string "none"
-    payload = {
+    payload: _ParsedReq = {
         "pair": valid_request.symbol_mapping[valid_request.symbol],
         "type": valid_request.side, 
         "ordertype": valid_request.ordType,
@@ -160,19 +183,48 @@ def parse_request_neworder(
     }
 
 
-    return pmap(payload)
+    return payload
 
 
-# ============================================================
-# VALIDATE
-# ============================================================
+#============================================================
+# KRAKEN RESPONSE
+#============================================================
 
 
-def validate_request_neworder(
-        # nonce: PositiveInt,
+class Descr(FrozenBaseModel):
+    order: str
+    close: typing.Optional[str]
+
+
+class KrakenResponseNewOrder(FrozenBaseModel):
+    descr: Descr
+    txid: typing.Any
+
+
+class _ParsedRes(TypedDict):
+    descr: Any
+    txid: Any
+
+
+def parse_result(
+        result_data: KrakenResponseNewOrder,
+    ) -> _ParsedRes:
+
+    res: _ParsedRes = result_data.dict()     #type: ignore
+    return res
+
+
+
+#============================================================
+# FETCH
+#============================================================
+
+
+# @retry_request(retries=1, logger=lambda *args: print("===xxxxx>>>> : ", *args))
+async def post_neworder_kraken(
+        client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE,
-
+        symbols_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         side: ntypes.ORDERSIDE,
         ordType: ntypes.ORDERTYPE,
         clOrdID: str,
@@ -181,47 +233,55 @@ def validate_request_neworder(
         marginRatio: Decimal,
         effectiveTime: ntypes.TIMESTAMP,
         expireTime: ntypes.TIMESTAMP,
+        auth=KrakenAuth(),
+        base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
+        endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.new_order,
+        **kwargs,
+    ) -> Result[NoobitResponseNewOrder, typing.Type[Exception]]:
+
+
+    req_url = urljoin(base_url, endpoint)
+    method = "POST"
+
+
+    valid_noobit_req = _validate_data(NoobitRequestAddOrder, pmap({
+        # auth.nonce, #! dont forget nonce ===> ALSO ADD NONCE TO KRAKEN REQUEST MODEL
+        "symbol":symbol, 
+        "symbol_mapping":symbols_to_exchange,
+        "side":side,
+        "ordType":ordType,
+        "clOrdID":clOrdID,
+        "orderQty":orderQty,
+        "price":price,
+        "marginRatio":marginRatio,
+        "effectiveTime":effectiveTime,
+        "expireTime":expireTime,
         **kwargs
-    ) -> Result[NoobitRequestAddOrder, ValidationError]:
-
-    try:
-        valid_req = NoobitRequestAddOrder(
-            # nonce=nonce,
-            symbol=symbol,
-            symbol_mapping=symbol_mapping,
-            side=side,
-            ordType=ordType,
-            clOrdID=clOrdID,
-            orderQty=orderQty,
-            price=price,
-            marginRatio=marginRatio,
-            effectiveTime=effectiveTime,
-            expireTime=expireTime,
-           **kwargs
-        )
-        return Ok(valid_req)
-
-    except ValidationError as e:
-        return Err(e)
-
-    except Exception as e:
-        raise e
+    })
+    )
+    if valid_noobit_req.is_err():
+        return valid_noobit_req
+    
+    parsed_req = parse_request(valid_noobit_req.value)
 
 
-def validate_parsed_request_neworder(
-        nonce: PositiveInt,
-        parsed_request: pmap
-    ) -> Result[KrakenRequestNewOrder, ValidationError]:
+    data = {"nonce": auth.nonce, **parsed_req}
 
-    try:
-        validated = KrakenRequestNewOrder(
-            nonce=nonce,
-            **parsed_request
-        )
-        return Ok(validated)
+    valid_kraken_req = _validate_data(KrakenRequestNewOrder, pmap({"nonce":data["nonce"], **parsed_req}))
+    if valid_kraken_req.is_err():
+        return valid_kraken_req
 
-    except ValidationError as e:
-        return Err(e)
+    headers = auth.headers(endpoint, valid_kraken_req.value.dict())
+    
+    result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
+    if result_content.is_err():
+        return result_content
 
-    except Exception as e:
-        raise e
+    valid_result_content = _validate_data(KrakenResponseNewOrder, result_content.value)
+    if valid_result_content.is_err():
+        return valid_result_content
+
+    parsed_result = parse_result(valid_result_content.value)
+
+    valid_parsed_response_data = _validate_data(NoobitResponseNewOrder, pmap({"descr":parsed_result["descr"], "txid": parsed_result["txid"], "rawJson": result_content.value}))
+    return valid_parsed_response_data

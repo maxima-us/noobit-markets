@@ -3,7 +3,6 @@ import functools
 
 import httpx
 import pyrsistent
-from pydantic import AnyHttpUrl
 
 import stackprinter                             #type: ignore
 stackprinter.set_excepthook(style="darkbg2")    #type: ignore
@@ -28,7 +27,6 @@ async def result_or_err(resp_obj: httpx.Response) -> Result:
     errors: list = content.get("error", None)
 
     if errors:
-        # err_dict = {err_k: err_v for err in errors for (err_k, err_v) in err.split(":")}
         err_dict = {err: err.split(":")[1] for err in errors}
         return Err(err_dict)
     else:

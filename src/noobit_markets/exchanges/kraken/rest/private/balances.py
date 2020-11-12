@@ -37,12 +37,13 @@ class KrakenResponseBalances(FrozenBaseModel):
 def parse_result(
         result_data: typing.Mapping[str, Decimal],
         # FIXME commented out just for testing
-        asset_mapping: ntypes.ASSET_FROM_EXCHANGE
-    ) -> typing.Mapping[ntypes.ASSET, Decimal]:
+        # asset_mapping: ntypes.ASSET_FROM_EXCHANGE
+        asset_mapping: typing.Callable[..., str] 
+    ) -> typing.Mapping[str, Decimal]:
 
     # DARKPOOL PAIRS: suffixed by .d
     # STAKED PAIRS: suffixed by .s
-    parsed = {asset_mapping[asset]: amount for asset, amount in result_data.items() if not asset == "KFEE" and amount > Decimal(0) and "." not in asset}
+    parsed = {asset_mapping(asset): amount for asset, amount in result_data.items() if not asset == "KFEE" and amount > Decimal(0) and "." not in asset}
 
     return pmap(parsed)
 
@@ -60,12 +61,12 @@ async def get_balances_kraken(
         #FIXME this should be a callable function
         #       eg lambda x: x.replace("/", "-")
         #       eg lambda x: asset_mapping.get(x, None)
-        asset_from_exchange: ntypes.ASSET_FROM_EXCHANGE,
+        # asset_from_exchange: ntypes.ASSET_FROM_EXCHANGE,
+        asset_from_exchange: typing.Callable[..., str], 
         auth=KrakenAuth(),
-        # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.balances
-    ) -> Result[NoobitResponseBalances, Exception]:
+    ) -> Result[NoobitResponseBalances, typing.Type[Exception]]:
 
     req_url = urljoin(base_url, endpoint)
     # Kraken Doc : Private methods must use POST
@@ -74,7 +75,7 @@ async def get_balances_kraken(
     data = {"nonce": auth.nonce}
     headers = auth.headers(endpoint, data)
 
-    valid_kraken_req = _validate_data(KrakenPrivateRequest, data)
+    valid_kraken_req = _validate_data(KrakenPrivateRequest, pmap(data))
     if valid_kraken_req.is_err():
         return valid_kraken_req
 
@@ -82,7 +83,7 @@ async def get_balances_kraken(
     if result_content.is_err():
         return result_content
 
-    valid_result_content = _validate_data(KrakenResponseBalances,  {"balances": result_content.value})
+    valid_result_content = _validate_data(KrakenResponseBalances,  pmap({"balances": result_content.value}))
     if valid_result_content.is_err():
         return valid_result_content
 
@@ -91,5 +92,5 @@ async def get_balances_kraken(
         asset_from_exchange
     )
 
-    valid_parsed_result_data = _validate_data(NoobitResponseBalances, {"data": parsed_result_data, "rawJson": result_content.value})
+    valid_parsed_result_data = _validate_data(NoobitResponseBalances, pmap({"data": parsed_result_data, "rawJson": result_content.value}))
     return valid_parsed_result_data

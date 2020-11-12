@@ -179,7 +179,8 @@ ORDERTYPE = Literal[
     # binance
     "stop-loss-limit",
     "take-profit-limit",
-    "limit-maker"
+    "limit-maker",
+    "stop market"   #TODO received this from kraken api, occurs when a stop gets hit
 ]
 
 

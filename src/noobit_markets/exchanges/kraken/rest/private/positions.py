@@ -5,12 +5,13 @@ Define both get_open_positions and get_closed_positions
 ORRRR encapsulate both in one response ??
 """
 import typing
+from typing import Any
 from decimal import Decimal
 from urllib.parse import urljoin
 
 import pydantic
 from pyrsistent import pmap
-from typing_extensions import Literal
+from typing_extensions import Literal, TypedDict
 
 from noobit_markets.base.request import (
     retry_request,
@@ -95,10 +96,36 @@ class KrakenResponseOpenPositions(FrozenBaseModel):
     positions: typing.Mapping[str, OpenPositionInfo]
 
 
+class _ParsedRes(TypedDict):
+    orderID: Any
+    symbol: Any
+    currency: Any
+    side: Any
+    ordType: Any
+    clOrdID: Any
+    cashMargin: Any
+    marginRatio: Any
+    marginAmt: Any
+    ordStatus: Any
+    workingIndicator: Any
+    transactTime: Any
+    grossTradeAmt: Any
+    orderQty: Any
+    cashOrderQty: Any
+    cumQty: Any
+    leavesQty: Any
+    price: Any
+    avgPx: Any
+    commission: Any
+    text: Any
+
+    unrealisedPnL: Any
+
+
 def parse_result(
         result_data: typing.Mapping[str, OpenPositionInfo],
-        symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE
-    ) -> typing.Tuple[pmap]:
+        symbol_mapping: typing.Callable[[ntypes.SYMBOL], str]
+    ) -> typing.Tuple[_ParsedRes, ...]:
 
     parsed = [
         _single_position(key, info, symbol_mapping) for key, info in result_data.items()
@@ -107,12 +134,12 @@ def parse_result(
     return tuple(parsed)
 
 
-def _single_position(key: str, info: OpenPositionInfo, symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE) -> pmap:
+def _single_position(key: str, info: OpenPositionInfo, symbol_mapping: typing.Callable[[ntypes.SYMBOL], str]) -> _ParsedRes:
 
-    parsed = {
+    parsed: _ParsedRes = {
         "orderID": info.ordertxid,
-        "symbol": symbol_mapping[info.pair],
-        "currency": symbol_mapping[info.pair].split("-")[1],
+        "symbol": symbol_mapping(ntypes.PSymbol(info.pair)),
+        "currency": symbol_mapping(ntypes.PSymbol(info.pair)).split("-")[1],
         "side": info.type,
         "ordType": info.ordertype,
 
@@ -148,7 +175,7 @@ def _single_position(key: str, info: OpenPositionInfo, symbol_mapping: ntypes.SY
 
     }
 
-    return pmap(parsed)
+    return parsed
 
 
 
@@ -161,12 +188,12 @@ def _single_position(key: str, info: OpenPositionInfo, symbol_mapping: ntypes.SY
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_openpositions_kraken(
         client: ntypes.CLIENT,
-        symbols_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbols_from_exchange: typing.Callable[[ntypes.SYMBOL], str],
         auth=KrakenAuth(),
         # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.open_positions
-    ) -> Result[NoobitResponseOpenPositions, Exception]:
+    ) -> Result[NoobitResponseOpenPositions, typing.Type[Exception]]:
 
 
     req_url = urljoin(base_url, endpoint)
@@ -178,7 +205,7 @@ async def get_openpositions_kraken(
     }
     headers = auth.headers(endpoint, data)
 
-    valid_kraken_req = _validate_data(KrakenRequestOpenPositions, data)
+    valid_kraken_req = _validate_data(KrakenRequestOpenPositions, pmap(data))
     if valid_kraken_req.is_err():
         return valid_kraken_req
 
@@ -186,15 +213,13 @@ async def get_openpositions_kraken(
     if result_content.is_err():
         return result_content
 
-    valid_result_content = _validate_data(KrakenResponseOpenPositions, {"positions": result_content.value})
+    valid_result_content = _validate_data(KrakenResponseOpenPositions, pmap({"positions": result_content.value}))
     if valid_result_content.is_err():
         return valid_result_content
 
-    symbols_from_exchange = {v: k for k, v in symbols_to_exchange.items()}
-
     parsed_result_data = parse_result(valid_result_content.value.positions, symbols_from_exchange)
 
-    valid_parsed_result_data = _validate_data(NoobitResponseOpenPositions, {"positions": parsed_result_data, "rawJson": result_content.value})
+    valid_parsed_result_data = _validate_data(NoobitResponseOpenPositions, pmap({"positions": parsed_result_data, "rawJson": result_content.value}))
     return valid_parsed_result_data
 
 

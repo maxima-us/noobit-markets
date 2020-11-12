@@ -11,120 +11,147 @@ from noobit_markets.exchanges.kraken.rest.private.orders import get_openorders_k
 from noobit_markets.exchanges.kraken.rest.private.positions import get_openpositions_kraken
 from noobit_markets.exchanges.kraken.rest.private.trades import get_usertrades_kraken
 from noobit_markets.exchanges.kraken.rest.private.ws_auth import get_wstoken_kraken
+from noobit_markets.exchanges.kraken.rest.private.trading import post_neworder_kraken
 
 
 from noobit_markets.base._tabulate import pylist_table, pymap_table
+from noobit_markets.base import ntypes
 
 
 
-res = asyncio.run(
+sym = asyncio.run(
     get_symbols_kraken(
         client=httpx.AsyncClient(),
     )
 )
 
-if res.is_err():
-    print(res)
+if sym.is_err():
+    print(sym)
 else:
     print("Symbols Ok")
-    symbols = res.value
+    symbols = sym.value
     asset_from_exchange = {v: k for k, v in symbols.assets.items()}
 
 
 
-    res = asyncio.run(
+    bal = asyncio.run(
         get_balances_kraken(
             client=httpx.AsyncClient(),
-            asset_from_exchange=asset_from_exchange
+            asset_from_exchange=lambda x : asset_from_exchange[x]
         )
     )
-    if res.is_err():
-        print(res)
+    if bal.is_err():
+        print(bal)
     else:
-        table = pymap_table(res.value.data, headers=["Asset", "Balance"])
-        print(table)
+        table = pymap_table(bal.value.data, headers=["Asset", "Balance"])
+        # print(table)
         print("Balances ok")
 
 
 
-    res = asyncio.run(
+    expo = asyncio.run(
         get_exposure_kraken(
             client=httpx.AsyncClient(),
         )
     )
-    if res.is_err():
-        print(res)
+    if expo.is_err():
+        print(expo)
     else:
         print("Exposure ok")
 
 
 
-    res = asyncio.run(
+    opo = asyncio.run(
         get_openorders_kraken(
             client=httpx.AsyncClient(),
             symbols_to_exchange=symbols
         )
     )
-    if res.is_err():
-        print(res)
+    if opo.is_err():
+        print(opo)
     else:
         print("Open Orders ok")
 
 
 
-    res = asyncio.run(
+    clo = asyncio.run(
         get_closedorders_kraken(
             client=httpx.AsyncClient(),
             symbols_to_exchange=symbols,
-            symbol="XBT-USD"
+            symbol=ntypes.PSymbol("XBT-USD")        #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
         )
     )
-    if res.is_err():
-        print(res)
+    if clo.is_err():
+        print(clo)
     else:
         #! table is tooo wide
         # table = pydantic_table(res.value.orders)
         # print(table)
-        print("CLosed Orders ok")
+        # print(clo.value.rawJson)
+        print("Closed Orders ok")
 
 
 
-    res = asyncio.run(
+    opp = asyncio.run(
         get_openpositions_kraken(
             client=httpx.AsyncClient(),
-            symbols_to_exchange={k: v.exchange_name for k, v in symbols.asset_pairs.items()},
+            # symbols_to_exchange={k: v.exchange_name for k, v in symbols.asset_pairs.items()},
+            symbols_from_exchange=lambda x: {v.exchange_name: k for k, v in symbols.asset_pairs.items()}.get(x, None),
         )
     )
-    if res.is_err():
-        print(res)
+    if opp.is_err():
+        print(opp)
     else:
         print("Open Positions ok")
 
 
 
-    res = asyncio.run(
+    utr = asyncio.run(
         get_usertrades_kraken(
             client=httpx.AsyncClient(),
-            symbol="XBT-USD",
-            symbols_to_exchange={k: v.exchange_name for k, v in symbols.asset_pairs.items()},
+            symbol=ntypes.PSymbol("XBT-USD"),        #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
+            symbols_from_exchange=lambda x: {v.exchange_name: k for k, v in symbols.asset_pairs.items()}.get(x, None),
         )
     )
-    if res.is_err():
-        print(res)
+    if utr.is_err():
+        print(utr)
     else:
-        table = pylist_table(res.value.trades)
-        print(table)
+        table = pylist_table(utr.value.trades)
+        # print(table)
         print("User Trades ok")
 
 
 
-    res = asyncio.run(
+    wst = asyncio.run(
         get_wstoken_kraken(
             client=httpx.AsyncClient(),
         )
     )
-    if res.is_err():
-        print(res)
+    if wst.is_err():
+        print(wst)
     else:
-        print(res)
+        print(wst)
         print("Ws Token ok")
+
+
+
+    trd = asyncio.run(
+        post_neworder_kraken(
+            client=httpx.AsyncClient(),
+            symbol="XBT-USD",
+            symbols_to_exchange={k: v.exchange_name for k, v in symbols.asset_pairs.items()},
+            side="buy",
+            ordType="limit",
+            clOrdID="10101",
+            orderQty=0.001,
+            price=10000,
+            marginRatio=None,
+            effectiveTime=None,
+            expireTime=None
+        )
+    )
+    if trd.is_err():
+        print(trd)
+    else:
+        print(trd)
+        print("Trading New Order ok")

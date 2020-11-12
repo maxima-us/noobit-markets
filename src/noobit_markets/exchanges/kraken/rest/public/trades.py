@@ -38,7 +38,6 @@ class KrakenRequestTrades(FrozenBaseModel):
     #   pair = asset pair to get Trades data for
     #   since = return commited OHLC data since given id (optional)
 
-    #FIXME incorrect, normal string (XXBTZUSD and not XBT-USD)
     pair: str
     # needs to be in ns (same as <last> param received from response)
     since: typing.Optional[pydantic.PositiveInt]

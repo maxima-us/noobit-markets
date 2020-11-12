@@ -1,6 +1,7 @@
 from urllib.parse import urljoin
 
 import pydantic
+from pyrsistent import pmap
 
 from noobit_markets.base.request import (
     retry_request,
@@ -53,7 +54,7 @@ async def get_wstoken_kraken(
     data = {"nonce": auth.nonce}
     headers = auth.headers(endpoint, data)
 
-    valid_kraken_req = _validate_data(KrakenPrivateRequest, data)
+    valid_kraken_req = _validate_data(KrakenPrivateRequest, pmap(data))
     if valid_kraken_req.is_err():
         return valid_kraken_req
 

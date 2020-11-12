@@ -1,9 +1,11 @@
 import typing
+from typing import Any
 from decimal import Decimal
 from urllib.parse import urljoin
 
 import pydantic
 from pyrsistent import pmap
+from typing_extensions import TypedDict
 
 from noobit_markets.base.request import (
     retry_request,
@@ -53,19 +55,25 @@ class KrakenResponseExposure(FrozenBaseModel):
     ml: typing.Optional[Decimal]
 
 
-def parse_result(
-        result_data: typing.Mapping[str, Decimal],
-    ) -> typing.Mapping[ntypes.ASSET, Decimal]:
+class _ParsedRes(TypedDict):
+    totalNetValue: Any
+    marginExcess: Any
+    marginAmt: Any
+    marginRatio: Any
+    unrealisedPnL: Any
 
-    parsed = {
-        "totalNetValue": result_data["eb"],
-        "marginExcess": result_data["mf"],
-        "marginAmt": result_data["m"],
-        "marginRatio": 1/result_data["ml"] if result_data["ml"] else 1,
-        "unrealisedPnL": result_data["n"]
+
+def parse_result(result_data: KrakenResponseExposure) -> _ParsedRes:
+
+    parsed: _ParsedRes = {
+        "totalNetValue": result_data.eb,
+        "marginExcess": result_data.mf,
+        "marginAmt": result_data.m,
+        "marginRatio": 1/result_data.ml if result_data.ml else 1,
+        "unrealisedPnL": result_data.n
     }
 
-    return pmap(parsed)
+    return parsed
 
 
 
@@ -82,7 +90,7 @@ async def get_exposure_kraken(
         # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.exposure
-    ) -> Result[NoobitResponseExposure, Exception]:
+    ) -> Result[NoobitResponseExposure, typing.Type[Exception]]:
 
 
     req_url = urljoin(base_url, endpoint)
@@ -92,7 +100,7 @@ async def get_exposure_kraken(
     data = {"nonce": auth.nonce}
     headers = auth.headers(endpoint, data)
 
-    valid_kraken_req = _validate_data(KrakenPrivateRequest, data)
+    valid_kraken_req = _validate_data(KrakenPrivateRequest, pmap(data))
     if valid_kraken_req.is_err():
         return valid_kraken_req
 
@@ -104,7 +112,7 @@ async def get_exposure_kraken(
     if valid_result_content.is_err():
         return valid_result_content
 
-    parsed_result = parse_result(valid_result_content.value.dict())
+    parsed_result = parse_result(valid_result_content.value)
 
-    valid_parsed_result_data = _validate_data(NoobitResponseExposure, {**parsed_result, "rawJson": result_content.value})
+    valid_parsed_result_data = _validate_data(NoobitResponseExposure, pmap({**parsed_result, "rawJson": result_content.value}))
     return valid_parsed_result_data
