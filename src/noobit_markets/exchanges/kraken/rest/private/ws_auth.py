@@ -45,7 +45,7 @@ async def get_wstoken_kraken(
         # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.ws_token
-    ) -> Result[str, Exception]:
+    ) -> Result[KrakenResponseWsToken, Exception]:
 
     req_url = urljoin(base_url, endpoint)
     # Kraken Doc : Private methods must use POST
