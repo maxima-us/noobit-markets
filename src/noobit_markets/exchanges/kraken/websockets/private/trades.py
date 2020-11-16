@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from pydantic import ValidationError
 
-import stackprinter
+import stackprinter     #type: ignore
 stackprinter.set_excepthook(style="darkbg2")
 
 from noobit_markets.base.ntypes import SYMBOL_TO_EXCHANGE, SYMBOL
@@ -26,7 +26,7 @@ def _util_validate_parsing(model, kwargs: dict):
         return Err(e)
 
 
-def validate_sub(token) -> KrakenSubModel:
+def validate_sub(token) -> Result[KrakenSubModel, Exception]:
     msg = {
         "event": "subscribe", 
         "pair": None,

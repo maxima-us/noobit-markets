@@ -1,11 +1,10 @@
 import json
 import asyncio
 import time
+import typing
 
 from . import trades, spread, orderbook
 
-
-FULL_OB = dict()
 
 # TODO separate data_queues and status_queues ????
 async def msg_handler(msg, data_queues, status_queues):

@@ -1,4 +1,5 @@
 import time
+import typing
 
 from pydantic import ValidationError
 
@@ -8,7 +9,7 @@ from noobit_markets.base.models.result import Result, Ok, Err
 from noobit_markets.base.models.rest.response import NoobitResponseOrderBook
 
 
-def validate_sub(symbol_mapping: SYMBOL_TO_EXCHANGE, symbol: SYMBOL, depth: DEPTH) -> KrakenSubModel:
+def validate_sub(symbol_mapping: SYMBOL_TO_EXCHANGE, symbol: SYMBOL, depth: DEPTH) -> Result[KrakenSubModel, Exception]:
     
     msg = {
         "event": "subscribe", 
@@ -48,6 +49,8 @@ def validate_parsed(msg, parsed_msg):
 
 
 def parse_msg(message):
+    """used by msg_handler in routing.py
+    """
 
     info = message[1]
     pair = message[3].replace("/", "-")

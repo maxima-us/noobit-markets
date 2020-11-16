@@ -1,11 +1,12 @@
 import functools
 import asyncio
 from decimal import Decimal
+import typing
 
 from pydantic import ValidationError
 import websockets
 
-import stackprinter
+import stackprinter                             #type: ignore
 stackprinter.set_excepthook(style="darkbg2")
 
 from noobit_markets.base.ntypes import SYMBOL_TO_EXCHANGE, SYMBOL
@@ -17,7 +18,7 @@ from noobit_markets.base.models.result import Result, Ok, Err
 
 
 
-def validate_sub(symbol_mapping: SYMBOL_TO_EXCHANGE, symbol: SYMBOL) -> KrakenSubModel:
+def validate_sub(symbol_mapping: SYMBOL_TO_EXCHANGE, symbol: SYMBOL) -> Result[KrakenSubModel, Exception]:
     
     msg = {
         "event": "subscribe", 

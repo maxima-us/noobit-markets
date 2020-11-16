@@ -16,7 +16,8 @@ class SubModel(pydantic.BaseModel):
 
   exchange: str
   feed: Literal["spread", "orderbook", "trade", "user_trades", "user_orders"]
-  
+  msg: pydantic.BaseModel 
+
 
 class KrakenSubMsg(pydantic.BaseModel):
   event: Literal["subscribe", "unsubscribe"]
@@ -31,7 +32,7 @@ class KrakenSubModel(SubModel):
 
 
 
-async def subscribe(client: WebSocketClientProtocol, sub_model: SubModel, q_maxsize = 0):
+async def subscribe(client: WebSocketClientProtocol, sub_model: SubModel, q_maxsize = 0) -> Result:
 
   payload = (sub_model.msg).dict(exclude_none=True)
 
