@@ -87,7 +87,7 @@ class KrakenResponseItemSymbols(FrozenBaseModel):
     quote: str
     lot: str
     pair_decimals: ntypes.COUNT
-    lot_decimals: ntypes.COUNT 
+    lot_decimals: ntypes.COUNT
     lot_multiplier: ntypes.COUNT
     leverage_buy: typing.Tuple[int, ...]
     leverage_sell: typing.Tuple[int, ...]
@@ -122,7 +122,7 @@ def parse_result_data_assetpairs(
     ) -> typing.Dict[ntypes.PSymbol, T_SymbolParsedItem]:
 
     parsed_assetpairs: typing.Dict[PSymbol, T_SymbolParsedItem] = {
-        ntypes.PSymbol(data.wsname.replace("/", "-")): _single_assetpair(data, exch_pair) 
+        ntypes.PSymbol(data.wsname.replace("/", "-")): _single_assetpair(data, exch_pair)
         for exch_pair, data in result_data.items()
     }
     return parsed_assetpairs
@@ -141,8 +141,8 @@ def _single_assetpair(
         "exchange_pair": exch_pair,
         "exchange_base": ntypes.PAsset(data.base),
         "exchange_quote": ntypes.PAsset(data.quote),
-        "noobit_base": ntypes.PAsset(nbase), 
-        "noobit_quote": ntypes.PAsset(nquote), 
+        "noobit_base": ntypes.PAsset(nbase),
+        "noobit_quote": ntypes.PAsset(nquote),
         "volume_decimals": ntypes.PCount(data.lot_decimals),
         "price_decimals": ntypes.PCount(data.pair_decimals),
         "leverage_available": data.leverage_sell,

@@ -54,7 +54,7 @@ async def get_wstoken_kraken(
     valid_kraken_req = _validate_data(KrakenPrivateRequest, pmap(data))
     if valid_kraken_req.is_err():
         return valid_kraken_req
-    
+
     headers = auth.headers(endpoint, valid_kraken_req.value.dict())
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)

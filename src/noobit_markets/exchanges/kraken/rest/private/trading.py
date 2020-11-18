@@ -220,7 +220,7 @@ def parse_result(
 async def post_neworder_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE, 
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         side: ntypes.ORDERSIDE,
         ordType: ntypes.ORDERTYPE,
         clOrdID: str,

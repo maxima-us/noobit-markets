@@ -38,7 +38,7 @@ def parse_result(
         result_data: typing.Mapping[str, Decimal],
         # FIXME commented out just for testing
         # asset_mapping: ntypes.ASSET_FROM_EXCHANGE
-        asset_from_exchange: ntypes.ASSET_FROM_EXCHANGE 
+        asset_from_exchange: ntypes.ASSET_FROM_EXCHANGE
     ) -> typing.Mapping[ntypes.ASSET, Decimal]:
 
     # DARKPOOL PAIRS: suffixed by .d

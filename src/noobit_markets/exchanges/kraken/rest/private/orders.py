@@ -226,7 +226,7 @@ class _ParsedRes(TypedDict):
 
 def parse_result_openorders(
         result_data: typing.Mapping[str, SingleOpenOrder],
-        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE, 
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
         symbol: ntypes.SYMBOL
     ) -> typing.Tuple[_ParsedRes, ...]:
 

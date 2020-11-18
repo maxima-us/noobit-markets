@@ -205,7 +205,7 @@ class NoobitResponseItemSpread(FrozenBaseModel):
 class NoobitResponseSpread(NoobitBaseResponse):
 
     spread: typing.Tuple[NoobitResponseItemSpread, ...]
-    
+
     # TODO remove in endpoints
     # last: ntypes.TIMESTAMP
 
@@ -467,7 +467,7 @@ class NoobitResponseExposure(NoobitBaseResponse):
 # ============================================================
 
 
-# ==================== 
+# ====================
 # mypy type hints
 
 class T_PositionsParsedRes(TypedDict):

@@ -164,7 +164,7 @@ def _single_position(key: str, info: OpenPositionInfo, symbol_from_exchange: nty
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_openpositions_kraken(
         client: ntypes.CLIENT,
-        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE, 
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.open_positions

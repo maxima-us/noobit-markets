@@ -140,7 +140,7 @@ def _single_trade(
         key: str,
         info: SingleTradeInfo,
         # symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE
-        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE 
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE
     ) -> T_PrivateTradesParsedRes:
 
     parsed: T_PrivateTradesParsedRes = {
@@ -174,7 +174,7 @@ def _single_trade(
 async def get_usertrades_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE, 
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.trades_history

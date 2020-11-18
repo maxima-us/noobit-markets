@@ -12,12 +12,12 @@ import pydantic
 
 
 
-# ============================================================ 
+# ============================================================
 # BASE CLASSES
-# ============================================================ 
+# ============================================================
 
 class NInt(pydantic.ConstrainedInt):
-    
+
     def __init__(self, _value: int):
         self._value = _value
 
@@ -30,7 +30,7 @@ class NInt(pydantic.ConstrainedInt):
 
 
 class Nstr(pydantic.ConstrainedStr):
-    
+
     def __init__(self, _value: str):
         self._value = _value
 
@@ -155,7 +155,7 @@ BIDS = typing.Mapping[Decimal, Decimal]
 ASK = typing.Mapping[Decimal, Decimal]
 BID = typing.Mapping[Decimal, Decimal]
 
-# tuple of <best bid>, <best ask>, <timestamp> 
+# tuple of <best bid>, <best ask>, <timestamp>
 # ? should this stay a tuple or do we only want last value
 # ? most exchanges dont give historic spread like kraken
 SPREAD = typing.Tuple[Decimal, Decimal, Decimal]
