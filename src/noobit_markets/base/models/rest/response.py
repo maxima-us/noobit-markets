@@ -68,11 +68,11 @@ class NoobitResponseOhlc(NoobitBaseResponse):
 
 class NoobitResponseItemSymbols(FrozenBaseModel):
 
-    exchange_name: str
-    #? keep this field 
-    ws_name: typing.Optional[str]
-    base: str
-    quote: str
+    exchange_pair: str
+    exchange_base: ntypes.PAsset
+    exchange_quote: ntypes.ASSET
+    noobit_base: ntypes.ASSET
+    noobit_quote: ntypes.ASSET
     volume_decimals: ntypes.COUNT
     price_decimals: ntypes.COUNT
     leverage_available: typing.Optional[typing.Tuple[PositiveInt, ...]] = Field(...)

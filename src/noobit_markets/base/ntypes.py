@@ -22,8 +22,8 @@ class NInt(pydantic.ConstrainedInt):
         self._value = _value
 
     def __str__(self):
-        # return self.sym
-        return f"<{self.__class__.__name__}>:{self._value}"
+        return self._value
+        # return f"<{self.__class__.__name__}>:{self._value}"
 
     def __repr__(self):
         return f"<{self.__class__.__name__}>:{self._value}"
@@ -35,8 +35,9 @@ class Nstr(pydantic.ConstrainedStr):
         self._value = _value
 
     def __str__(self):
-        # return self.sym
-        return f"<{self.__class__.__name__}>:{self._value}"
+        # we want to be able to concat strings
+        return self._value
+        # return f"<{self.__class__.__name__}>:{self._value}"
 
     def __repr__(self):
         return f"<{self.__class__.__name__}>:{self._value}"
@@ -112,7 +113,7 @@ class PSymbol(Nstr):
 # pydantic asset
 class PAsset(Nstr):
     regex=re.compile(r'[A-Z]{2,5}')
-    strict = True
+    strict=True
 
 # ? should be keep this ??
 SYMBOL = PSymbol
@@ -226,3 +227,18 @@ TRANSACTIONTYPE = Literal[
     "withdrawal",
     "deposit"
 ]
+
+
+
+if __name__ == "__main__":
+
+    class Symbol(pydantic.BaseModel):
+        pair: PSymbol
+        base: PAsset
+        quote: PAsset
+
+    try:
+        err = Symbol(pair=PSymbol("XBXB-ZEBZE"), base=PAsset("PROEUYTNCBCHFSOF"), quote="spaghetti")
+        print(err)
+    except pydantic.ValidationError as e:
+        raise e

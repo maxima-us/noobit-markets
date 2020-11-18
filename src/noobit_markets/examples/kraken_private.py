@@ -31,16 +31,24 @@ else:
     print("Symbols Ok")
     symbols = sym.value
     asset_from_exchange = {v: k for k, v in symbols.assets.items()}
-    # symbols_from_exchange = {v.ws_name.replace("/", ""): k for k, v in symbols_to_exchange.asset_pairs.items() if v} 
+    symbol_from_exchange={f"{v.noobit_base}{v.noobit_quote}": k for k, v in symbols.asset_pairs.items()}
+    symbol_to_exchange={k: v.exchange_pair for k, v in symbols.asset_pairs.items()}
 
-    print(symbols.asset_pairs["XBT-USD"])
+    print(symbol_from_exchange["XBTUSD"])
+    print(symbol_to_exchange["DOT-USD"])
+
     # exchange_name='XXBTZUSD' ws_name='XBT/USD' base='XXBT' quote='ZUSD' volume_decimals=8 price_decimals=1 leverage_available=(2, 3, 4, 5) order_min=Decimal('0.001')
+    
+    
+    # ============================================================
+    # BALANCES
+
 
     bal = asyncio.run(
         get_balances_kraken(
             client=httpx.AsyncClient(),
             # if we also want to see the staking assets (eg `DOT.S`)
-            asset_from_exchange=lambda x : asset_from_exchange[x] if "." not in x else ntypes.PAsset(x)
+            asset_from_exchange=lambda x : asset_from_exchange[x] if ".S" not in x else ntypes.PAsset(x)
         )
     )
     if bal.is_err():
@@ -50,6 +58,9 @@ else:
         print(table)
         print("Balances ok")
 
+    
+    # ============================================================
+    # EXPOSURE
 
 
     expo = asyncio.run(
@@ -63,6 +74,9 @@ else:
         (print(expo.value))
         print("Exposure ok")
 
+
+    # ============================================================
+    # OPEN ORDERS
 
 
     opo = asyncio.run(
@@ -82,30 +96,39 @@ else:
         print("Open Orders ok")
 
 
+    # ============================================================
+    # CLOSED ORDERS
+
 
     clo = asyncio.run(
         get_closedorders_kraken(
             client=httpx.AsyncClient(),
-            symbol_from_exchange=lambda x: {v.ws_name.replace("/", ""): k for k, v in symbols.asset_pairs.items()}.get(x),
-            symbol=ntypes.PSymbol("XBT-USD")      #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
+            symbol_from_exchange=lambda x: {f"{v.noobit_base}{v.noobit_quote}": k for k, v in symbols.asset_pairs.items()}[x],
+            # symbol_from_exchange=lambda x: f"{x[0:3]}-{x[-3:]}",
+            symbol=ntypes.PSymbol("DOT-USD")      #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
         )
     )
+
+
     if clo.is_err():
         print(clo)
     else:
         #! table is tooo wide
-        # table = pydantic_table(res.value.orders)
+        # table = pylist_table(clo.value.orders)
         # print(table)
-        # print(clo.value.rawJson)
+        print(clo.value.orders)
         print("Closed Orders ok")
 
+
+    # ============================================================
+    # OPEN POSITIONS
 
 
     opp = asyncio.run(
         get_openpositions_kraken(
             client=httpx.AsyncClient(),
             # symbols_to_exchange={k: v.exchange_name for k, v in symbols.asset_pairs.items()},
-            symbol_from_exchange=lambda x: {v.exchange_name: k for k, v in symbols.asset_pairs.items()}.get(x, None),
+            symbol_from_exchange=lambda x: {f"{v.exchange_base}{v.exchange_quote}": k for k, v in symbols.asset_pairs.items()}.get(x),
         )
     )
     if opp.is_err():
@@ -114,21 +137,28 @@ else:
         print("Open Positions ok")
 
 
-
+    # ============================================================
+    # USER TRADES
+    
+    
     utr = asyncio.run(
         get_usertrades_kraken(
             client=httpx.AsyncClient(),
             symbol=ntypes.PSymbol("XBT-USD"),        #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
-            symbol_from_exchange=lambda x: {v.exchange_name: k for k, v in symbols.asset_pairs.items()}.get(x, None),
+            # symbol_from_exchange=lambda x: {v.exchange_name: k for k, v in symbols.asset_pairs.items()}.get(x, None),
+            symbol_from_exchange=lambda x: {f"{v.exchange_base}{v.exchange_quote}": k for k, v in symbols.asset_pairs.items()}.get(x),
         )
     )
     if utr.is_err():
         print(utr)
     else:
-        table = pylist_table(utr.value.trades)
+        # table = pylist_table(utr.value.trades)
         # print(table)
         print("User Trades ok")
 
+    
+    # ============================================================
+    # WS AUTH TOKEN
 
 
     wst = asyncio.run(
@@ -148,7 +178,8 @@ else:
         post_neworder_kraken(
             client=httpx.AsyncClient(),
             symbol="DOT-USD",
-            symbol_to_exchange=lambda x: {k: v.exchange_name for k, v in symbols.asset_pairs.items()}.get(x),
+            # symbol_to_exchange=lambda x: {k: v.exchange_name for k, v in symbols.asset_pairs.items()}.get(x),
+            symbol_to_exchange=lambda x: {k: v.exchange_pair for k, v in symbols.asset_pairs.items()}[x],
             side="buy",
             ordType="market",
             clOrdID="10101",

@@ -269,6 +269,7 @@ def _single_order(
             "orderID": key,
             "symbol": symbol_from_exchange(order.descr.pair),
             "currency": (symbol_from_exchange(order.descr.pair)).split("-")[1],
+            # "currency": "USD",
             "side": order.descr.type,
             "ordType": order.descr.ordertype,
             "execInst": None,

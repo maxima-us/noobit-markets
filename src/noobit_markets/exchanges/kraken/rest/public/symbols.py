@@ -32,6 +32,50 @@ from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_re
 # KRAKEN RESPONSE
 #============================================================
 
+# SAMPLE RESPONSE
+# "XXBTZUSD":{
+#     "altname":"XBTUSD",
+#     "wsname":"XBT\/USD",
+#     "aclass_base":"currency",
+#     "base":"XXBT",
+#     "aclass_quote":"currency",
+#     "quote":"ZUSD",
+#     "lot":"unit",
+#     "pair_decimals":1,
+#     "lot_decimals":8,
+#     "lot_multiplier":1,
+#     "leverage_buy":[2,3,4,5],
+#     "leverage_sell":[2,3,4,5],
+#     "fees":[[0,0.26],[50000,0.24],[100000,0.22],[250000,0.2],[500000,0.18],[1000000,0.16],[2500000,0.14],[5000000,0.12],[10000000,0.1]],
+#     "fees_maker":[[0,0.16],[50000,0.14],[100000,0.12],[250000,0.1],[500000,0.08],[1000000,0.06],[2500000,0.04],[5000000,0.02],[10000000,0]],
+#     "fee_volume_currency":"ZUSD",
+#     "margin_call":80,
+#     "margin_stop":40,
+#     "ordermin":"0.001"
+#     }
+
+# "DOTUSD":{
+#     "altname":"DOTUSD",
+#     "wsname":"DOT\/USD",
+#     "aclass_base":"currency",
+#     "base":"DOT",
+#     "aclass_quote":"currency",
+#     "quote":"ZUSD",
+#     "lot":"unit",
+#     "pair_decimals":4,
+#     "lot_decimals":8,
+#     "lot_multiplier":1,
+#     "leverage_buy":[2,3],
+#     "leverage_sell":[2,3],
+#     "fees":[[0,0.26],[50000,0.24],[100000,0.22],[250000,0.2],[500000,0.18],[1000000,0.16],[2500000,0.14],[5000000,0.12],[10000000,0.1]],
+#     "fees_maker":[[0,0.16],[50000,0.14],[100000,0.12],[250000,0.1],[500000,0.08],[1000000,0.06],[2500000,0.04],[5000000,0.02],[10000000,0]],
+#     "fee_volume_currency":"ZUSD",
+#     "margin_call":80,
+#     "margin_stop":40,
+#     "ordermin":"1"
+#     }
+
+
 
 class KrakenResponseItemSymbols(FrozenBaseModel):
 
@@ -96,24 +140,29 @@ def parse_result_data_assetpairs(
     ) -> typing.Dict[ntypes.PSymbol, _AssetPairValue]:
 
     parsed_assetpairs: typing.Dict[PSymbol, _AssetPairValue] = {
-        ntypes.PSymbol(data.wsname.replace("/", "-")): _single_assetpair(data, exch_symbol) 
-        for exch_symbol, data in result_data.items()
+        ntypes.PSymbol(data.wsname.replace("/", "-")): _single_assetpair(data, exch_pair) 
+        for exch_pair, data in result_data.items()
     }
     return parsed_assetpairs
 
 
 def _single_assetpair(
     data: KrakenResponseItemSymbols,
-    exchange_symbol: str
+    exch_pair: str
 ) -> _AssetPairValue:
 
+    nbase, nquote = data.wsname.split("/")
+
     parsed: _AssetPairValue = {
-        "exchange_name": exchange_symbol,
-        "ws_name": data.wsname,
-        "base": data.base,
-        "quote": data.quote,
-        "volume_decimals": data.lot_decimals,
-        "price_decimals": data.pair_decimals,
+        # exchange pair might not be a simple concat of `exchange_base` and `exchange_quote`
+        # e.g kraken where pair = "DOTUSD", base = "DOT", quote = "ZUSD"
+        "exchange_pair": exch_pair,
+        "exchange_base": ntypes.PAsset(data.base),
+        "exchange_quote": ntypes.PAsset(data.quote),
+        "noobit_base": ntypes.PAsset(nbase), 
+        "noobit_quote": ntypes.PAsset(nquote), 
+        "volume_decimals": ntypes.PCount(data.lot_decimals),
+        "price_decimals": ntypes.PCount(data.pair_decimals),
         "leverage_available": data.leverage_sell,
         "order_min": data.ordermin
     }
@@ -169,6 +218,7 @@ async def get_symbols_kraken(
 
     # ? or should we pass in entire model ? (not passing data attribute)
     parsed_result_data = parse_result(valid_result_content.value.symbols)
+    print(parsed_result_data["asset_pairs"]["XBT-USD"])
 
     valid_parsed_result_data = _validate_data(NoobitResponseSymbols, pmap({**parsed_result_data, "rawJson": result_content.value}))
     return valid_parsed_result_data

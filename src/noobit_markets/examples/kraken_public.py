@@ -10,6 +10,9 @@ from noobit_markets.exchanges.kraken.rest.public.symbols import get_symbols_krak
 from noobit_markets.exchanges.kraken.rest.public.spread import get_spread_kraken
 
 
+#============================================================
+# OHLC
+
 
 res = asyncio.run(
     get_ohlc_kraken(
@@ -24,6 +27,11 @@ if res.is_err():
     print(res)
 else:
     print("Ohlc ok")
+
+
+#============================================================
+# ORDERBOOK
+
 
 res = asyncio.run(
     get_orderbook_kraken(
@@ -40,6 +48,10 @@ else:
     print("OrderBook ok")
 
 
+#============================================================
+# TRADES
+
+
 res = asyncio.run(
     get_trades_kraken(
         client=httpx.AsyncClient(),
@@ -52,6 +64,10 @@ if res.is_err():
     print(res)
 else:
     print("Trades ok")
+
+
+#============================================================
+# INSTRUMENT
 
 
 res = asyncio.run(
@@ -68,6 +84,10 @@ else:
     print("Instrument ok")
 
 
+#============================================================
+# SYMBOLS
+
+
 res = asyncio.run(
     get_symbols_kraken(
         client=httpx.AsyncClient(),
@@ -78,7 +98,12 @@ if res.is_err():
     print(res)
 else:
     assert isinstance(res.value, NoobitResponseSymbols)
+    print(res.value.asset_pairs["XBT-USD"])
     print("Symbols Ok")
+
+
+#============================================================
+# SPREAD
 
 
 res = asyncio.run(
