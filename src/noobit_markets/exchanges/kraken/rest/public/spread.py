@@ -18,7 +18,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Err, Result
-from noobit_markets.base.models.rest.response import NoobitResponseSpread
+from noobit_markets.base.models.rest.response import NoobitResponseSpread, T_SpreadParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestSpread
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -135,17 +135,10 @@ def make_kraken_model_spread(
     return model
 
 
-class _ParsedRes(TypedDict):
-    symbol: Any
-    utcTime: Any
-    bestBidPrice: Any
-    bestAskPrice: Any
-
-
 def parse_result(
         result_data_spread: typing.Tuple[_SpreadItem, ...],
         symbol: ntypes.SYMBOL
-    ) -> typing.Tuple[_ParsedRes, ...]:
+    ) -> typing.Tuple[T_SpreadParsedRes, ...]:
 
     parsed_spread = [_single(data, symbol) for data in result_data_spread]
     return tuple(parsed_spread)
@@ -154,9 +147,9 @@ def parse_result(
 def _single(
         data: _SpreadItem,
         symbol: ntypes.SYMBOL
-    ) -> _ParsedRes:
+    ) -> T_SpreadParsedRes:
 
-    parsed: _ParsedRes = {
+    parsed: T_SpreadParsedRes = {
         "symbol": symbol,
         # noobit timestamps are in ms
         "utcTime": data[0]*10**3,

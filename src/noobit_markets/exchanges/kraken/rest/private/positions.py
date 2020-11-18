@@ -10,9 +10,8 @@ from decimal import Decimal
 from urllib.parse import urljoin
 
 import pydantic
-from pydantic.utils import ValueItems
 from pyrsistent import pmap
-from typing_extensions import Literal, TypedDict
+from typing_extensions import Literal
 
 from noobit_markets.base.request import (
     retry_request,
@@ -22,7 +21,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseOpenPositions
+from noobit_markets.base.models.rest.response import NoobitResponseOpenPositions, T_PositionsParsedRes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 # Kraken
@@ -97,36 +96,12 @@ class KrakenResponseOpenPositions(FrozenBaseModel):
     positions: typing.Mapping[str, OpenPositionInfo]
 
 
-class _ParsedRes(TypedDict):
-    orderID: Any
-    symbol: Any
-    currency: Any
-    side: Any
-    ordType: Any
-    clOrdID: Any
-    cashMargin: Any
-    marginRatio: Any
-    marginAmt: Any
-    ordStatus: Any
-    workingIndicator: Any
-    transactTime: Any
-    grossTradeAmt: Any
-    orderQty: Any
-    cashOrderQty: Any
-    cumQty: Any
-    leavesQty: Any
-    price: Any
-    avgPx: Any
-    commission: Any
-    text: Any
-
-    unrealisedPnL: Any
 
 
 def parse_result(
         result_data: typing.Mapping[str, OpenPositionInfo],
         symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE
-    ) -> typing.Tuple[_ParsedRes, ...]:
+    ) -> typing.Tuple[T_PositionsParsedRes, ...]:
 
     parsed = [
         _single_position(key, info, symbol_from_exchange) for key, info in result_data.items()
@@ -135,9 +110,9 @@ def parse_result(
     return tuple(parsed)
 
 
-def _single_position(key: str, info: OpenPositionInfo, symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE) -> _ParsedRes:
+def _single_position(key: str, info: OpenPositionInfo, symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE) -> T_PositionsParsedRes:
 
-    parsed: _ParsedRes = {
+    parsed: T_PositionsParsedRes = {
         "orderID": info.ordertxid,
         "symbol": symbol_from_exchange(info.pair),
         "currency": symbol_from_exchange(info.pair).split("-")[1],

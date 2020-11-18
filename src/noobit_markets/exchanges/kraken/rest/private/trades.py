@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 
 import pydantic
 from pyrsistent import pmap
-from typing_extensions import Literal, TypedDict
+from typing_extensions import Literal
 
 from noobit_markets.base.request import (
     retry_request,
@@ -15,7 +15,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseTrades
+from noobit_markets.base.models.rest.response import NoobitResponseTrades, T_PrivateTradesParsedRes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 # Kraken
@@ -119,27 +119,12 @@ class KrakenResponseUserTrades(FrozenBaseModel):
 
 
 
-class _ParsedRes(TypedDict):
-    trdMatchID: Any
-    transactTime: Any
-    orderID: Any
-    clOrdID: Any
-    symbol: Any
-    side: Any
-    ordType: Any
-    avgPx: Any
-    cumQty: Any
-    grossTradeAmt: Any
-    commission: Any
-    tickDirection: Any
-    text: Any
-
 
 def parse_result(
         result_data: typing.Mapping[str, SingleTradeInfo],
         symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
         symbol: ntypes.SYMBOL
-    ) -> typing.Tuple[_ParsedRes, ...]:
+    ) -> typing.Tuple[T_PrivateTradesParsedRes, ...]:
 
     parsed = [
         _single_trade(key, info, symbol_from_exchange)
@@ -156,9 +141,9 @@ def _single_trade(
         info: SingleTradeInfo,
         # symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE
         symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE 
-    ) -> _ParsedRes:
+    ) -> T_PrivateTradesParsedRes:
 
-    parsed: _ParsedRes = {
+    parsed: T_PrivateTradesParsedRes = {
         "trdMatchID": key,
         "transactTime": info.time,
         "orderID": info.ordertxid,

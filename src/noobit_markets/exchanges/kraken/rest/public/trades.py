@@ -18,7 +18,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Err, Result
-from noobit_markets.base.models.rest.response import NoobitResponseTrades
+from noobit_markets.base.models.rest.response import NoobitResponseTrades, T_PublicTradesParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestTrades
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -139,24 +139,11 @@ def make_kraken_model_trades(
     return model
 
 
-# only used to check field names
-class _ParsedRes(TypedDict):
-    symbol: Any
-    orderID: Any
-    trdMatchID: Any
-    transactTime: Any
-    side: Any
-    ordType: Any
-    avgPx: Any
-    cumQty: Any
-    grossTradeAmt: Any
-    text: Any
-
 
 def parse_result(
         result_data: typing.Tuple[_TradesItem, ...],
         symbol: ntypes.SYMBOL
-    ) -> typing.Tuple[_ParsedRes, ...]:
+    ) -> typing.Tuple[T_PublicTradesParsedRes, ...]:
 
     parsed_trades = [_single_trade(data, symbol) for data in result_data]
 
@@ -166,9 +153,9 @@ def parse_result(
 def _single_trade(
         data: _TradesItem,
         symbol: ntypes.SYMBOL
-    ) -> _ParsedRes:
+    ) -> T_PublicTradesParsedRes:
 
-    parsed: _ParsedRes = {
+    parsed: T_PublicTradesParsedRes = {
         "symbol": symbol,
         "orderID": None,
         "trdMatchID": None,

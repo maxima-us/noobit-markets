@@ -17,7 +17,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseNewOrder
+from noobit_markets.base.models.rest.response import NoobitResponseNewOrder, T_NewOrderParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestAddOrder
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -202,14 +202,9 @@ class KrakenResponseNewOrder(FrozenBaseModel):
     txid: typing.Any
 
 
-class _ParsedRes(TypedDict):
-    descr: Any
-    txid: Any
-
-
 def parse_result(
         result_data: KrakenResponseNewOrder,
-    ) -> _ParsedRes:
+    ) -> T_NewOrderParsedRes:
 
     res: _ParsedRes = result_data.dict()     #type: ignore
     return res

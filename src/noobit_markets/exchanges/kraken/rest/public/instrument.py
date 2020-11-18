@@ -6,7 +6,6 @@ from urllib.parse import urljoin
 import stackprinter     #type: ignore
 stackprinter.set_excepthook(style="darkbg2")
 
-from typing_extensions import TypedDict
 import pydantic
 from pydantic.error_wrappers import ValidationError
 from pyrsistent import pmap
@@ -20,7 +19,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result, Err
-from noobit_markets.base.models.rest.response import NoobitResponseInstrument
+from noobit_markets.base.models.rest.response import NoobitResponseInstrument, T_InstrumentParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestInstrument
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -111,29 +110,14 @@ def make_kraken_model_instrument(
     return model
 
 
-class _ParsedRes(TypedDict):
-    symbol: Any
-    low: Any
-    high: Any
-    vwap: Any
-    last: Any
-    volume: Any
-    trdCount: Any
-    bestAsk: Any
-    bestBid: Any
-    prevLow: Any
-    prevHigh: Any
-    prevVwap: Any
-    prevVolume: Any
-    prevTrdCount: Any
 
 
 def parse_result(
         result_data: KrakenInstrumentData,
         symbol: ntypes.SYMBOL
-    ) -> _ParsedRes:
+    ) -> T_InstrumentParsedRes:
 
-    parsed_instrument: _ParsedRes = {
+    parsed_instrument: T_InstrumentParsedRes = {
         "symbol": symbol,
         "low": result_data.l[0],
         "high": result_data.h[0],

@@ -18,7 +18,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Err, Result
-from noobit_markets.base.models.rest.response import NoobitResponseOrderBook
+from noobit_markets.base.models.rest.response import NoobitResponseOrderBook, T_OrderBookParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestOrderBook
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -95,20 +95,13 @@ def make_kraken_model_orderbook(
     return model
 
 
-# only used to check field names
-class _TypedRes(TypedDict):
-    utcTime: Any
-    symbol: Any
-    asks: Any
-    bids: Any
-
 
 def parse_result(
         result_data: KrakenBook,
         symbol: ntypes.SYMBOL
-    ) -> _TypedRes:
+    ) -> T_OrderBookParsedRes:
 
-    parsed_book: _TypedRes = {
+    parsed_book: T_OrderBookParsedRes = {
         # noobit timestamp in ms
         "utcTime": time.time() * 10**3,
         "symbol": symbol,

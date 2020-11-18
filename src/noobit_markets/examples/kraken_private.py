@@ -34,8 +34,8 @@ else:
     symbol_from_exchange={f"{v.noobit_base}{v.noobit_quote}": k for k, v in symbols.asset_pairs.items()}
     symbol_to_exchange={k: v.exchange_pair for k, v in symbols.asset_pairs.items()}
 
-    print(symbol_from_exchange["XBTUSD"])
-    print(symbol_to_exchange["DOT-USD"])
+    # print(symbol_from_exchange["XBTUSD"])
+    # print(symbol_to_exchange["DOT-USD"])
 
     # exchange_name='XXBTZUSD' ws_name='XBT/USD' base='XXBT' quote='ZUSD' volume_decimals=8 price_decimals=1 leverage_available=(2, 3, 4, 5) order_min=Decimal('0.001')
     
@@ -71,7 +71,7 @@ else:
     if expo.is_err():
         print(expo)
     else:
-        (print(expo.value))
+        # (print(expo.value))
         print("Exposure ok")
 
 
@@ -116,7 +116,7 @@ else:
         #! table is tooo wide
         # table = pylist_table(clo.value.orders)
         # print(table)
-        print(clo.value.orders)
+        # print(clo.value.orders)
         print("Closed Orders ok")
 
 
@@ -169,7 +169,7 @@ else:
     if wst.is_err():
         print(wst)
     else:
-        print(wst)
+        # print(wst)
         print("Ws Token ok")
 
 
@@ -193,5 +193,5 @@ else:
     if trd.is_err():
         print(trd)
     else:
-        print(trd)
+        # print(trd)
         print("Trading New Order ok")

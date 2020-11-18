@@ -98,7 +98,6 @@ if res.is_err():
     print(res)
 else:
     assert isinstance(res.value, NoobitResponseSymbols)
-    print(res.value.asset_pairs["XBT-USD"])
     print("Symbols Ok")
 
 

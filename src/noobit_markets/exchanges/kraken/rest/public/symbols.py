@@ -8,7 +8,6 @@ from noobit_markets.base.ntypes import PSymbol
 import pydantic
 from pydantic.error_wrappers import ValidationError
 from pyrsistent import pmap
-from typing_extensions import TypedDict
 
 from noobit_markets.base.request import (
     retry_request,
@@ -18,7 +17,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result, Ok
-from noobit_markets.base.models.rest.response import NoobitResponseSymbols
+from noobit_markets.base.models.rest.response import NoobitResponseSymbols, T_SymbolParsedItem, T_SymbolParsedRes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 # Kraken
@@ -105,29 +104,12 @@ class KrakenResponseSymbols(FrozenBaseModel):
     symbols: typing.Mapping[str, KrakenResponseItemSymbols]
 
 
-# TODO move this to base/models/response.py
-class _AssetPairValue(TypedDict):
-    exchange_name: Any
-    ws_name: Any
-    base: Any
-    quote: Any
-    volume_decimals: Any
-    price_decimals: Any
-    leverage_available: Any
-    order_min: Any
-
-
-# TODO move this to base/models/response.py
-class _ParsedRes(TypedDict):
-    asset_pairs: typing.Dict[ntypes.PSymbol, _AssetPairValue]
-    assets: typing.Dict[ntypes.PAsset, str]
-
 
 def parse_result(
         result_data: typing.Dict[str, KrakenResponseItemSymbols]
-    ) -> _ParsedRes:
+    ) -> T_SymbolParsedRes:
 
-    parsed: _ParsedRes = {
+    parsed: T_SymbolParsedRes = {
         "asset_pairs": parse_result_data_assetpairs(result_data),
         "assets": parse_result_data_assets(result_data)
     }
@@ -137,9 +119,9 @@ def parse_result(
 
 def parse_result_data_assetpairs(
         result_data: typing.Dict[str, KrakenResponseItemSymbols],
-    ) -> typing.Dict[ntypes.PSymbol, _AssetPairValue]:
+    ) -> typing.Dict[ntypes.PSymbol, T_SymbolParsedItem]:
 
-    parsed_assetpairs: typing.Dict[PSymbol, _AssetPairValue] = {
+    parsed_assetpairs: typing.Dict[PSymbol, T_SymbolParsedItem] = {
         ntypes.PSymbol(data.wsname.replace("/", "-")): _single_assetpair(data, exch_pair) 
         for exch_pair, data in result_data.items()
     }
@@ -149,11 +131,11 @@ def parse_result_data_assetpairs(
 def _single_assetpair(
     data: KrakenResponseItemSymbols,
     exch_pair: str
-) -> _AssetPairValue:
+) -> T_SymbolParsedItem:
 
     nbase, nquote = data.wsname.split("/")
 
-    parsed: _AssetPairValue = {
+    parsed: T_SymbolParsedItem = {
         # exchange pair might not be a simple concat of `exchange_base` and `exchange_quote`
         # e.g kraken where pair = "DOTUSD", base = "DOT", quote = "ZUSD"
         "exchange_pair": exch_pair,
@@ -218,7 +200,6 @@ async def get_symbols_kraken(
 
     # ? or should we pass in entire model ? (not passing data attribute)
     parsed_result_data = parse_result(valid_result_content.value.symbols)
-    print(parsed_result_data["asset_pairs"]["XBT-USD"])
 
     valid_parsed_result_data = _validate_data(NoobitResponseSymbols, pmap({**parsed_result_data, "rawJson": result_content.value}))
     return valid_parsed_result_data

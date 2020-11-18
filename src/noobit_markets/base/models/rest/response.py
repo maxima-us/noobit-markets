@@ -1,7 +1,13 @@
+"""
+Define the unified response model we expect for each endpoint.
+
+A class whose name is prefixed by `T_` is only there for mypy
+"""
+
 import typing
 from decimal import Decimal
 
-from typing_extensions import Literal
+from typing_extensions import Literal, TypedDict
 from pydantic import PositiveInt, Field
 
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
@@ -23,11 +29,87 @@ class NoobitBaseResponse(FrozenBaseModel):
 
 
 
+# ============================================================
+# INSTRUMENT
+# ============================================================
+
+
+# ====================
+# mypy type hints
+class T_InstrumentParsedRes(TypedDict):
+    symbol: typing.Any
+    low: typing.Any
+    high: typing.Any
+    vwap: typing.Any
+    last: typing.Any
+    volume: typing.Any
+    trdCount: typing.Any
+    bestAsk: typing.Any
+    bestBid: typing.Any
+    prevLow: typing.Any
+    prevHigh: typing.Any
+    prevVwap: typing.Any
+    prevVolume: typing.Any
+    prevTrdCount: typing.Any
+
+
+# ====================
+# pydantic models
+
+class NoobitResponseInstrument(NoobitBaseResponse):
+
+    # FIX Definition:
+    #   Ticker symbol. Common, "human understood" representation of the security.
+    #   SecurityID (48) value can be specified if no symbol exists
+    #   (e.g. non-exchange traded Collective Investment Vehicles)
+    #   Use "[N/A]" for products which do not have a symbol.
+    symbol: ntypes.SYMBOL
+
+    # prices
+    low: Decimal
+    high: Decimal
+    vwap: Decimal
+    last: Decimal
+    # specific to derivatives exchanges
+    markPrice: typing.Optional[Decimal]
+
+    # quantities
+    volume: Decimal
+    trdCount: Decimal
+
+    # spread
+    bestAsk: ntypes.ASK
+    bestBid: ntypes.BID
+
+    # stats for previous day
+    prevLow: Decimal
+    prevHigh: Decimal
+    prevVwap: Decimal
+    prevVolume: Decimal
+    prevTrdCount: typing.Optional[Decimal]
+
+
+
 
 # ============================================================
 # OHLC
 # ============================================================
 
+# ====================
+# mypy type hints
+class T_OhlcParsedRes(TypedDict):
+    symbol: typing.Any
+    utcTime: typing.Any
+    open: typing.Any
+    high: typing.Any
+    low: typing.Any
+    close: typing.Any
+    volume: typing.Any
+    trdCount: typing.Any
+
+
+# ====================
+# pydantic models
 
 class NoobitResponseItemOhlc(FrozenBaseModel):
 
@@ -61,10 +143,99 @@ class NoobitResponseOhlc(NoobitBaseResponse):
     #     return v
 
 
+
+# ============================================================
+# ORDERBOOK
+# ============================================================
+
+
+# ====================
+# mypy type hints
+
+class T_OrderBookParsedRes(TypedDict):
+    utcTime: typing.Any
+    symbol: typing.Any
+    asks: typing.Any
+    bids: typing.Any
+
+
+
+# ====================
+# pydantic models
+
+class NoobitResponseOrderBook(NoobitBaseResponse):
+
+    utcTime: ntypes.TIMESTAMP
+    symbol: ntypes.SYMBOL
+    asks: ntypes.ASKS
+    bids: ntypes.BIDS
+
+
+
+# ============================================================
+# SPREAD
+# ============================================================
+
+
+# ====================
+# mypy type hints
+
+
+class T_SpreadParsedRes(TypedDict):
+    symbol: typing.Any
+    utcTime: typing.Any
+    bestBidPrice: typing.Any
+    bestAskPrice: typing.Any
+
+
+# ====================
+# pydantic models
+
+
+class NoobitResponseItemSpread(FrozenBaseModel):
+
+    symbol: ntypes.SYMBOL
+    utcTime: ntypes.TIMESTAMP
+
+    # we only get price, without volume
+    bestAskPrice: Decimal
+    bestBidPrice: Decimal
+
+
+class NoobitResponseSpread(NoobitBaseResponse):
+
+    spread: typing.Tuple[NoobitResponseItemSpread, ...]
+    
+    # TODO remove in endpoints
+    # last: ntypes.TIMESTAMP
+
+
+
 # ============================================================
 # SYMBOLS
 # ============================================================
 
+
+# ====================
+# mypy type hints
+class T_SymbolParsedItem(TypedDict):
+    exchange_name: typing.Any
+    ws_name: typing.Any
+    base: typing.Any
+    quote: typing.Any
+    volume_decimals: typing.Any
+    price_decimals: typing.Any
+    leverage_available: typing.Any
+    order_min: typing.Any
+
+
+class T_SymbolParsedRes(TypedDict):
+    asset_pairs: typing.Dict[ntypes.PSymbol, T_SymbolParsedItem]
+    assets: typing.Dict[ntypes.PAsset, str]
+
+
+# ====================
+# pydantic models
 
 class NoobitResponseItemSymbols(FrozenBaseModel):
 
@@ -85,72 +256,52 @@ class NoobitResponseSymbols(NoobitBaseResponse):
     assets: typing.Mapping[ntypes.PAsset, str]
 
 
-# ============================================================
-# BALANCES
-# ============================================================
 
 
-class NoobitResponseBalances(NoobitBaseResponse):
-
-    # FIXME replace with more explicit field name ?
-    data: typing.Mapping[ntypes.ASSET, Decimal]
-
-
-
-
-# ============================================================
-# OHLC
-# ============================================================
-
-class NoobitResponseOrderBook(NoobitBaseResponse):
-
-    utcTime: ntypes.TIMESTAMP
-    symbol: ntypes.SYMBOL
-    asks: ntypes.ASKS
-    bids: ntypes.BIDS
-
-
-
-
-# ============================================================
-# EXPOSURE
-# ============================================================
-
-
-class NoobitResponseExposure(NoobitBaseResponse):
-
-     # FIX Definition: https://www.onixs.biz/fix-dictionary/4.4/tagNum_900.html
-    # (Total value of assets + positions + unrealized)
-    totalNetValue: Decimal
-
-    # FIX Definition: https://www.onixs.biz/fix-dictionary/4.4/tagNum_901.html
-    # (Available cash after deducting margin)
-    cashOutstanding: typing.Optional[Decimal]
-
-    # FIX Definition: https://www.onixs.biz/fix-dictionary/4.4/tagNum_899.html
-    #   Excess margin amount (deficit if value is negative)
-    # (Available margin)
-    marginExcess: Decimal
-
-    # FIX Definition:
-    #   The fraction of the cash consideration that must be collateralized, expressed as a percent.
-    #   A MarginRatio of 02% indicates that the value of the collateral (after deducting for "haircut")
-    #   must exceed the cash consideration by 2%.
-    # (marginRatio = 1/leverage)
-    # (total margin exposure on account)
-    marginRatio: Decimal = Decimal(0)
-
-    marginAmt: Decimal = Decimal(0)
-
-    unrealisedPnL: Decimal = Decimal(0)
-
-
+#? ============================================================
+#? ============================================================
+#! TRADES (both private and public, same model for both)
+#? ============================================================
+#? ============================================================
 
 
 # ============================================================
 # TRADES
 # ============================================================
 
+
+# ====================
+# mypy type hints
+class T_PublicTradesParsedRes(TypedDict):
+    symbol: typing.Any
+    orderID: typing.Any
+    trdMatchID: typing.Any
+    transactTime: typing.Any
+    side: typing.Any
+    ordType: typing.Any
+    avgPx: typing.Any
+    cumQty: typing.Any
+    grossTradeAmt: typing.Any
+    text: typing.Any
+
+
+class T_PrivateTradesParsedRes(TypedDict):
+    trdMatchID: typing.Any
+    transactTime: typing.Any
+    orderID: typing.Any
+    clOrdID: typing.Any
+    symbol: typing.Any
+    side: typing.Any
+    ordType: typing.Any
+    avgPx: typing.Any
+    cumQty: typing.Any
+    grossTradeAmt: typing.Any
+    commission: typing.Any
+    tickDirection: typing.Any
+    text: typing.Any
+
+# ====================
+# pydantic models
 
 class NoobitResponseItemTrade(FrozenBaseModel):
     # Field(...) = we need to explicitly pass None
@@ -240,74 +391,110 @@ class NoobitResponseTrades(NoobitBaseResponse):
 
 
 
+
+#? ============================================================
+#? ============================================================
+#! PRIVATE ENDPOINTS
+#? ============================================================
+#? ============================================================
+
+
+
+
 # ============================================================
-# INSTRUMENT
+# BALANCES
 # ============================================================
 
 
-class NoobitResponseInstrument(NoobitBaseResponse):
+class NoobitResponseBalances(NoobitBaseResponse):
+
+    # FIXME replace with more explicit field name ?
+    data: typing.Mapping[ntypes.ASSET, Decimal]
+
+
+
+
+# ============================================================
+# EXPOSURE
+# ============================================================
+
+
+# ====================
+# mypy type hints
+class T_ExposureParsedRes(TypedDict):
+    totalNetValue: typing.Any
+    marginExcess: typing.Any
+    marginAmt: typing.Any
+    marginRatio: typing.Any
+    unrealisedPnL: typing.Any
+
+
+# ====================
+# pydantic models
+
+class NoobitResponseExposure(NoobitBaseResponse):
+
+     # FIX Definition: https://www.onixs.biz/fix-dictionary/4.4/tagNum_900.html
+    # (Total value of assets + positions + unrealized)
+    totalNetValue: Decimal
+
+    # FIX Definition: https://www.onixs.biz/fix-dictionary/4.4/tagNum_901.html
+    # (Available cash after deducting margin)
+    cashOutstanding: typing.Optional[Decimal]
+
+    # FIX Definition: https://www.onixs.biz/fix-dictionary/4.4/tagNum_899.html
+    #   Excess margin amount (deficit if value is negative)
+    # (Available margin)
+    marginExcess: Decimal
 
     # FIX Definition:
-    #   Ticker symbol. Common, "human understood" representation of the security.
-    #   SecurityID (48) value can be specified if no symbol exists
-    #   (e.g. non-exchange traded Collective Investment Vehicles)
-    #   Use "[N/A]" for products which do not have a symbol.
-    symbol: ntypes.SYMBOL
+    #   The fraction of the cash consideration that must be collateralized, expressed as a percent.
+    #   A MarginRatio of 02% indicates that the value of the collateral (after deducting for "haircut")
+    #   must exceed the cash consideration by 2%.
+    # (marginRatio = 1/leverage)
+    # (total margin exposure on account)
+    marginRatio: Decimal = Decimal(0)
 
-    # prices
-    low: Decimal
-    high: Decimal
-    vwap: Decimal
-    last: Decimal
-    # specific to derivatives exchanges
-    markPrice: typing.Optional[Decimal]
+    marginAmt: Decimal = Decimal(0)
 
-    # quantities
-    volume: Decimal
-    trdCount: Decimal
-
-    # spread
-    bestAsk: ntypes.ASK
-    bestBid: ntypes.BID
-
-    # stats for previous day
-    prevLow: Decimal
-    prevHigh: Decimal
-    prevVwap: Decimal
-    prevVolume: Decimal
-    prevTrdCount: typing.Optional[Decimal]
+    unrealisedPnL: Decimal = Decimal(0)
 
 
 
 
 # ============================================================
-# SPREAD
+# ORDERS AND POSITIONS (actually rely on same base model)
 # ============================================================
 
 
-class NoobitResponseItemSpread(FrozenBaseModel):
+# ==================== 
+# mypy type hints
 
-    symbol: ntypes.SYMBOL
-    utcTime: ntypes.TIMESTAMP
+class T_PositionsParsedRes(TypedDict):
+    orderID: typing.Any
+    symbol: typing.Any
+    currency: typing.Any
+    side: typing.Any
+    ordType: typing.Any
+    clOrdID: typing.Any
+    cashMargin: typing.Any
+    marginRatio: typing.Any
+    marginAmt: typing.Any
+    ordStatus: typing.Any
+    workingIndicator: typing.Any
+    transactTime: typing.Any
+    grossTradeAmt: typing.Any
+    orderQty: typing.Any
+    cashOrderQty: typing.Any
+    cumQty: typing.Any
+    leavesQty: typing.Any
+    price: typing.Any
+    avgPx: typing.Any
+    commission: typing.Any
+    text: typing.Any
 
-    # we only get price, without volume
-    bestAskPrice: Decimal
-    bestBidPrice: Decimal
+    unrealisedPnL: typing.Any
 
-
-class NoobitResponseSpread(NoobitBaseResponse):
-
-    spread: typing.Tuple[NoobitResponseItemSpread, ...]
-    
-    # TODO remove in endpoints
-    # last: ntypes.TIMESTAMP
-
-
-
-
-# ============================================================
-# ORDERS AND POSITIONS
-# ============================================================
 
 # FIX ExecutionReport : https://www.onixs.biz/fix-dictionary/5.0.sp2/msgType_8_8.html
 #! should be add session ID ? to identify a particular trading session ??
@@ -318,7 +505,6 @@ class NoobitResponseItemOrder(FrozenBaseModel):
 
 
     # ================================================================================
-
 
     # FIX Definition:
     #   Unique identifier for Order as assigned by sell-side (broker, exchange, ECN).
@@ -624,5 +810,12 @@ class Descr(FrozenBaseModel):
 
 class NoobitResponseNewOrder(NoobitBaseResponse):
 
+    descr: typing.Any
+    txid: typing.Any
+
+
+# ====================
+# mypy type hints
+class T_NewOrderParsedRes(TypedDict):
     descr: typing.Any
     txid: typing.Any

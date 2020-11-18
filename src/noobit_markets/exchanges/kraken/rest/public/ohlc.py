@@ -7,7 +7,7 @@ from datetime import date
 import pydantic
 from pydantic.error_wrappers import ValidationError
 from pyrsistent import pmap, PRecord, field
-from typing_extensions import Literal, TypedDict
+from typing_extensions import Literal
 
 from noobit_markets.base.request import (
     retry_request,
@@ -18,7 +18,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes, mappings
 from noobit_markets.base.models.result import Result, Err
-from noobit_markets.base.models.rest.response import NoobitResponseOhlc
+from noobit_markets.base.models.rest.response import NoobitResponseOhlc, T_OhlcParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestOhlc
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -133,22 +133,11 @@ def make_kraken_model_ohlc(
     return model
 
 
-# only used to check field names
-class _TypedRes(TypedDict):
-    symbol: Any
-    utcTime: Any
-    open: Any
-    high: Any
-    low: Any
-    close: Any
-    volume: Any
-    trdCount: Any
-
 
 def parse_result(
         result_data: typing.Tuple[_KrakenResponseItemCandle, ...],
         symbol: ntypes.SYMBOL
-    ) -> typing.Tuple[_TypedRes, ...]:
+    ) -> typing.Tuple[T_OhlcParsedRes, ...]:
 
     parsed_ohlc = [_single_candle(data, symbol) for data in result_data]
 
@@ -158,9 +147,9 @@ def parse_result(
 def _single_candle(
         data: tuple,
         symbol: ntypes.SYMBOL
-    ) -> _TypedRes:
+    ) -> T_OhlcParsedRes:
 
-    parsed: _TypedRes = {
+    parsed: T_OhlcParsedRes = {
         "symbol": symbol,
         "utcTime": data[0]*10**3,
         "open": data[1],

@@ -5,7 +5,6 @@ from urllib.parse import urljoin
 
 import pydantic
 from pyrsistent import pmap
-from typing_extensions import TypedDict
 
 from noobit_markets.base.request import (
     retry_request,
@@ -15,7 +14,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseExposure
+from noobit_markets.base.models.rest.response import NoobitResponseExposure, T_ExposureParsedRes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 
@@ -55,17 +54,11 @@ class KrakenResponseExposure(FrozenBaseModel):
     ml: typing.Optional[Decimal]
 
 
-class _ParsedRes(TypedDict):
-    totalNetValue: Any
-    marginExcess: Any
-    marginAmt: Any
-    marginRatio: Any
-    unrealisedPnL: Any
 
 
-def parse_result(result_data: KrakenResponseExposure) -> _ParsedRes:
+def parse_result(result_data: KrakenResponseExposure) -> T_ExposureParsedRes:
 
-    parsed: _ParsedRes = {
+    parsed: T_ExposureParsedRes = {
         "totalNetValue": result_data.eb,
         "marginExcess": result_data.mf,
         "marginAmt": result_data.m,
