@@ -12,7 +12,7 @@ from pyrsistent import pmap
 # noobit base
 from noobit_markets.base import ntypes
 from noobit_markets.base.request import _validate_data
-from noobit_markets.base.websockets import subscribe 
+from noobit_markets.base.websockets import subscribe
 from noobit_markets.base.models.result import Result, Ok, Err
 from noobit_markets.base.models.rest.response import NoobitResponseOrderBook, NoobitResponseSpread, NoobitResponseTrades
 
@@ -70,8 +70,8 @@ class KrakenWsPublic(BaseWsApi):
 
 
     def __init__(
-            self, 
-            client: websockets.WebSocketClientProtocol, 
+            self,
+            client: websockets.WebSocketClientProtocol,
             msg_handler: typing.Callable[
                 [str, typing.Type[asyncio.Queue], typing.Type[asyncio.Queue]],
                 typing.Coroutine[typing.Any, typing.Any, None]
@@ -85,9 +85,9 @@ class KrakenWsPublic(BaseWsApi):
 
 
     async def subscription(self):
-        
+
         await super()._watch_sub(
-            self._status_queues, 
+            self._status_queues,
             feed_map = {
                 "trade": "trade",
                 "ticker": "instrument",
@@ -149,7 +149,7 @@ class KrakenWsPublic(BaseWsApi):
             print(sub_result)
 
         self._subd_feeds["trade"].add(symbol_mapping[symbol])
-        
+
         # async for msg in self._queues["spread"]:
         async for msg in self.iterq(self._data_queues, "trade"):
             if self._terminate: break
@@ -169,9 +169,9 @@ class KrakenWsPublic(BaseWsApi):
         #! replace with: below
 
         # msg = {
-        #     "event": "subscribe", 
+        #     "event": "subscribe",
         #     "pair": [symbol_mapping[symbol], ],
-        #     "subscription": {"name": "book", "depth": depth} 
+        #     "subscription": {"name": "book", "depth": depth}
         # }
         # fields = {
         #     "exchange": "kraken",
@@ -197,11 +197,11 @@ class KrakenWsPublic(BaseWsApi):
             #     if self._terminate: break
             #     yield msg
             pass
-        
+
         else:
             # reconstruct orderbook
             _count = 0
-            # async for msg in self.iterq(self._data_queues, "orderbook"):                
+            # async for msg in self.iterq(self._data_queues, "orderbook"):
             async for msg in self.aiter_book():
 
                 # print("From iterq :", msg)
@@ -217,7 +217,7 @@ class KrakenWsPublic(BaseWsApi):
 
                 pair = msg.value.symbol     #type: ignore
                 pair_key= ntypes.PSymbol(pair)
-    
+
                 # only way to make mypy understand that `msg.value` is `Ok`
                 #   (msg.is_ok() will not work)
                 # see: https://github.com/dbrgn/result/issues/17#issue-502950927
@@ -247,9 +247,9 @@ class KrakenWsPublic(BaseWsApi):
                         }
 
                     _count += 1
-                    
+
                     valid_book = _validate_data(
-                        NoobitResponseOrderBook, 
+                        NoobitResponseOrderBook,
                         pmap({
                             "symbol": msg.value.symbol,
                             "utcTime": msg.value.utcTime,
@@ -318,8 +318,8 @@ if __name__ == "__main__":
 
             results = await asyncio.gather(coro1(), coro3())
             return results
-    
-    
+
+
     loop = asyncio.get_event_loop()
 
     loop.run_until_complete(main(loop))

@@ -1,20 +1,19 @@
 import time
-import typing
 
 from pydantic import ValidationError
 
 from noobit_markets.base.ntypes import SYMBOL_TO_EXCHANGE, SYMBOL, DEPTH
-from noobit_markets.base.websockets import KrakenSubModel 
+from noobit_markets.base.websockets import KrakenSubModel
 from noobit_markets.base.models.result import Result, Ok, Err
 from noobit_markets.base.models.rest.response import NoobitResponseOrderBook
 
 
 def validate_sub(symbol_mapping: SYMBOL_TO_EXCHANGE, symbol: SYMBOL, depth: DEPTH) -> Result[KrakenSubModel, Exception]:
-    
+
     msg = {
-        "event": "subscribe", 
+        "event": "subscribe",
         "pair": [symbol_mapping[symbol], ],
-        "subscription": {"name": "book", "depth": depth} 
+        "subscription": {"name": "book", "depth": depth}
     }
 
     try:
@@ -42,7 +41,7 @@ def validate_parsed(msg, parsed_msg):
             rawJson=msg
         )
         return Ok(validated_msg)
-    
+
     except ValidationError as e:
         return Err(e)
 
