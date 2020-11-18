@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 from datetime import date
 
 import pydantic
+from pydantic.error_wrappers import ValidationError
 from pyrsistent import pmap
 from typing_extensions import Literal, TypedDict
 
@@ -16,7 +17,7 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result
+from noobit_markets.base.models.result import Err, Result
 from noobit_markets.base.models.rest.response import NoobitResponseTrades
 from noobit_markets.base.models.rest.request import NoobitRequestTrades
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
@@ -63,10 +64,13 @@ class _ParsedReq(TypedDict):
     since: Any
 
 
-def parse_request(valid_request: NoobitRequestTrades) -> _ParsedReq:
+def parse_request(
+    valid_request: NoobitRequestTrades,
+    symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
+    ) -> _ParsedReq:
 
     payload: _ParsedReq = {
-        "pair": valid_request.symbol_mapping[valid_request.symbol],
+        "pair": symbol_to_exchange(valid_request.symbol),
         # convert from noobit ts (ms) to expected (ns)
         "since": None if valid_request.since is None else valid_request.since * 10**6
     }
@@ -115,11 +119,11 @@ _TradesItem = typing.Tuple[Decimal, Decimal, Decimal, Literal["b", "s"], Literal
 # needs to be create dynamically since pair changes according to request
 def make_kraken_model_trades(
         symbol: ntypes.SYMBOL,
-        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
     ) -> typing.Type[pydantic.BaseModel]:
 
     kwargs = {
-        symbol_mapping[symbol]: (
+        symbol_to_exchange(symbol): (
             # tuple : price, volume, time, buy/sell, market/limit, misc
             # time = timestamp in s, decimal
             typing.Tuple[_TradesItem, ...], ...
@@ -196,17 +200,17 @@ async def get_trades_kraken(
         since: typing.Optional[ntypes.TIMESTAMP] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.trades,
-    ) -> Result[NoobitResponseTrades, typing.Type[Exception]]:
+    ) -> Result[NoobitResponseTrades,ValidationError]:
 
     req_url = urljoin(base_url, endpoint)
     method = "GET"
     headers: typing.Dict = {}
 
     valid_noobit_req = validate_nreq_trades(symbol, symbol_to_exchange, since)
-    if valid_noobit_req.is_err():
-        return valid_noobit_req     #type: ignore
+    if isinstance(valid_noobit_req, Err):
+        return valid_noobit_req
 
-    parsed_req = parse_request(valid_noobit_req.value)      #type: ignore
+    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
     valid_kraken_req = _validate_data(KrakenRequestTrades, pmap(parsed_req))
     if valid_kraken_req.is_err():
@@ -224,7 +228,7 @@ async def get_trades_kraken(
         return valid_result_content
 
     parsed_result_trades = parse_result(
-        getattr(valid_result_content.value, symbol_to_exchange[symbol]),
+        getattr(valid_result_content.value, symbol_to_exchange(symbol)),
         symbol
     )
 

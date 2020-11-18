@@ -119,13 +119,16 @@ SYMBOL = PSymbol
 ASSET = PAsset
 
 # symbol mappings (symbol = assetpair)
-SYMBOL_FROM_EXCHANGE = typing.Mapping[str, PSymbol]
-SYMBOL_TO_EXCHANGE = typing.Mapping[PSymbol, str]
-
+# SYMBOL_FROM_EXCHANGE = typing.Mapping[str, PSymbol]
+# SYMBOL_TO_EXCHANGE = typing.Mapping[PSymbol, str]
+SYMBOL_FROM_EXCHANGE = typing.Callable[[str], PSymbol]
+SYMBOL_TO_EXCHANGE = typing.Callable[[PSymbol], str]
 
 # asset mappings
-ASSET_TO_EXCHANGE = typing.Dict[PAsset, str]
-ASSET_FROM_EXCHANGE = typing.Mapping[str, PAsset]
+# ASSET_TO_EXCHANGE = typing.Dict[PAsset, str]
+# ASSET_FROM_EXCHANGE = typing.Mapping[str, PAsset]
+ASSET_FROM_EXCHANGE = typing.Callable[[str], PAsset]
+ASSET_TO_EXCHANGE = typing.Callable[[PAsset], str]
 
 
 

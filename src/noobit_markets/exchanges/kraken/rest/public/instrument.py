@@ -3,15 +3,13 @@ from typing import Any
 from decimal import Decimal
 from urllib.parse import urljoin
 
-
-from typing_extensions import TypedDict
-
-
 import stackprinter     #type: ignore
 stackprinter.set_excepthook(style="darkbg2")
 
+from typing_extensions import TypedDict
 import pydantic
-from pyrsistent import PRecord, PMap, field, pmap
+from pydantic.error_wrappers import ValidationError
+from pyrsistent import pmap
 
 from noobit_markets.base.request import (
     retry_request,
@@ -21,7 +19,7 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result
+from noobit_markets.base.models.result import Result, Err
 from noobit_markets.base.models.rest.response import NoobitResponseInstrument
 from noobit_markets.base.models.rest.request import NoobitRequestInstrument
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
@@ -42,9 +40,7 @@ import pyrsistent
 class KrakenRequestInstrument(FrozenBaseModel):
     # KRAKEN PAYLOAD
     #   pair = comma delimited list of asset pairs to get info on
-
-    #! restrict query to one pair, otherwise parsing response will get messy
-    # pair: constr(regex=r'([A-Z]+,[A-Z]+)*[A-Z]+')
+    # we restrict it to a single symbol
     pair: str
 
 
@@ -53,12 +49,12 @@ class _ParsedReq(pyrsistent.PRecord):
 
 
 def parse_request(
-        valid_request: NoobitRequestInstrument
+        valid_request: NoobitRequestInstrument,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
     ) -> _ParsedReq:
 
-    # comma_delimited_list = ",".join(symbol for symbol in valid_request.symbol_mapping[valid_request.symbol])
     payload = {
-        "pair": valid_request.symbol_mapping[valid_request.symbol],
+        "pair": symbol_to_exchange(valid_request.symbol),
     }
 
     return _ParsedReq(**payload)
@@ -99,69 +95,23 @@ class KrakenInstrumentData(FrozenBaseModel):
 # needs to be create dynamically since pair changes according to request
 def make_kraken_model_instrument(
         symbol: ntypes.SYMBOL,
-        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
     ) -> typing.Type[pydantic.BaseModel]:
 
     kwargs = {
-        symbol_mapping[symbol]: (KrakenInstrumentData, ...),
+        symbol_to_exchange(symbol): (KrakenInstrumentData, ...),
         "__base__": FrozenBaseModel
     }
 
     model = pydantic.create_model(
         'KrakenResponseInstrument',
-        **kwargs    #type: ignore   
+        **kwargs    #type: ignore
     )
 
     return model
 
-# TODO Defining 3 different models for each endpoint is obviously very repetitive
-#   ==> see if we can reduce that work by making ntypes split match to other types depending on wethers its for a pydantic model or PRecord
-#   ==> ex Price will always be expected to be a string in the response models, and a Decimal in pydantic models
 
-
-# ! below actually useless
-# class _RawRes(PRecord):
-#     """only used for typing
-#     """
-
-#     # PRecord would let use define only field() (without types) but mypy would error
-
-#     # specifying typle field throws error: 
-#     #       >>> TypeError: Type specifications must be types or strings. Input: typing.Tuple[str, str, str] 
-#     # see: https://github.com/tobgu/pyrsistent/issues/181
-
-#     # ? ==> replace with a typeddict instead ??
-#     a = field(type=typing.Tuple[str, str, str])
-#     b = field(type=typing.Tuple[str, str, str])
-#     c = field(type=typing.Tuple[str, str])
-#     v = field(type=typing.Tuple[str, str])
-#     p = field(type=typing.Tuple[str, str])
-#     t =  field(type=typing.Tuple[int, int])
-#     l = field(type=typing.Tuple[str, str])
-#     h = field(type=typing.Tuple[str, str])
-#     o = field(type=str)
-
-
-# class _ParsedRes(PRecord):
-#     """only used for typing
-#     """
-#       typing.Any not allowed, seems any typing Types are not allowed
-#     symbol = field(type=Any)
-#     low = field(type=Any)
-#     high = field(type=Any)
-#     vwap = field(type=Any)
-#     last = field(type=Any)
-#     volume = field(type=Any)
-#     trdCount = field(type=Any)
-#     bestAsk = field(type=Any)
-#     bestBid = field(type=Any)
-#     prevLow = field(type=Any)
-#     prevHigh = field(type=Any)
-#     prevVwap = field(type=Any)
-#     prevVolume = field(type=Any)
-#     prevTrdCount = field(type=Any)
-
-class _TypedRes(TypedDict):
+class _ParsedRes(TypedDict):
     symbol: Any
     low: Any
     high: Any
@@ -179,11 +129,11 @@ class _TypedRes(TypedDict):
 
 
 def parse_result(
-        result_data: KrakenInstrumentData,       #! INCORRECTLY TYPED, needs to have `l` attribute etc
+        result_data: KrakenInstrumentData,
         symbol: ntypes.SYMBOL
-    ) -> _TypedRes:
+    ) -> _ParsedRes:
 
-    parsed_instrument: _TypedRes = {
+    parsed_instrument: _ParsedRes = {
         "symbol": symbol,
         "low": result_data.l[0],
         "high": result_data.h[0],
@@ -221,17 +171,17 @@ async def get_instrument_kraken(
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.instrument,
-    ) -> Result[NoobitResponseInstrument, typing.Type[Exception]]:
+    ) -> Result[NoobitResponseInstrument, ValidationError]:
 
     req_url = urljoin(base_url, endpoint)
     method = "GET"
     headers: typing.Dict = {}
 
     valid_noobit_req = validate_nreq_instrument(symbol, symbol_to_exchange)
-    if valid_noobit_req.is_err():
-        return valid_noobit_req     #type: ignore
-    
-    parsed_req = parse_request(valid_noobit_req.value)      #type: ignore
+    if isinstance(valid_noobit_req, Err):
+        return valid_noobit_req
+
+    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
     valid_kraken_req = _validate_data(KrakenRequestInstrument, parsed_req)
     if valid_kraken_req.is_err():
@@ -249,7 +199,7 @@ async def get_instrument_kraken(
         return valid_result_content
 
     parsed_result = parse_result(
-        getattr(valid_result_content.value, symbol_to_exchange[symbol]),
+        getattr(valid_result_content.value, symbol_to_exchange(symbol)),
         symbol
     )
 

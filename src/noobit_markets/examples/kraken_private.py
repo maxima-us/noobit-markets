@@ -31,20 +31,23 @@ else:
     print("Symbols Ok")
     symbols = sym.value
     asset_from_exchange = {v: k for k, v in symbols.assets.items()}
+    # symbols_from_exchange = {v.ws_name.replace("/", ""): k for k, v in symbols_to_exchange.asset_pairs.items() if v} 
 
-
+    print(symbols.asset_pairs["XBT-USD"])
+    # exchange_name='XXBTZUSD' ws_name='XBT/USD' base='XXBT' quote='ZUSD' volume_decimals=8 price_decimals=1 leverage_available=(2, 3, 4, 5) order_min=Decimal('0.001')
 
     bal = asyncio.run(
         get_balances_kraken(
             client=httpx.AsyncClient(),
-            asset_from_exchange=lambda x : asset_from_exchange[x]
+            # if we also want to see the staking assets (eg `DOT.S`)
+            asset_from_exchange=lambda x : asset_from_exchange[x] if "." not in x else ntypes.PAsset(x)
         )
     )
     if bal.is_err():
         print(bal)
     else:
         table = pymap_table(bal.value.data, headers=["Asset", "Balance"])
-        # print(table)
+        print(table)
         print("Balances ok")
 
 
@@ -57,6 +60,7 @@ else:
     if expo.is_err():
         print(expo)
     else:
+        (print(expo.value))
         print("Exposure ok")
 
 
@@ -64,7 +68,12 @@ else:
     opo = asyncio.run(
         get_openorders_kraken(
             client=httpx.AsyncClient(),
-            symbols_to_exchange=symbols
+            #! Problem is we can now not inspect the dict anymore
+            #! so if we get an error, it will be way harder to debug
+            #! but also provides more flexbility as shown in this example
+            symbol_from_exchange=lambda x: f"{x[0:3]}-{x[-3:]}",
+            # symbols_from_exchange=lambda x: {v.ws_name.replace("/", ""): k for k, v in symbols.asset_pairs.items()}.get(x),
+            symbol=ntypes.PSymbol("XBT-USD")       #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
         )
     )
     if opo.is_err():
@@ -77,8 +86,8 @@ else:
     clo = asyncio.run(
         get_closedorders_kraken(
             client=httpx.AsyncClient(),
-            symbols_to_exchange=symbols,
-            symbol=ntypes.PSymbol("XBT-USD")        #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
+            symbol_from_exchange=lambda x: {v.ws_name.replace("/", ""): k for k, v in symbols.asset_pairs.items()}.get(x),
+            symbol=ntypes.PSymbol("XBT-USD")      #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
         )
     )
     if clo.is_err():
@@ -96,7 +105,7 @@ else:
         get_openpositions_kraken(
             client=httpx.AsyncClient(),
             # symbols_to_exchange={k: v.exchange_name for k, v in symbols.asset_pairs.items()},
-            symbols_from_exchange=lambda x: {v.exchange_name: k for k, v in symbols.asset_pairs.items()}.get(x, None),
+            symbol_from_exchange=lambda x: {v.exchange_name: k for k, v in symbols.asset_pairs.items()}.get(x, None),
         )
     )
     if opp.is_err():
@@ -110,7 +119,7 @@ else:
         get_usertrades_kraken(
             client=httpx.AsyncClient(),
             symbol=ntypes.PSymbol("XBT-USD"),        #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
-            symbols_from_exchange=lambda x: {v.exchange_name: k for k, v in symbols.asset_pairs.items()}.get(x, None),
+            symbol_from_exchange=lambda x: {v.exchange_name: k for k, v in symbols.asset_pairs.items()}.get(x, None),
         )
     )
     if utr.is_err():
@@ -138,13 +147,13 @@ else:
     trd = asyncio.run(
         post_neworder_kraken(
             client=httpx.AsyncClient(),
-            symbol="XBT-USD",
-            symbols_to_exchange={k: v.exchange_name for k, v in symbols.asset_pairs.items()},
+            symbol="DOT-USD",
+            symbol_to_exchange=lambda x: {k: v.exchange_name for k, v in symbols.asset_pairs.items()}.get(x),
             side="buy",
-            ordType="limit",
+            ordType="market",
             clOrdID="10101",
-            orderQty=0.001,
-            price=10000,
+            orderQty=100,
+            price=1,
             marginRatio=None,
             effectiveTime=None,
             expireTime=None

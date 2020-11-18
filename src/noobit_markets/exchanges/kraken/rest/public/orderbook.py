@@ -4,7 +4,6 @@ import time
 from decimal import Decimal
 from urllib.parse import urljoin
 from collections import Counter
-from pydantic.types import PositiveInt
 
 from typing_extensions import TypedDict
 import pydantic
@@ -18,7 +17,7 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result
+from noobit_markets.base.models.result import Err, Result
 from noobit_markets.base.models.rest.response import NoobitResponseOrderBook
 from noobit_markets.base.models.rest.request import NoobitRequestOrderBook
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
@@ -39,9 +38,8 @@ class KrakenRequestOrderBook(FrozenBaseModel):
     # KRAKEN PAYLOAD
     #   pair = asset pair to get market depth for
     #   count = maximum number of asks/bids (optional)
-
-    pair: str 
-    count: ntypes.COUNT 
+    pair: str
+    count: ntypes.COUNT
 
 
 class _ParsedReq(TypedDict):
@@ -49,10 +47,13 @@ class _ParsedReq(TypedDict):
     count: Any
 
 
-def parse_request(valid_request: NoobitRequestOrderBook) -> _ParsedReq:
+def parse_request(
+    valid_request: NoobitRequestOrderBook,
+    symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
+    ) -> _ParsedReq:
 
     parsed: _ParsedReq = {
-        "pair": valid_request.symbol_mapping[valid_request.symbol],
+        "pair": symbol_to_exchange(valid_request.symbol),
         "count": valid_request.depth
     }
 
@@ -78,11 +79,11 @@ class KrakenBook(FrozenBaseModel):
 
 def make_kraken_model_orderbook(
         symbol: ntypes.SYMBOL,
-        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
     ) -> typing.Type[pydantic.BaseModel]:
 
     kwargs = {
-        symbol_mapping[symbol]: (KrakenBook, ...),
+        symbol_to_exchange(symbol): (KrakenBook, ...),
         "__base__": FrozenBaseModel
         }
 
@@ -134,7 +135,7 @@ async def get_orderbook_kraken(
         depth: ntypes.DEPTH,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.orderbook,
-    ) -> Result[NoobitResponseOrderBook, typing.Type[Exception]]:
+    ) -> Result[NoobitResponseOrderBook, pydantic.ValidationError]:
 
 
     req_url = urljoin(base_url, endpoint)
@@ -142,10 +143,10 @@ async def get_orderbook_kraken(
     headers: typing.Dict = {}
 
     valid_req = validate_nreq_orderbook(symbol, symbol_to_exchange, depth)
-    if valid_req.is_err():
-        return valid_req    #type: ignore
+    if isinstance(valid_req, Err):
+        return valid_req
 
-    parsed_req = parse_request(valid_req.value)     #type: ignore
+    parsed_req = parse_request(valid_req.value, symbol_to_exchange)
 
     valid_kraken_req = _validate_data(KrakenRequestOrderBook, pmap(parsed_req))
     if valid_kraken_req.is_err():
@@ -163,7 +164,7 @@ async def get_orderbook_kraken(
         return valid_result_content
 
     parsed_result = parse_result(
-        getattr(valid_result_content.value, symbol_to_exchange[symbol]),
+        getattr(valid_result_content.value, symbol_to_exchange(symbol)),
         symbol
     )
 

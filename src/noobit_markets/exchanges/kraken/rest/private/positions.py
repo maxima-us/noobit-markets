@@ -10,6 +10,7 @@ from decimal import Decimal
 from urllib.parse import urljoin
 
 import pydantic
+from pydantic.utils import ValueItems
 from pyrsistent import pmap
 from typing_extensions import Literal, TypedDict
 
@@ -124,22 +125,22 @@ class _ParsedRes(TypedDict):
 
 def parse_result(
         result_data: typing.Mapping[str, OpenPositionInfo],
-        symbol_mapping: typing.Callable[[ntypes.SYMBOL], str]
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE
     ) -> typing.Tuple[_ParsedRes, ...]:
 
     parsed = [
-        _single_position(key, info, symbol_mapping) for key, info in result_data.items()
+        _single_position(key, info, symbol_from_exchange) for key, info in result_data.items()
     ]
 
     return tuple(parsed)
 
 
-def _single_position(key: str, info: OpenPositionInfo, symbol_mapping: typing.Callable[[ntypes.SYMBOL], str]) -> _ParsedRes:
+def _single_position(key: str, info: OpenPositionInfo, symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE) -> _ParsedRes:
 
     parsed: _ParsedRes = {
         "orderID": info.ordertxid,
-        "symbol": symbol_mapping(ntypes.PSymbol(info.pair)),
-        "currency": symbol_mapping(ntypes.PSymbol(info.pair)).split("-")[1],
+        "symbol": symbol_from_exchange(info.pair),
+        "currency": symbol_from_exchange(info.pair).split("-")[1],
         "side": info.type,
         "ordType": info.ordertype,
 
@@ -188,9 +189,8 @@ def _single_position(key: str, info: OpenPositionInfo, symbol_mapping: typing.Ca
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_openpositions_kraken(
         client: ntypes.CLIENT,
-        symbols_from_exchange: typing.Callable[[ntypes.SYMBOL], str],
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE, 
         auth=KrakenAuth(),
-        # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.open_positions
     ) -> Result[NoobitResponseOpenPositions, typing.Type[Exception]]:
@@ -198,16 +198,16 @@ async def get_openpositions_kraken(
 
     req_url = urljoin(base_url, endpoint)
     method = "POST"
-    # get nonce right away since there is noother param
     data = {
         "nonce": auth.nonce,
         "docalcs": True
     }
-    headers = auth.headers(endpoint, data)
 
     valid_kraken_req = _validate_data(KrakenRequestOpenPositions, pmap(data))
     if valid_kraken_req.is_err():
         return valid_kraken_req
+
+    headers = auth.headers(endpoint, valid_kraken_req.value.dict())
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
     if result_content.is_err():
@@ -217,7 +217,7 @@ async def get_openpositions_kraken(
     if valid_result_content.is_err():
         return valid_result_content
 
-    parsed_result_data = parse_result(valid_result_content.value.positions, symbols_from_exchange)
+    parsed_result_data = parse_result(valid_result_content.value.positions, symbol_from_exchange)
 
     valid_parsed_result_data = _validate_data(NoobitResponseOpenPositions, pmap({"positions": parsed_result_data, "rawJson": result_content.value}))
     return valid_parsed_result_data

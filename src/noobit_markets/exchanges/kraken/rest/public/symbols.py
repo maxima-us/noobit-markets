@@ -2,9 +2,11 @@ import typing
 from typing import Any
 from decimal import Decimal
 from urllib.parse import urljoin
+from noobit_markets.base.ntypes import PSymbol
 
 # import httpx
 import pydantic
+from pydantic.error_wrappers import ValidationError
 from pyrsistent import pmap
 from typing_extensions import TypedDict
 
@@ -73,12 +75,8 @@ class _AssetPairValue(TypedDict):
 
 # TODO move this to base/models/response.py
 class _ParsedRes(TypedDict):
-    asset_pairs: typing.Dict[str, _AssetPairValue]
-    assets: ntypes.ASSET_TO_EXCHANGE
-
-# FIXME above two classes are exactly the same as our pydantic response models,
-#       minus the type declarations and the serialization
-#       ? how to avoid repeating ourselves ?
+    asset_pairs: typing.Dict[ntypes.PSymbol, _AssetPairValue]
+    assets: typing.Dict[ntypes.PAsset, str]
 
 
 def parse_result(
@@ -95,10 +93,12 @@ def parse_result(
 
 def parse_result_data_assetpairs(
         result_data: typing.Dict[str, KrakenResponseItemSymbols],
-        # symbol: ntypes.SYMBOL
-    ) -> typing.Dict[str, _AssetPairValue]:
+    ) -> typing.Dict[ntypes.PSymbol, _AssetPairValue]:
 
-    parsed_assetpairs: typing.Dict[str, _AssetPairValue] = {data.wsname.replace("/", "-"): _single_assetpair(data, exch_symbol) for exch_symbol, data in result_data.items()}
+    parsed_assetpairs: typing.Dict[PSymbol, _AssetPairValue] = {
+        ntypes.PSymbol(data.wsname.replace("/", "-")): _single_assetpair(data, exch_symbol) 
+        for exch_symbol, data in result_data.items()
+    }
     return parsed_assetpairs
 
 
@@ -123,9 +123,9 @@ def _single_assetpair(
 
 def parse_result_data_assets(
         result_data: typing.Dict[str, KrakenResponseItemSymbols]
-    ) -> ntypes.ASSET_TO_EXCHANGE:
+    ) -> typing.Dict[ntypes.PAsset, str]:
 
-    asset_to_exchange: ntypes.ASSET_TO_EXCHANGE = {}
+    asset_to_exchange: typing.Dict[ntypes.PAsset, str] = {}
     for _, v in result_data.items():
         kbase = v.base
         kquote = v.quote
@@ -148,7 +148,7 @@ async def get_symbols_kraken(
         client: ntypes.CLIENT,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.symbols
-    ) -> Result[NoobitResponseSymbols, typing.Type[Exception]]:
+    ) -> Result[NoobitResponseSymbols, ValidationError]:
 
     req_url = urljoin(base_url, endpoint)
     method = "GET"
@@ -157,8 +157,6 @@ async def get_symbols_kraken(
     valid_kraken_req = Ok(FrozenBaseModel())
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
-    # print(result_content)
-    # return
     if result_content.is_err():
         return result_content
     else:

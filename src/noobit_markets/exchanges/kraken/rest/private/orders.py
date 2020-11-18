@@ -23,7 +23,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseOpenOrders, NoobitResponseClosedOrders, NoobitResponseSymbols
+from noobit_markets.base.models.rest.response import NoobitResponseOpenOrders, NoobitResponseClosedOrders
 from noobit_markets.base.models.rest.request import NoobitRequestClosedOrders
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -227,30 +227,31 @@ class _ParsedRes(TypedDict):
 
 def parse_result_openorders(
         result_data: typing.Mapping[str, SingleOpenOrder],
-        symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE
-    ) -> typing.Tuple[_ParsedRes, ...]:
-
-    parsed = [
-        _single_order(key, order, symbol_mapping)
-        for key, order in result_data.items()
-    ]
-
-    return tuple(parsed)
-
-
-def parse_result_closedorders(
-        result_data: typing.Mapping[str, SingleClosedOrder],
-        symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE,
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE, 
         symbol: ntypes.SYMBOL
     ) -> typing.Tuple[_ParsedRes, ...]:
 
     parsed = [
-        _single_order(key, order, symbol_mapping)
+        _single_order(key, order, symbol_from_exchange)
         for key, order in result_data.items()
     ]
 
     filtered = [item for item in parsed if item["symbol"] == symbol]
+    return tuple(filtered)
 
+
+def parse_result_closedorders(
+        result_data: typing.Mapping[str, SingleClosedOrder],
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
+        symbol: ntypes.SYMBOL
+    ) -> typing.Tuple[_ParsedRes, ...]:
+
+    parsed = [
+        _single_order(key, order, symbol_from_exchange)
+        for key, order in result_data.items()
+    ]
+
+    filtered = [item for item in parsed if item["symbol"] == symbol]
     return tuple(filtered)
 
 
@@ -259,15 +260,15 @@ def _single_order(
         # can be either closed or open orders
         # but SingleClosedOrder subclasses SingleOpenOrder
         order: typing.Union[SingleOpenOrder, SingleClosedOrder],
-        # FIXME not actually symbol from exchange but symbol from altname (eg XBT-USD frm XBTUSD)
-        symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE
     ) -> _ParsedRes:
+
 
     parsed: _ParsedRes = {
 
             "orderID": key,
-            "symbol": symbol_mapping[order.descr.pair],
-            "currency": symbol_mapping[order.descr.pair].split("-")[1],
+            "symbol": symbol_from_exchange(order.descr.pair),
+            "currency": (symbol_from_exchange(order.descr.pair)).split("-")[1],
             "side": order.descr.type,
             "ordType": order.descr.ordertype,
             "execInst": None,
@@ -328,18 +329,16 @@ def _single_order(
 
 async def get_openorders_kraken(
         client: ntypes.CLIENT,
-        symbols_to_exchange: NoobitResponseSymbols, #?? change to NoobitResponseSymbol instead ??
-        # symbols_from_altname,
+        symbol: ntypes.SYMBOL,
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE ,
         auth=KrakenAuth(),
-        #! FIXME CORRECT ENDPOINTS
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.open_orders
-    ) -> Result[NoobitResponseOpenOrders, typing.Type[Exception]]:
+    ) -> Result[NoobitResponseOpenOrders, Exception]:
 
     req_url = urljoin(base_url, endpoint)
     # Kraken Doc : Private methods must use POST
     method = "POST"
-    # get nonce right away since there is noother param
     data = {"nonce": auth.nonce, "trades": True}
 
     valid_kraken_req = _validate_data(KrakenRequestOpenOrders, pmap(data))
@@ -356,16 +355,13 @@ async def get_openorders_kraken(
     if valid_result_content.is_err():
         return valid_result_content
 
-    # TODO FIX below (mypy)
-    symbols_from_altname = {v.ws_name.replace("/", ""): k for k, v in symbols_to_exchange.asset_pairs.items() if v}     #type: ignore
-
-    # step 12: parse result data ==> output: pmap
     parsed_result_data = parse_result_openorders(
         valid_result_content.value.open,
-        symbols_from_altname
+        symbol_from_exchange,
+        symbol
     )
-    valid_parsed_result_data = _validate_data(NoobitResponseOpenOrders, pmap({"orders": parsed_result_data, "rawJson": result_content.value}))
 
+    valid_parsed_result_data = _validate_data(NoobitResponseOpenOrders, pmap({"orders": parsed_result_data, "rawJson": result_content.value}))
     return valid_parsed_result_data
 
 
@@ -380,24 +376,15 @@ async def get_openorders_kraken(
 async def get_closedorders_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbols_to_exchange: NoobitResponseSymbols, #?? should we pass in a model ?? eg NoobitResponseSymbols ?
-        # symbols_from_altname,
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE ,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.closed_orders
-    ) -> Result[NoobitResponseClosedOrders, typing.Type[Exception]]:
-
-    # step 1: validate base request ==> output: Result[NoobitRequestTradeBalance, ValidationError]
-    # step 2: parse valid base req ==> output: pmap
-    # step 3: validate parsed request ==> output: Result[KrakenRequestTradeBalance, ValidationError]
-
-    # get nonce right away since there is noother param
-    data = {"nonce": auth.nonce}
+    ) -> Result[NoobitResponseClosedOrders, Exception]:
 
     req_url = urljoin(base_url, endpoint)
     # Kraken Doc : Private methods must use POST
     method = "POST"
-    # get nonce right away since there is noother param
     data = {"nonce": auth.nonce, "trades": True}
 
     valid_kraken_req = _validate_data(KrakenRequestClosedOrders, pmap(data))
@@ -414,14 +401,11 @@ async def get_closedorders_kraken(
     if valid_result_content.is_err():
         return valid_result_content
 
-    # TODO fix below for mypy
-    symbols_from_altname = {v.ws_name.replace("/", ""): k for k, v in symbols_to_exchange.asset_pairs.items() if v}     #type: ignore
-
     parsed_result_data = parse_result_closedorders(
         valid_result_content.value.closed,
-        symbols_from_altname,
+        symbol_from_exchange,
         symbol
     )
-    valid_parsed_result_data = _validate_data(NoobitResponseClosedOrders, pmap({"orders": parsed_result_data, "rawJson": result_content.value}))
 
+    valid_parsed_result_data = _validate_data(NoobitResponseClosedOrders, pmap({"orders": parsed_result_data, "rawJson": result_content.value}))
     return valid_parsed_result_data

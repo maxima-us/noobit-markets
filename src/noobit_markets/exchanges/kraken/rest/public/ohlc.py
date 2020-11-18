@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 from datetime import date
 
 import pydantic
+from pydantic.error_wrappers import ValidationError
 from pyrsistent import pmap, PRecord, field
 from typing_extensions import Literal, TypedDict
 
@@ -16,7 +17,7 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes, mappings
-from noobit_markets.base.models.result import Result
+from noobit_markets.base.models.result import Result, Err
 from noobit_markets.base.models.rest.response import NoobitResponseOhlc
 from noobit_markets.base.models.rest.request import NoobitRequestOhlc
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
@@ -66,12 +67,13 @@ class _ParsedReq(PRecord):
 
 
 def parse_request(
-        valid_request: NoobitRequestOhlc
+        valid_request: NoobitRequestOhlc,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
     ) -> _ParsedReq:
 
 
     payload = {
-        "pair": valid_request.symbol_mapping[valid_request.symbol],
+        "pair": symbol_to_exchange(valid_request.symbol),
         "interval": mappings.TIMEFRAME[valid_request.timeframe],
         # noobit ts are in ms vs ohlc kraken ts in s
         "since": valid_request.since * 10**-3 if valid_request.since else None
@@ -112,11 +114,11 @@ _KrakenResponseItemCandle = typing.Tuple[
 # needs to be create dynamically since pair changes according to request
 def make_kraken_model_ohlc(
         symbol: ntypes.SYMBOL,
-        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
     ) -> typing.Type[pydantic.BaseModel]:
 
     kwargs = {
-        symbol_mapping[symbol]: (
+        symbol_to_exchange(symbol): (
             # tuple : timestamp, open, high, low, close, vwap, volume, count
             typing.Tuple[_KrakenResponseItemCandle, ...], ...
         ),
@@ -188,7 +190,7 @@ async def get_ohlc_kraken(
         since: ntypes.TIMESTAMP,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.ohlc,
-    ) -> Result[NoobitResponseOhlc, typing.Type[Exception]]:
+    ) -> Result[NoobitResponseOhlc, ValidationError]:
 
 
     req_url = urljoin(base_url, endpoint)
@@ -196,10 +198,10 @@ async def get_ohlc_kraken(
     headers: typing.Dict = {}
 
     valid_noobit_req = validate_nreq_ohlc(symbol, symbol_to_exchange, timeframe, since)
-    if valid_noobit_req.is_err():
-        return valid_noobit_req     #type: ignore
+    if isinstance(valid_noobit_req, Err):
+        return valid_noobit_req
 
-    parsed_req = parse_request(valid_noobit_req.value)      #type: ignore
+    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
     valid_kraken_req = _validate_data(KrakenRequestOhlc, parsed_req)
     if valid_kraken_req.is_err():
@@ -212,7 +214,7 @@ async def get_ohlc_kraken(
     valid_result_content = _validate_data(
         make_kraken_model_ohlc(symbol, symbol_to_exchange),
         pmap({
-            symbol_to_exchange[symbol]: result_content.value[symbol_to_exchange[symbol]],
+            symbol_to_exchange(symbol): result_content.value[symbol_to_exchange(symbol)],
             "last": result_content.value["last"]
         })
     )
@@ -220,7 +222,7 @@ async def get_ohlc_kraken(
         return valid_result_content
 
     parsed_result = parse_result(
-        getattr(valid_result_content.value, symbol_to_exchange[symbol]),
+        getattr(valid_result_content.value, symbol_to_exchange(symbol)),
         symbol
     )
 

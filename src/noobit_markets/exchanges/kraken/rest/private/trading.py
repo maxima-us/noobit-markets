@@ -77,12 +77,12 @@ from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_re
 
 class KrakenRequestNewOrder(KrakenPrivateRequest):
 
-    pair: str 
+    pair: str
     type: Literal["buy", "sell"]
     ordertype: Literal[
-        "market", "limit", "stop-loss", "take-profit", "take-profit-limit", 
+        "market", "limit", "stop-loss", "take-profit", "take-profit-limit",
         "settle-position",
-        "stop-loss-profit", "stop-loss-profit-limit", "stop-loss-limit", "stop-loss-and-limit", 
+        "stop-loss-profit", "stop-loss-profit-limit", "stop-loss-limit", "stop-loss-and-limit",
         "trailing-stop", "trailing-stop-limit"
     ]
     price: typing.Optional[float]
@@ -90,7 +90,7 @@ class KrakenRequestNewOrder(KrakenPrivateRequest):
     volume: float
     leverage: typing.Optional[typing.Any]
     oflags: typing.Optional[typing.Tuple[Literal["viqc", "fcib", "fciq", "nompp", "post"]]]
-    
+
     # FIXME Noobit model doesnt allow "+ timestmap" only aboslute timestamps or None
     # starttm: typing.Union[conint(ge=0), constr(regex=r'^[+-][1-9]+')]
     # expiretm: typing.Union[conint(ge=0), constr(regex=r'^[+-][1-9]+')]
@@ -124,7 +124,7 @@ class KrakenRequestNewOrder(KrakenPrivateRequest):
             return "none"
         else:
             return int(v)
-    
+
     # @validator("price2")
     # def v_price2(cls, v):
     #     if v == None:
@@ -132,7 +132,7 @@ class KrakenRequestNewOrder(KrakenPrivateRequest):
     #     else:
     #         return float(v)
 
-    
+
     @pydantic.validator("oflags")
     def v_oflags(cls, v):
         try:
@@ -161,14 +161,15 @@ class _ParsedReq(TypedDict):
 
 
 def parse_request(
-        valid_request: NoobitRequestAddOrder
+        valid_request: NoobitRequestAddOrder,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
     ) -> _ParsedReq:
 
     #FIXME check which values correspond to None for kraken
     # e.g leverage needs to be string "none"
     payload: _ParsedReq = {
-        "pair": valid_request.symbol_mapping[valid_request.symbol],
-        "type": valid_request.side, 
+        "pair": symbol_to_exchange(valid_request.symbol),
+        "type": valid_request.side,
         "ordertype": valid_request.ordType,
         "price": valid_request.price,
         "price2": 0,
@@ -224,7 +225,7 @@ def parse_result(
 async def post_neworder_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbols_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE, 
         side: ntypes.ORDERSIDE,
         ordType: ntypes.ORDERTYPE,
         clOrdID: str,
@@ -237,17 +238,15 @@ async def post_neworder_kraken(
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.new_order,
         **kwargs,
-    ) -> Result[NoobitResponseNewOrder, typing.Type[Exception]]:
+    ) -> Result[NoobitResponseNewOrder, Exception]:
 
 
     req_url = urljoin(base_url, endpoint)
     method = "POST"
 
-
     valid_noobit_req = _validate_data(NoobitRequestAddOrder, pmap({
-        # auth.nonce, #! dont forget nonce ===> ALSO ADD NONCE TO KRAKEN REQUEST MODEL
-        "symbol":symbol, 
-        "symbol_mapping":symbols_to_exchange,
+        "symbol":symbol,
+        "symbol_mapping":symbol_to_exchange,
         "side":side,
         "ordType":ordType,
         "clOrdID":clOrdID,
@@ -257,14 +256,12 @@ async def post_neworder_kraken(
         "effectiveTime":effectiveTime,
         "expireTime":expireTime,
         **kwargs
-    })
-    )
+    }))
+
     if valid_noobit_req.is_err():
         return valid_noobit_req
-    
-    parsed_req = parse_request(valid_noobit_req.value)
 
-
+    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
     data = {"nonce": auth.nonce, **parsed_req}
 
     valid_kraken_req = _validate_data(KrakenRequestNewOrder, pmap({"nonce":data["nonce"], **parsed_req}))
@@ -272,7 +269,7 @@ async def post_neworder_kraken(
         return valid_kraken_req
 
     headers = auth.headers(endpoint, valid_kraken_req.value.dict())
-    
+
     result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
     if result_content.is_err():
         return result_content

@@ -15,7 +15,7 @@ res = asyncio.run(
     get_ohlc_kraken(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
-        symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
+        symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
         timeframe="15M",
         since=None
     )
@@ -29,7 +29,7 @@ res = asyncio.run(
     get_orderbook_kraken(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
-        symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
+        symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
         depth=50
     )
 )
@@ -44,7 +44,7 @@ res = asyncio.run(
     get_trades_kraken(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
-        symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
+        symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
     )
 )
 
@@ -58,7 +58,7 @@ res = asyncio.run(
     get_instrument_kraken(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
-        symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
+        symbol_to_exchange= lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
     )
 )
 
@@ -85,7 +85,7 @@ res = asyncio.run(
     get_spread_kraken(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
-        symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
+        symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
     )
 )
 

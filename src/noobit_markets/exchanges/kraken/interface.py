@@ -1,6 +1,5 @@
 from noobit_markets.base.models.interface import ExchangeInterface
 
-
 # rest private endpoints
 from noobit_markets.exchanges.kraken.rest.private.balances import get_balances_kraken
 from noobit_markets.exchanges.kraken.rest.private.exposure import get_exposure_kraken
@@ -20,11 +19,10 @@ from noobit_markets.exchanges.kraken.rest.public.trades import get_trades_kraken
 from noobit_markets.exchanges.kraken.rest.public.instrument import get_instrument_kraken
 from noobit_markets.exchanges.kraken.rest.public.spread import get_spread_kraken
 
-# ws public
-from noobit_markets.examples.ws_class import KrakenWsApi
+# kraken ws
+from noobit_markets.exchanges.kraken.websockets.public.api import KrakenWsPublic
+from noobit_markets.exchanges.kraken.websockets.private.api import KrakenWsPrivate
 
-# ws private
-from noobit_markets.examples.ws_class import KrakenWsPrivate
 
 
 KRAKEN = ExchangeInterface(**{
@@ -49,7 +47,7 @@ KRAKEN = ExchangeInterface(**{
     },
 
     "ws":{
-        "public": KrakenWsApi,
+        "public": KrakenWsPublic,
         "private": KrakenWsPrivate
     }
 })

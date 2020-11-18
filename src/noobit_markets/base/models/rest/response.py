@@ -82,7 +82,7 @@ class NoobitResponseItemSymbols(FrozenBaseModel):
 class NoobitResponseSymbols(NoobitBaseResponse):
 
     asset_pairs: typing.Mapping[ntypes.SYMBOL, NoobitResponseItemSymbols]
-    assets: ntypes.ASSET_TO_EXCHANGE
+    assets: typing.Mapping[ntypes.PAsset, str]
 
 
 # ============================================================
