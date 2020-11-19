@@ -18,7 +18,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Err, Result
-from noobit_markets.base.models.rest.response import NoobitResponseTrades, T_PublicTradesParsedRes
+from noobit_markets.base.models.rest.response import NoobitResponseTrades, T_PublicTradesParsedRes, T_PublicTradesParsedItem
 from noobit_markets.base.models.rest.request import NoobitRequestTrades
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -143,7 +143,7 @@ def make_kraken_model_trades(
 def parse_result(
         result_data: typing.Tuple[_TradesItem, ...],
         symbol: ntypes.SYMBOL
-    ) -> typing.Tuple[T_PublicTradesParsedRes, ...]:
+    ) -> T_PublicTradesParsedRes:
 
     parsed_trades = [_single_trade(data, symbol) for data in result_data]
 
@@ -153,9 +153,9 @@ def parse_result(
 def _single_trade(
         data: _TradesItem,
         symbol: ntypes.SYMBOL
-    ) -> T_PublicTradesParsedRes:
+    ) -> T_PublicTradesParsedItem:
 
-    parsed: T_PublicTradesParsedRes = {
+    parsed: T_PublicTradesParsedItem = {
         "symbol": symbol,
         "orderID": None,
         "trdMatchID": None,

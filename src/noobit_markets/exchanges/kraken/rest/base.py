@@ -8,7 +8,6 @@ import stackprinter                             #type: ignore
 stackprinter.set_excepthook(style="darkbg2")    #type: ignore
 
 # base
-from noobit_markets.base.errors import BaseError
 from noobit_markets.base.response import (
     resp_json,
     get_req_content
@@ -38,7 +37,7 @@ def parse_error_content(
         error_content: dict,    #value returned from result_or_err 
         sent_request: pyrsistent.PMap
     ) -> typing.Tuple[Exception, ...]:
-    """error content returned from result_or_err
+    """error_content is value returned from result_or_err
     """
 
     err_list = [ERRORS_FROM_EXCHANGE[err_key](error_content, sent_request) for err_key, _ in error_content.items()]

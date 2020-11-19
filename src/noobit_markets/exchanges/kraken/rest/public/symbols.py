@@ -131,11 +131,11 @@ def parse_result_data_assetpairs(
 def _single_assetpair(
     data: KrakenResponseItemSymbols,
     exch_pair: str
-) -> T_SymbolParsedItem:
+) -> T_SymbolParsedPair:
 
     nbase, nquote = data.wsname.split("/")
 
-    parsed: T_SymbolParsedItem = {
+    parsed: T_SymbolParsedPair = {
         # exchange pair might not be a simple concat of `exchange_base` and `exchange_quote`
         # e.g kraken where pair = "DOTUSD", base = "DOT", quote = "ZUSD"
         "exchange_pair": exch_pair,

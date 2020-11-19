@@ -22,7 +22,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseOpenOrders, NoobitResponseClosedOrders
+from noobit_markets.base.models.rest.response import NoobitResponseOpenOrders, NoobitResponseClosedOrders, T_OrderParsedRes, T_OrderParsedItem
 from noobit_markets.base.models.rest.request import NoobitRequestClosedOrders
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -186,49 +186,12 @@ class KrakenResponseClosedOrders(FrozenBaseModel):
     count: pydantic.PositiveInt
 
 
-class _ParsedRes(TypedDict):
-    orderID: Any
-    symbol: Any
-    currency: Any
-    side: Any
-    ordType: Any
-    execInst: Any
-    clOrdID: Any
-    account: Any
-    cashMargin: Any
-    marginRatio: Any
-    marginAmt: Any
-    ordStatus: Any
-    workingIndicator: Any
-    ordRejReason: Any
-    timeInForce: Any
-    transactTime: Any
-    sendingTime: Any
-    effectiveTime: Any
-    validUntilTime: Any
-    expireTime: Any
-    displayQty: Any
-    grossTradeAmt: Any
-    orderQty: Any
-    cashOrderQty: Any
-    orderPercent: Any
-    cumQty: Any
-    leavesQty: Any
-    price: Any
-    stopPx: Any
-    avgPx: Any
-    fills: Any
-    commission: Any
-    targetStrategy: Any
-    targetStrategyParameters: Any
-    text: Any
-
 
 def parse_result_openorders(
         result_data: typing.Mapping[str, SingleOpenOrder],
         symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
         symbol: ntypes.SYMBOL
-    ) -> typing.Tuple[_ParsedRes, ...]:
+    ) -> T_OrderParsedRes:
 
     parsed = [
         _single_order(key, order, symbol_from_exchange)
@@ -243,7 +206,7 @@ def parse_result_closedorders(
         result_data: typing.Mapping[str, SingleClosedOrder],
         symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
         symbol: ntypes.SYMBOL
-    ) -> typing.Tuple[_ParsedRes, ...]:
+    ) -> T_OrderParsedRes: 
 
     parsed = [
         _single_order(key, order, symbol_from_exchange)
@@ -260,10 +223,10 @@ def _single_order(
         # but SingleClosedOrder subclasses SingleOpenOrder
         order: typing.Union[SingleOpenOrder, SingleClosedOrder],
         symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE
-    ) -> _ParsedRes:
+    ) -> T_OrderParsedItem:
 
 
-    parsed: _ParsedRes = {
+    parsed: T_OrderParsedItem = {
 
             "orderID": key,
             "symbol": symbol_from_exchange(order.descr.pair),

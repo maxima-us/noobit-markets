@@ -1,9 +1,11 @@
 import typing
 from decimal import Decimal
 from urllib.parse import urljoin
+from pydantic.typing import is_callable_type
 
 from typing_extensions import Literal
 import pydantic
+from pydantic import ValidationError
 from pyrsistent import pmap
 
 from noobit_markets.base.request import (
@@ -72,7 +74,7 @@ class BinanceRequestBalances(BinancePrivateRequest):
 
 
 class BinanceResponseItemBalances(FrozenBaseModel):
-    asset: pydantic.constr(regex=r'[A-Z]+')
+    asset: str 
     free: Decimal
     locked: Decimal
 
@@ -80,13 +82,13 @@ class BinanceResponseItemBalances(FrozenBaseModel):
 
 class BinanceResponseBalances(FrozenBaseModel):
 
-    makerCommission: pydantic.conint(ge=0)
-    takerCommission: pydantic.conint(ge=0)
-    buyerCommission: pydantic.conint(ge=0)
-    sellerCommission: pydantic.conint(ge=0)
+    makerCommission: ntypes.PERCENT
+    takerCommission: ntypes.PERCENT
+    buyerCommission: ntypes.PERCENT 
+    sellerCommission: ntypes.PERCENT 
     canTrade: bool
     canWithdraw: bool
-    updateTime: pydantic.conint(gt=0)
+    updateTime: pydantic.PositiveInt
     accountType: Literal["SPOT", "MARGIN"]
     balances: typing.Tuple[BinanceResponseItemBalances, ...]
     permissions: typing.List[Literal["SPOT", "MARGIN"]]
@@ -94,14 +96,15 @@ class BinanceResponseBalances(FrozenBaseModel):
 
 def parse_result(
         result_data: BinanceResponseBalances,
-        # FIXME commented out just for testing
         asset_mapping: ntypes.ASSET_FROM_EXCHANGE
     ) -> typing.Mapping[ntypes.ASSET, Decimal]:
 
     # Asset mapping should replace BTC with XBT
-    parsed = {asset_mapping[item.asset]: (item.free + item.locked) for item in result_data.balances if (item.free + item.locked) > 0}
-
-    return pmap(parsed)
+    parsed = {
+        asset_mapping(item.asset): (item.free + item.locked)
+        for item in result_data.balances if (item.free + item.locked) > 0
+    }
+    return parsed
 
 
 
@@ -119,17 +122,21 @@ async def get_balances_binance(
         # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.private.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.private.endpoints.balances
-    ) -> Result[NoobitResponseBalances, Exception]:
+    ) -> Result[NoobitResponseBalances, ValidationError]:
+
+    # FIXME we need to check that user passes in correct types
+    # FIXME generally speaking, we forgot to test this in endpoints that dont require user input
+    # assert callable(asset_from_exchange)
 
     req_url = urljoin(base_url, endpoint)
     method = "GET"
-    headers = auth.headers()
+    headers: typing.Dict = auth.headers()
 
     nonce = auth.nonce
     data = {"timestamp": nonce}
     signed_params = auth._sign(data)
 
-    valid_binance_req = _validate_data(BinancePrivateRequest, signed_params)
+    valid_binance_req = _validate_data(BinancePrivateRequest, pmap(signed_params))
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_binance_req.value, headers)
     if result_content.is_err():
@@ -142,6 +149,6 @@ async def get_balances_binance(
     parsed_result = parse_result(valid_result_content.value, asset_from_exchange)
 
     # TODO change `data` field to `balances` in `NoobitResponseBalance`
-    valid_parsed_response_data = _validate_data(NoobitResponseBalances, {"data": parsed_result, "rawJson": result_content.value})
+    valid_parsed_response_data = _validate_data(NoobitResponseBalances, pmap({"data": parsed_result, "rawJson": result_content.value}))
     return valid_parsed_response_data
 

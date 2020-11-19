@@ -22,9 +22,12 @@ class BinancePrivateRequest(FrozenBaseModel):
     signature: typing.Any
 
 # necessary so we do not share same class attributes/methods across all exchanges
-BinanceBase = make_base("BinanceBase")
+BinanceBase: typing.Any = make_base("BinanceBase")
 
 
+# base class is dynamically generated and therefore is considered as invalid by mypy
+# except if we type it as Any
+# TODO see if we can improve on this
 class BinanceAuth(BinanceBase):
 
     # nonce seems to be called `timestamp` here

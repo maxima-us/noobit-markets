@@ -1,6 +1,9 @@
+import typing
+
 from noobit_markets.base.errors import *
 
-ERRORS_FROM_EXCHANGE = {
+
+ERRORS_FROM_EXCHANGE: typing.Mapping[int, typing.Type[Exception]] = {
     1000: UndefinedError, #unknown error occured while processing the request
     1001: ExchangeNotAvailable,
     1002: PermissionDenied, #?AuthenticationError or PermissionDenied

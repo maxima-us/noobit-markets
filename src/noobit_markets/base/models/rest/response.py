@@ -310,7 +310,7 @@ class NoobitResponseSymbols(NoobitBaseResponse):
 
 # ====================
 # mypy type hints
-class T_PublicTradesParsedRes(TypedDict):
+class T_PublicTradesParsedItem(TypedDict):
     symbol: typing.Any
     orderID: typing.Any
     trdMatchID: typing.Any
@@ -323,7 +323,7 @@ class T_PublicTradesParsedRes(TypedDict):
     text: typing.Any
 
 
-class T_PrivateTradesParsedRes(TypedDict):
+class T_PrivateTradesParsedItem(TypedDict):
     trdMatchID: typing.Any
     transactTime: typing.Any
     orderID: typing.Any
@@ -337,6 +337,10 @@ class T_PrivateTradesParsedRes(TypedDict):
     commission: typing.Any
     tickDirection: typing.Any
     text: typing.Any
+
+
+T_PublicTradesParsedRes = typing.Tuple[T_PublicTradesParsedItem, ...]
+T_PrivateTradesParsedRes = typing.Tuple[T_PrivateTradesParsedItem, ...]
 
 # ====================
 # pydantic models
@@ -857,3 +861,44 @@ class NoobitResponseNewOrder(NoobitBaseResponse):
 class T_NewOrderParsedRes(TypedDict):
     descr: typing.Any
     txid: typing.Any
+
+
+class T_OrderParsedItem(TypedDict):
+    orderID: typing.Any
+    symbol: typing.Any
+    currency: typing.Any
+    side: typing.Any
+    ordType: typing.Any
+    execInst: typing.Any
+    clOrdID: typing.Any
+    account: typing.Any
+    cashMargin: typing.Any
+    marginRatio: typing.Any
+    marginAmt: typing.Any
+    ordStatus: typing.Any
+    workingIndicator: typing.Any
+    ordRejReason: typing.Any
+    timeInForce: typing.Any
+    transactTime: typing.Any
+    sendingTime: typing.Any
+    effectiveTime: typing.Any
+    validUntilTime: typing.Any
+    expireTime: typing.Any
+    displayQty: typing.Any
+    grossTradeAmt: typing.Any
+    orderQty: typing.Any
+    cashOrderQty: typing.Any
+    orderPercent: typing.Any
+    cumQty: typing.Any
+    leavesQty: typing.Any
+    price: typing.Any
+    stopPx: typing.Any
+    avgPx: typing.Any
+    fills: typing.Any
+    commission: typing.Any
+    targetStrategy: typing.Any
+    targetStrategyParameters: typing.Any
+    text: typing.Any
+
+
+T_OrderParsedRes = typing.Tuple[T_OrderParsedItem, ...]

@@ -19,11 +19,15 @@ sym = asyncio.run(
 )
 
 
+# ============================================================
+# Balances
+
+
 res = asyncio.run(
     get_balances_binance(
         client=httpx.AsyncClient(),
-        # get_symbols.assets is TO_EXCH
-        asset_from_exchange={k: v for v, k in sym.value.assets.items()}
+        # FIXME Does note fail explicitely if we pass in a non callable
+        asset_from_exchange=lambda x: {k: v for v, k in sym.value.assets.items()}[x]
     )
 )
 
@@ -33,13 +37,15 @@ else:
     print("Balances successfully fetched")
 
 
+# ============================================================
+# CLosed Orders
+
+
 res = asyncio.run(
     get_closedorders_binance(
         client=httpx.AsyncClient(),
-        # get_symbols.assets is TO_EXCH
-        symbol="BTC-USDT",
-        # symbols_to_exchange={k:v.exchange_name for k, v in sym.value.asset_pairs.items()}
-        symbols_to_exchange=sym.value
+        symbol="XBT-USD",
+        symbol_to_exchange=lambda x: {"XBT-USD": "BTCUSDT"}[x]
     )
 )
 
@@ -49,12 +55,16 @@ else:
     print("Closed orders successfully fetched")
 
 
+
+# ============================================================
+# Trades
+
+
 res = asyncio.run(
     get_trades_binance(
         client=httpx.AsyncClient(),
-        # get_symbols.assets is TO_EXCH
-        symbol="BTC-USDT",
-        symbols_to_exchange={k:v.exchange_name for k, v in sym.value.asset_pairs.items()}
+        symbol="XBT-USD",
+        symbol_to_exchange= lambda x: {"XBT-USD": "BTCUSDT"}[x]
     )
 )
 
