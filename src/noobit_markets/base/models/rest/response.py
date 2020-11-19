@@ -8,10 +8,13 @@ import typing
 from decimal import Decimal
 
 from typing_extensions import Literal, TypedDict
-from pydantic import PositiveInt, Field
+from pydantic import PositiveInt, Field, ValidationError
 
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
+from noobit_markets.base.models.result import Result, Err
 from noobit_markets.base import ntypes
+
+from tabulate import tabulate
 
 
 
@@ -129,18 +132,52 @@ class NoobitResponseOhlc(NoobitBaseResponse):
 
     ohlc: typing.Tuple[NoobitResponseItemOhlc, ...]
 
-    # TODO remove from endpoints
-    # last: PositiveInt
 
-    # @validator('last')
-    # def check_year_from_timestamp(cls, v):
-    #     # timestamp should be in milliseconds
-    #     y = date.fromtimestamp(v/1000).year
-    #     if not y > 2009 and y < 2050:
-    #         # FIXME we should raise
-    #         raise ValueError(f'TimeStamp year : {y} not within [2009, 2050]')
-    #     # return v * 10**3
-    #     return v
+# FIXME still up for debate whether we should implement this
+class NOhlc:
+
+    # model = NoobitResponseOhlc
+
+    def __init__(self, return_value: Result[NoobitResponseOhlc, ValidationError]):
+
+        self._ok: bool = return_value.is_ok()
+        self._err: bool = return_value.is_err()
+
+        
+        self._vser = return_value
+
+    # # in practice the input would be for ex `KrakenResponseOrderBook`
+    # def cast(self, model: NoobitResponseOhlc) 
+    #     try:
+    #         self.vser = self.model(symbol=symbol, asks=asks, bids=bids)
+    #         return Ok(self)
+    #     except ValidationError as e:
+    #         return Err(e)
+
+
+    def is_ok(self):
+        return self._ok
+
+    def is_err(self):
+        return self._err
+
+
+    @property
+    def table(self):
+        if self._ok:
+            _ohlc = self._vser.value.ohlc
+            table = tabulate(
+                {
+                    "Open": [k.open for k in _ohlc],
+                    "High": [k.high for k in _ohlc],
+                    "Low": [k.low for k in _ohlc],
+                    "Close": [k.close for k in _ohlc],
+                },
+                headers="keys"
+            )
+            return table
+        else:
+            return "Returned an invalid result"
 
 
 
@@ -219,10 +256,11 @@ class NoobitResponseSpread(NoobitBaseResponse):
 # ====================
 # mypy type hints
 class T_SymbolParsedItem(TypedDict):
-    exchange_name: typing.Any
-    ws_name: typing.Any
-    base: typing.Any
-    quote: typing.Any
+    exchange_pair: typing.Any
+    exchange_base: typing.Any
+    exchange_quote: typing.Any
+    noobit_base: typing.Any
+    noobit_quote: typing.Any
     volume_decimals: typing.Any
     price_decimals: typing.Any
     leverage_available: typing.Any

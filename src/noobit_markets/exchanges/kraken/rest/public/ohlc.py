@@ -61,8 +61,10 @@ class KrakenRequestOhlc(FrozenBaseModel):
 
 
 class _ParsedReq(PRecord):
-    pair = field(type=str)
-    interval = field(type=int)
+    # needs to allow None types, or might throw following error if we pass inexistant symbol: 
+    # pyrsistent._field_common.PTypeError: Invalid type for field _ParsedReq.pair, was NoneType
+    pair = field(type=(str, type(None)))
+    interval = field(type=(int, type(None)))
     since = field(type=(int, type(None)))
 
 

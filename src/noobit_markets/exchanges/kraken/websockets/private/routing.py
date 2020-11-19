@@ -1,5 +1,4 @@
 import json
-import asyncio
 import time
 
 from . import trades, orders
@@ -12,18 +11,10 @@ async def msg_handler(msg, data_queues, status_queues):
     """
 
     if "systemStatus" in msg:
-        # route = "connection_status"
         await status_queues["connection"].put(json.loads(msg))
     
     
     elif "subscriptionStatus" in msg:
-        # route = "subscription_status"
-
-        # parsed_msg = status.parse_sub(msg)
-        # valid_parsed_msg = status.validate_parsed_sub(msg, parsed_msg)
-        # if valid_parsed_msg.is_ok():
-        #   await feed_queues["subscription"]
-
         await status_queues["subscription"].put(json.loads(msg))
 
 

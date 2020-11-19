@@ -1,5 +1,3 @@
-import functools
-import asyncio
 from decimal import Decimal
 
 from pydantic import ValidationError
@@ -7,23 +5,12 @@ from pydantic import ValidationError
 import stackprinter     #type: ignore
 stackprinter.set_excepthook(style="darkbg2")
 
-from noobit_markets.base.ntypes import SYMBOL_TO_EXCHANGE, SYMBOL
 from noobit_markets.base.websockets import KrakenSubModel
 
 from noobit_markets.base.models.rest.response import NoobitResponseTrades
 from noobit_markets.base.models.result import Result, Ok, Err
+from noobit_markets.base.request import _validate_data
 
-
-
-def _util_validate_parsing(model, kwargs: dict):
-
-    try:
-        validated_msg = model(**kwargs)
-
-        return Ok(validated_msg)
-
-    except ValidationError as e:
-        return Err(e)
 
 
 def validate_sub(token) -> Result[KrakenSubModel, Exception]:
@@ -49,7 +36,7 @@ def validate_sub(token) -> Result[KrakenSubModel, Exception]:
 
 
 def validate_parsed(msg, parsed_msg):
-    return _util_validate_parsing(
+    return _validate_data(
         NoobitResponseTrades,
         {"trades": parsed_msg, "rawJson": msg}
     )

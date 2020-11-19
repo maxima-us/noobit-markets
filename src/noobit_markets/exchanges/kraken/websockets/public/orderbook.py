@@ -8,11 +8,11 @@ from noobit_markets.base.models.result import Result, Ok, Err
 from noobit_markets.base.models.rest.response import NoobitResponseOrderBook
 
 
-def validate_sub(symbol_mapping: SYMBOL_TO_EXCHANGE, symbol: SYMBOL, depth: DEPTH) -> Result[KrakenSubModel, Exception]:
+def validate_sub(symbol_to_exchange: SYMBOL_TO_EXCHANGE, symbol: SYMBOL, depth: DEPTH) -> Result[KrakenSubModel, Exception]:
 
     msg = {
         "event": "subscribe",
-        "pair": [symbol_mapping[symbol], ],
+        "pair": [symbol_to_exchange(symbol), ],
         "subscription": {"name": "book", "depth": depth}
     }
 
@@ -88,7 +88,6 @@ def parse_snapshot(info, pair):
 def parse_update(info, pair):
 
     keys = list(info.keys())
-    # logging.warning(keys)
 
     try:
         parsed_update = {

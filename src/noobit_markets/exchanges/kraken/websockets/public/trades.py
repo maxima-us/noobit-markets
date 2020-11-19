@@ -14,11 +14,11 @@ from noobit_markets.base.models.result import Result, Ok, Err
 
 
 
-def validate_sub(symbol_mapping: SYMBOL_TO_EXCHANGE, symbol: SYMBOL) -> Result[KrakenSubModel, Exception]:
+def validate_sub(symbol_to_exchange: SYMBOL_TO_EXCHANGE, symbol: SYMBOL) -> Result[KrakenSubModel, Exception]:
 
     msg = {
         "event": "subscribe",
-        "pair": [symbol_mapping[symbol], ],
+        "pair": [symbol_to_exchange(symbol), ],
         "subscription": {"name": "trade"}
     }
 

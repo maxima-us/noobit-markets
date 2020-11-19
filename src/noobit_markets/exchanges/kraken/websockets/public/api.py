@@ -112,10 +112,10 @@ class KrakenWsPublic(BaseWsApi):
     # ENDPOINTS
 
 
-    async def spread(self, symbol_mapping, symbol) -> typing.AsyncIterable[Ok[NoobitResponseSpread]]:
+    async def spread(self, symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE, symbol: ntypes.PSymbol) -> typing.AsyncIterable[Ok[NoobitResponseSpread]]:
         super()._ensure_dispatch()
 
-        valid_sub_model = spread.validate_sub(symbol_mapping, symbol)
+        valid_sub_model = spread.validate_sub(symbol_to_exchange, symbol)
         if valid_sub_model.is_err():
             # validation error upon subscription
             #? should we yield this in here or push it to a "sub error" queue
@@ -126,7 +126,7 @@ class KrakenWsPublic(BaseWsApi):
         if sub_result.is_err():
             print(sub_result)
 
-        self._subd_feeds["spread"].add(symbol_mapping[symbol])
+        self._subd_feeds["spread"].add(symbol_to_exchange(symbol))
 
         async for msg in self.iterq(self._data_queues, "spread"):
             if self._terminate: break
@@ -135,10 +135,10 @@ class KrakenWsPublic(BaseWsApi):
 
 
     #? should we return msg wrapped in result ?
-    async def trade(self, symbol_mapping, symbol) -> typing.AsyncIterable[Ok[NoobitResponseTrades]]:
+    async def trade(self, symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE, symbol: ntypes.PSymbol) -> typing.AsyncIterable[Ok[NoobitResponseTrades]]:
         super()._ensure_dispatch()
 
-        valid_sub_model = trades.validate_sub(symbol_mapping, symbol)
+        valid_sub_model = trades.validate_sub(symbol_to_exchange, symbol)
         if valid_sub_model.is_err():
             # TODO log error (means user will need to pass logger to class init)
             print(valid_sub_model)
@@ -148,7 +148,7 @@ class KrakenWsPublic(BaseWsApi):
             # TODO log error
             print(sub_result)
 
-        self._subd_feeds["trade"].add(symbol_mapping[symbol])
+        self._subd_feeds["trade"].add(symbol_to_exchange(symbol))
 
         # async for msg in self._queues["spread"]:
         async for msg in self.iterq(self._data_queues, "trade"):
@@ -157,10 +157,17 @@ class KrakenWsPublic(BaseWsApi):
             # TODO add aiter_trade ?
 
 
-    async def orderbook(self, symbol_mapping, symbol, depth, aggregate: bool=False) -> typing.AsyncIterable[Result[NoobitResponseOrderBook, Exception]]:
+    async def orderbook(
+        self,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbol: ntypes.PSymbol,
+        depth: ntypes.DEPTH,
+        aggregate: bool=False
+        ) -> typing.AsyncIterable[Result[NoobitResponseOrderBook, Exception]]:
+
         super()._ensure_dispatch()
 
-        valid_sub_model = orderbook.validate_sub(symbol_mapping, symbol, depth)
+        valid_sub_model = orderbook.validate_sub(symbol_to_exchange, symbol, depth)
         # if valid_sub_model.is_err():
         #     yield valid_sub_model       #type: ignore
 
@@ -188,7 +195,7 @@ class KrakenWsPublic(BaseWsApi):
             # TODO log error
             print(sub_result)
 
-        self._subd_feeds["orderbook"].add(symbol_mapping[symbol])
+        self._subd_feeds["orderbook"].add(symbol_to_exchange(symbol))
 
         #? should we stream full orderbook ?
         if not aggregate:
@@ -282,8 +289,8 @@ if __name__ == "__main__":
             # TODO put this in our interface
             #       ==> then call with : ksw = interface.KRAKEN.ws.public
             kws = KrakenWsPublic(client, msg_handler, loop)
-            symbol_mapping = {"XBT-USD": "XBT/USD"}
-            symbol = "XBT-USD"
+            symbol_mapping = lambda x: {"XBT-USD": "XBT/USD"}[x]
+            symbol = ntypes.PSymbol("XBT-USD")
 
             async def coro1():
                 async for msg in kws.spread(symbol_mapping, symbol):
@@ -316,7 +323,7 @@ if __name__ == "__main__":
                 await asyncio.sleep(10)
                 kws.schedule(print_test())
 
-            results = await asyncio.gather(coro1(), coro3())
+            results = await asyncio.gather(coro1(), coro3(), coro2())
             return results
 
 
