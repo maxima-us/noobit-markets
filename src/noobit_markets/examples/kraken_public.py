@@ -18,7 +18,9 @@ from noobit_markets.exchanges.kraken.rest.public.spread import get_spread_kraken
 res = asyncio.run(
     get_ohlc_kraken(
         client=httpx.AsyncClient(),
-        symbol="XBB-USD",
+        symbol="XBT-USD",
+        # ==> if we pass invalid symbol, lambda function will return none and we will get following error:
+        # Err(ValidationError(model='KrakenRequestOhlc', errors=[{'loc': ('pair',), 'msg': 'none is not an allowed value', 'type': 'type_error.none.not_allowed'}]))
         symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
         timeframe="15M",
         since=None
@@ -40,91 +42,91 @@ else:
 #     print('Ohlc ok')
 
 
-# #============================================================
-# # ORDERBOOK
+#============================================================
+# ORDERBOOK
 
 
-# res = asyncio.run(
-#     get_orderbook_kraken(
-#         client=httpx.AsyncClient(),
-#         symbol="XBT-USD",
-#         symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
-#         depth=10
-#     )
-# )
+res = asyncio.run(
+    get_orderbook_kraken(
+        client=httpx.AsyncClient(),
+        symbol="XBT-USD",
+        symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
+        depth=10
+    )
+)
 
-# if res.is_err():
-#     print(res)
-# else:
-#     print("OrderBook ok")
-
-
-# #============================================================
-# # TRADES
+if res.is_err():
+    print(res)
+else:
+    print("OrderBook ok")
 
 
-# res = asyncio.run(
-#     get_trades_kraken(
-#         client=httpx.AsyncClient(),
-#         symbol="XBT-USD",
-#         symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
-#     )
-# )
-
-# if res.is_err():
-#     print(res)
-# else:
-#     print("Trades ok")
+#============================================================
+# TRADES
 
 
-# #============================================================
-# # INSTRUMENT
+res = asyncio.run(
+    get_trades_kraken(
+        client=httpx.AsyncClient(),
+        symbol="XBT-USD",
+        symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
+    )
+)
+
+if res.is_err():
+    print(res)
+else:
+    print("Trades ok")
 
 
-# res = asyncio.run(
-#     get_instrument_kraken(
-#         client=httpx.AsyncClient(),
-#         symbol="XBT-USD",
-#         symbol_to_exchange= lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
-#     )
-# )
-
-# if res.is_err():
-#     print(res)
-# else:
-#     print("Instrument ok")
+#============================================================
+# INSTRUMENT
 
 
-# #============================================================
-# # SYMBOLS
+res = asyncio.run(
+    get_instrument_kraken(
+        client=httpx.AsyncClient(),
+        symbol="XBT-USD",
+        symbol_to_exchange= lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
+    )
+)
+
+if res.is_err():
+    print(res)
+else:
+    print("Instrument ok")
 
 
-# res = asyncio.run(
-#     get_symbols_kraken(
-#         client=httpx.AsyncClient(),
-#     )
-# )
-
-# if res.is_err():
-#     print(res)
-# else:
-#     assert isinstance(res.value, NoobitResponseSymbols)
-#     print("Symbols Ok")
+#============================================================
+# SYMBOLS
 
 
-# #============================================================
-# # SPREAD
+res = asyncio.run(
+    get_symbols_kraken(
+        client=httpx.AsyncClient(),
+    )
+)
+
+if res.is_err():
+    print(res)
+else:
+    assert isinstance(res.value, NoobitResponseSymbols)
+    print("Symbols Ok")
 
 
-# res = asyncio.run(
-#     get_spread_kraken(
-#         client=httpx.AsyncClient(),
-#         symbol="XBT-USD",
-#         symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
-#     )
-# )
+#============================================================
+# SPREAD
 
-# if res.is_err():
-#     print(res)
-# else:
-#     print("Spread ok")
+
+res = asyncio.run(
+    get_spread_kraken(
+        client=httpx.AsyncClient(),
+        symbol="XBT-USD",
+        symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
+    )
+)
+
+if res.is_err():
+    print(res)
+else:
+    print("Spread ok")

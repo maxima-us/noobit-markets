@@ -255,7 +255,7 @@ class NoobitResponseSpread(NoobitBaseResponse):
 
 # ====================
 # mypy type hints
-class T_SymbolParsedItem(TypedDict):
+class T_SymbolParsedPair(TypedDict):
     exchange_pair: typing.Any
     exchange_base: typing.Any
     exchange_quote: typing.Any
@@ -268,7 +268,7 @@ class T_SymbolParsedItem(TypedDict):
 
 
 class T_SymbolParsedRes(TypedDict):
-    asset_pairs: typing.Dict[ntypes.PSymbol, T_SymbolParsedItem]
+    asset_pairs: typing.Dict[ntypes.PSymbol, T_SymbolParsedPair]
     assets: typing.Dict[ntypes.PAsset, str]
 
 

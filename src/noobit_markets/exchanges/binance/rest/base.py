@@ -2,9 +2,8 @@ import functools
 import typing
 
 import httpx
-from pyrsistent import pmap
 
-import stackprinter
+import stackprinter     #type: ignore
 stackprinter.set_excepthook(style="darkbg2")
 
 # base
@@ -39,7 +38,7 @@ async def result_or_err(resp_obj: httpx.Response) -> Result:
 
 def parse_error_content(
         error_content: frozenset,
-        sent_request: pmap
+        sent_request: typing.Mapping
     ) -> Err[typing.Tuple[BaseError]]:
     """error content returned from result_or_err
     """

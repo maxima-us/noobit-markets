@@ -17,7 +17,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result, Ok
-from noobit_markets.base.models.rest.response import NoobitResponseSymbols, T_SymbolParsedItem, T_SymbolParsedRes
+from noobit_markets.base.models.rest.response import NoobitResponseSymbols, T_SymbolParsedPair, T_SymbolParsedRes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 # Kraken
@@ -119,9 +119,9 @@ def parse_result(
 
 def parse_result_data_assetpairs(
         result_data: typing.Dict[str, KrakenResponseItemSymbols],
-    ) -> typing.Dict[ntypes.PSymbol, T_SymbolParsedItem]:
+    ) -> typing.Dict[ntypes.PSymbol, T_SymbolParsedPair]:
 
-    parsed_assetpairs: typing.Dict[PSymbol, T_SymbolParsedItem] = {
+    parsed_assetpairs: typing.Dict[PSymbol, T_SymbolParsedPair] = {
         ntypes.PSymbol(data.wsname.replace("/", "-")): _single_assetpair(data, exch_pair)
         for exch_pair, data in result_data.items()
     }

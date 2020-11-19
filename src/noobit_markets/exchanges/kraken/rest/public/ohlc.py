@@ -61,6 +61,7 @@ class KrakenRequestOhlc(FrozenBaseModel):
 
 
 class _ParsedReq(PRecord):
+    # TODO should be replaced with TypedDict anyway, we only want to check field names
     # needs to allow None types, or might throw following error if we pass inexistant symbol: 
     # pyrsistent._field_common.PTypeError: Invalid type for field _ParsedReq.pair, was NoneType
     pair = field(type=(str, type(None)))
@@ -107,7 +108,7 @@ class FrozenBaseOhlc(FrozenBaseModel):
 
 
 
-_KrakenResponseItemCandle = typing.Tuple[
+_Candle = typing.Tuple[
                     Decimal, Decimal, Decimal, Decimal, Decimal, Decimal, Decimal, ntypes.COUNT
                 ]
 
@@ -122,7 +123,7 @@ def make_kraken_model_ohlc(
     kwargs = {
         symbol_to_exchange(symbol): (
             # tuple : timestamp, open, high, low, close, vwap, volume, count
-            typing.Tuple[_KrakenResponseItemCandle, ...], ...
+            typing.Tuple[_Candle, ...], ...
         ),
         "__base__": FrozenBaseOhlc
     }
@@ -137,7 +138,7 @@ def make_kraken_model_ohlc(
 
 
 def parse_result(
-        result_data: typing.Tuple[_KrakenResponseItemCandle, ...],
+        result_data: typing.Tuple[_Candle, ...],
         symbol: ntypes.SYMBOL
     ) -> typing.Tuple[T_OhlcParsedRes, ...]:
 
@@ -147,7 +148,7 @@ def parse_result(
 
 
 def _single_candle(
-        data: tuple,
+        data: _Candle,
         symbol: ntypes.SYMBOL
     ) -> T_OhlcParsedRes:
 
