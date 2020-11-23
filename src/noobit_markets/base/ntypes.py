@@ -59,7 +59,9 @@ CLIENT = typing.Union[
 
 # exchanges
 EXCHANGE = Literal[
-    "KRAKEN"
+    "KRAKEN",
+    "BINANCE",
+    "FTX"
 ]
 
 
@@ -181,7 +183,7 @@ ORDERTYPE = Literal[
     "limit",
     "stop-loss",
     "take-profit",
-    "settle-position",
+    # "settle-position",
 
     # binance
     "stop-loss-limit",
@@ -213,6 +215,9 @@ ORDERSTATUS = Literal[
 
 
 TIMEINFORCE = Literal[
+    "GTC",
+    "IOC",
+    "FOK",
     "good-till-cancel",
     "immediate-or-cancel",
     "fill-or-kill",

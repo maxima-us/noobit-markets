@@ -50,18 +50,17 @@ class BinanceAuth(BinanceBase):
         return auth_headers
 
 
-    def _sign(self, request_args: dict):
-        """Sign request data according to Kraken's scheme.
+    def _sign(self, request_args: dict) -> dict:
+        """Sign request data according to Binance's scheme.
         Args:
-            data (dict): API request parameters
-            urlpath (str): API URL path sans host
+            request_args: dict of all query params
         Returns
-            signature digest
+            request dict containing signature key/value pair
         """
         # request_args["timestamp"] = self.nonce
         sorted_req_args = sorted([(k, v) for k, v in request_args.items()], reverse=True)
         postdata = urllib.parse.urlencode(sorted_req_args)
-        print("req string : ", postdata)
+        # print("req string : ", postdata)
         # Unicode-objects must be encoded before hashing
         # ! Nonce must be same as self.nonce
         # encoded = (s + postdata).encode()
@@ -83,7 +82,8 @@ class BinanceAuth(BinanceBase):
 
         return request_args
 
-        
+
+        # DOCS: 
 
         # SIGNED endpoints require an additional parameter, signature, to be sent in the query string or request body.
         # Endpoints use HMAC SHA256 signatures. The HMAC SHA256 signature is a keyed HMAC SHA256 operation. Use your secretKey as the key and totalParams as the value for the HMAC operation.

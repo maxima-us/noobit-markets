@@ -126,9 +126,14 @@ async def get_req_content(
 
     resp = await client.request(**payload)  #type: ignore
     
-    valid_status = get_response_status_code(resp)
-    if valid_status.is_err():
-        return valid_status
+    # valid_status = get_response_status_code(resp)
+    # if valid_status.is_err():
+
+    #     # FIXME we still need to return the content
+    #     # while kraken doesnt return any error if stauts code isnt 200,
+    #     # binance for ex will return more info on the error (for ex for 400, content will contain detail)
+    #     print(resp.text)
+    #     return valid_status
 
     content = await result_or_err(resp)
     if  content.is_err():

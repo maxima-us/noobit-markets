@@ -27,6 +27,7 @@ async def result_or_err(resp_obj: httpx.Response) -> Result:
 
     content = await resp_json(resp_obj)
 
+
     if "code" in content:
         # we have an error message
         error_msg = content.get("msg", None)
@@ -45,7 +46,7 @@ def parse_error_content(
     """
 
     # ERR_FROM_EXCH[err_key] returns a NoobitError (subclass of BaseError) to which we pass the error content and original request
-    err_list = [ERRORS_FROM_EXCHANGE[err_key](error_content, sent_request) for err_key, _ in error_content.items()]
+    err_list = [ERRORS_FROM_EXCHANGE[err_key](err_msg, sent_request) for err_key, err_msg in error_content.items()]
     return tuple(err_list)
 
 

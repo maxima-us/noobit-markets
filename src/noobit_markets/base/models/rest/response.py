@@ -690,6 +690,8 @@ class NoobitResponseItemOrder(FrozenBaseModel):
     # FIX Definition: https://fixwiki.org/fixwiki/CashOrderQty
     #   Specifies the approximate order quantity desired in total monetary units
     #   vs. as tradeable units (e.g. number of shares).
+
+    # TODO replace with quoteOrderQty ?? (like in binance api)
     cashOrderQty: Decimal
 
     # FIX Definition: https://fixwiki.org/fixwiki/OrderPercent
@@ -838,30 +840,6 @@ class NoobitResponseClosedOrders(NoobitBaseResponse):
 
     orders: typing.Tuple[NoobitResponseItemOrder, ...]
 
-    # TODO useless, remove from endpoints
-    # count: conint(ge=0)
-
-
-
-
-
-# TODO implement actual model (this is same as kraken response model)
-class Descr(FrozenBaseModel):
-    order: typing.Any
-    close: typing.Any
-
-class NoobitResponseNewOrder(NoobitBaseResponse):
-
-    descr: typing.Any
-    txid: typing.Any
-
-
-# ====================
-# mypy type hints
-class T_NewOrderParsedRes(TypedDict):
-    descr: typing.Any
-    txid: typing.Any
-
 
 class T_OrderParsedItem(TypedDict):
     orderID: typing.Any
@@ -902,3 +880,34 @@ class T_OrderParsedItem(TypedDict):
 
 
 T_OrderParsedRes = typing.Tuple[T_OrderParsedItem, ...]
+
+
+#! ============================================================
+#! NEW ORDER (Trading)
+
+# TODO implement actual model (this is same as kraken response model)
+
+
+# ====================
+# mypy type hints
+class T_NewOrderParsedRes(TypedDict):
+    descr: typing.Any
+    txid: typing.Any
+
+
+# ====================
+# pydantic models
+
+class Descr(FrozenBaseModel):
+    order: typing.Any
+    close: typing.Any
+
+
+class NoobitResponseNewOrder(NoobitBaseResponse):
+
+    descr: typing.Any
+    txid: typing.Any
+
+
+class AltResponseNewOrder(NoobitBaseResponse):
+    pass

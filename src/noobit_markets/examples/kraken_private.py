@@ -35,9 +35,38 @@ else:
     symbol_to_exchange={k: v.exchange_pair for k, v in symbols.asset_pairs.items()}
 
     # print(symbol_from_exchange["XBTUSD"])
-    # print(symbol_to_exchange["DOT-USD"])
+    print(symbols.asset_pairs["DOT-USD"])
 
     # exchange_name='XXBTZUSD' ws_name='XBT/USD' base='XXBT' quote='ZUSD' volume_decimals=8 price_decimals=1 leverage_available=(2, 3, 4, 5) order_min=Decimal('0.001')
+    
+    
+    # ============================================================
+    # POST NEW ORDER
+
+
+    trd = asyncio.run(
+        post_neworder_kraken(
+            client=httpx.AsyncClient(),
+            symbol="DOT-USD",
+            # FIXME wouldnt it be better to pass noobit objetct as symbol_to_exchange 
+            # (that way we could get both `to` and `from` exchange, as well as decimal places and min orders)
+            symbol_to_exchange=lambda x: {k: v.exchange_pair for k, v in symbols.asset_pairs.items()}[x],
+            side="buy",
+            ordType="market",
+            clOrdID="1234567",
+            orderQty=1,
+            price=None,
+            timeInForce=None,
+            quoteOrderQty=None,
+            stopPrice=None
+        )
+    )
+    print(trd)
+    # if trd.is_err():
+    #     print(trd)
+    # else:
+    #     print(trd)
+    #     print("Trading New Order ok")
     
     
     # ============================================================
@@ -87,7 +116,7 @@ else:
             #! but also provides more flexbility as shown in this example
             symbol_from_exchange=lambda x: f"{x[0:3]}-{x[-3:]}",
             # symbols_from_exchange=lambda x: {v.ws_name.replace("/", ""): k for k, v in symbols.asset_pairs.items()}.get(x),
-            symbol=ntypes.PSymbol("XBT-USD")       #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
+            symbol=ntypes.PSymbol("DOT-USD")       #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
         )
     )
     if opo.is_err():
@@ -116,7 +145,7 @@ else:
         #! table is tooo wide
         # table = pylist_table(clo.value.orders)
         # print(table)
-        # print(clo.value.orders)
+        # print([i for i in clo.value.orders if i.clOrdID == "12345"])
         print("Closed Orders ok")
 
 
@@ -154,6 +183,7 @@ else:
     else:
         # table = pylist_table(utr.value.trades)
         # print(table)
+        # print(utr.value.trades)
         print("User Trades ok")
 
     
@@ -173,25 +203,3 @@ else:
         print("Ws Token ok")
 
 
-
-    trd = asyncio.run(
-        post_neworder_kraken(
-            client=httpx.AsyncClient(),
-            symbol="DOT-USD",
-            # symbol_to_exchange=lambda x: {k: v.exchange_name for k, v in symbols.asset_pairs.items()}.get(x),
-            symbol_to_exchange=lambda x: {k: v.exchange_pair for k, v in symbols.asset_pairs.items()}[x],
-            side="buy",
-            ordType="market",
-            clOrdID="10101",
-            orderQty=100,
-            price=1,
-            marginRatio=None,
-            effectiveTime=None,
-            expireTime=None
-        )
-    )
-    if trd.is_err():
-        print(trd)
-    else:
-        # print(trd)
-        print("Trading New Order ok")

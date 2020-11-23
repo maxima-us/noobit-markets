@@ -2,6 +2,10 @@ import typing
 
 from noobit_markets.base.errors import *
 
+# MSg encountered that might not be in doc:
+# {"code":-1013,"msg":"Filter failure: PERCENT_PRICE"}
+# {1013: 'Stop loss orders are not supported for this symbol.'}
+
 
 ERRORS_FROM_EXCHANGE: typing.Mapping[int, typing.Type[Exception]] = {
     1000: UndefinedError, #unknown error occured while processing the request
@@ -11,6 +15,7 @@ ERRORS_FROM_EXCHANGE: typing.Mapping[int, typing.Type[Exception]] = {
     1004: ExchangeNotAvailable, # server busy
     1006: BadResponse,
     1007: RequestTimeout,
+    1013: InvalidOrder, #! not documented by API
     1014: InvalidOrder,
     1015: RateLimitExceeded, #not sur
     1016: Deprecated, 

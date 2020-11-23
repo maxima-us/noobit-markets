@@ -16,8 +16,8 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseNewOrder, T_NewOrderParsedRes
+from noobit_markets.base.models.result import Result, Ok
+from noobit_markets.base.models.rest.response import NoobitResponseNewOrder, T_NewOrderParsedRes, NoobitResponseItemOrder 
 from noobit_markets.base.models.rest.request import NoobitRequestAddOrder
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -25,7 +25,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.exchanges.kraken.rest.auth import KrakenAuth, KrakenPrivateRequest
 from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
-
+from .orders import get_openorders_kraken, get_closedorders_kraken
 
 # ============================================================
 # KRAKEN REQUEST
@@ -95,8 +95,8 @@ class KrakenRequestNewOrder(KrakenPrivateRequest):
     # starttm: typing.Union[conint(ge=0), constr(regex=r'^[+-][1-9]+')]
     # expiretm: typing.Union[conint(ge=0), constr(regex=r'^[+-][1-9]+')]
     # TODO Add Timestamp to ntype
-    starttm: typing.Union[ntypes.TIMESTAMP, str]
-    expiretm: typing.Union[ntypes.TIMESTAMP, str]
+    starttm: typing.Optional[ntypes.TIMESTAMP]
+    expiretm: typing.Optional[ntypes.TIMESTAMP]
     #FIXME keep this as str or int ?
     userref: typing.Optional[pydantic.PositiveInt]
 
@@ -171,14 +171,16 @@ def parse_request(
         "pair": symbol_to_exchange(valid_request.symbol),
         "type": valid_request.side,
         "ordertype": valid_request.ordType,
-        "price": valid_request.price,
-        "price2": 0,
-        "volume": valid_request.orderQty,
-        "leverage": None if valid_request.marginRatio is None else 1/ Decimal(valid_request.marginRatio),
-        "oflags": ("post",) if valid_request.ordType == "limit" else ("fciq",),
+        "price": valid_request.stopPrice if valid_request.ordType in ["stop-loss-limit", "take-profit-limit", "stop-loss", "take-profit"] else valid_request.price,
+        "price2": valid_request.price if valid_request.ordType in ["stop-loss-limit", "take-profit-limit"] else None,
+        "volume": valid_request.orderQty if valid_request.orderQty else valid_request.quoteOrderQty,
+        "leverage": None,
+        #`vqic` flag is deactivated, so we cant actually pass `quoteOrderQty` 
+        # "oflags": ("post",) if valid_request.ordType == "limit" else ("viqc",) if valid_request.ordType == "market" and valid_request.quoteOrderQty else ("fciq",),
+        "oflags": ("post", ) if valid_request.ordType == "limit" else ("fciq",),
         # noobit ts are in ms vs ohlc kraken ts in s
-        "starttm": 0 if valid_request.effectiveTime is None else valid_request.effectiveTime * 10**-3,
-        "expiretm": 0 if valid_request.expireTime is None else valid_request.expireTime * 10**-3,
+        "starttm": None, 
+        "expiretm": None,
         "userref": valid_request.clOrdID,
         # "validate": True,
     }
@@ -206,7 +208,11 @@ def parse_result(
         result_data: KrakenResponseNewOrder,
     ) -> T_NewOrderParsedRes:
 
-    res: _ParsedRes = result_data.dict()     #type: ignore
+    # we cant use pydantic_model.dict() here because of mypy
+    res: T_NewOrderParsedRes = {
+        "descr": result_data.descr,
+        "txid": result_data.txid
+    }
     return res
 
 
@@ -226,30 +232,31 @@ async def post_neworder_kraken(
         clOrdID: str,
         orderQty: Decimal,
         price: Decimal,
-        marginRatio: Decimal,
-        effectiveTime: ntypes.TIMESTAMP,
-        expireTime: ntypes.TIMESTAMP,
+        timeInForce: ntypes.TIMEINFORCE,
+        stopPrice: Decimal,
+        # until kraken enables use of `viqc` flag, always pass in None
+        quoteOrderQty = None,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.new_order,
         **kwargs,
-    ) -> Result[NoobitResponseNewOrder, Exception]:
+    ) -> Result[NoobitResponseItemOrder, Exception]:
 
 
     req_url = urljoin(base_url, endpoint)
     method = "POST"
 
     valid_noobit_req = _validate_data(NoobitRequestAddOrder, pmap({
+        "exchange": "KRAKEN",
         "symbol":symbol,
-        "symbol_mapping":symbol_to_exchange,
         "side":side,
         "ordType":ordType,
         "clOrdID":clOrdID,
         "orderQty":orderQty,
         "price":price,
-        "marginRatio":marginRatio,
-        "effectiveTime":effectiveTime,
-        "expireTime":expireTime,
+        "timeInForce": timeInForce,
+        "quoteOrderQty": quoteOrderQty,
+        "stopPrice": stopPrice,
         **kwargs
     }))
 
@@ -263,7 +270,7 @@ async def post_neworder_kraken(
     if valid_kraken_req.is_err():
         return valid_kraken_req
 
-    headers = auth.headers(endpoint, valid_kraken_req.value.dict())
+    headers = auth.headers(endpoint, valid_kraken_req.value.dict(exclude_none=True))
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
     if result_content.is_err():
@@ -276,4 +283,34 @@ async def post_neworder_kraken(
     parsed_result = parse_result(valid_result_content.value)
 
     valid_parsed_response_data = _validate_data(NoobitResponseNewOrder, pmap({"descr":parsed_result["descr"], "txid": parsed_result["txid"], "rawJson": result_content.value}))
-    return valid_parsed_response_data
+    if valid_parsed_response_data.is_err():
+        return valid_parsed_response_data
+    # return valid_parsed_response_data
+
+    [newOrderID] = valid_parsed_response_data.value.txid
+
+    # # TODO we want to return a more complete info on the trade:
+    # # ?     ==> should we fetch the order corresponding to the txid we get back ? 
+    # tx_info = await get_usertrades_kraken(client, symbol, lambda x : {"DOTUSD": ntypes.PSymbol("DOT-USD")}, auth)
+    # return [trade for trade in tx_info.value.trades if trade.orderID == valid_parsed_response_data.value.txid]
+    
+    if ordType == "market":
+        # FIXME symbol_from_exchange lambda isnt entirely accurate
+        # will be ok for most pairs but some have 4/5 letters for base
+        cl_ord = await get_closedorders_kraken(client, symbol, lambda x: ntypes.PSymbol(f"{x[0:3]}-{x[-3:]}"), auth) 
+        if isinstance(cl_ord, Ok):
+            [order_info] = [order for order in cl_ord.value.orders if order.orderID == newOrderID]
+        else:
+            return cl_ord
+
+    else:
+        await asyncio.sleep(0.1)
+        # FIXME symbol_from_exchange lambda isnt entirely accurate
+        # will be ok for most pairs but some have 4/5 letters for base
+        op_ord = await get_openorders_kraken(client, symbol, lambda x: ntypes.PSymbol(f"{x[0:3]}-{x[-3:]}") ,auth) 
+        if isinstance(op_ord, Ok):
+            [order_info] = [order for order in op_ord.value.orders if order.orderID == newOrderID]
+        else:
+            return op_ord
+    # return type will be : NoobitResponseItemOrder, same as binance trading.py, so should be ok
+    return Ok(order_info)
