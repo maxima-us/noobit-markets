@@ -31,9 +31,7 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_r
 
 
 class BinanceRequestInstrument(FrozenBaseModel):
-
     symbol: str 
-
 
 
 class _ParsedRes(TypedDict):
@@ -156,6 +154,7 @@ async def get_instrument_binance(
     req_url = urljoin(base_url, endpoint)
     method = "GET"
     headers: typing.Dict = {}
+
 
     valid_noobit_req = validate_nreq_instrument(symbol, symbol_to_exchange)
     if isinstance(valid_noobit_req, Err):

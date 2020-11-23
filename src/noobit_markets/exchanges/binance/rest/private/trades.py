@@ -34,7 +34,6 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_r
 
 
 class BinanceRequestUserTrades(BinancePrivateRequest):
-
     symbol: str
 
 
@@ -191,6 +190,6 @@ async def get_trades_binance(
 
     # closed_orders = [item for item in parsed_result if item["ordStatus"] in ["filled"]]
 
-    valid_parsed_response_data = _validate_data(NoobitResponseTrades, pmap({"trades": parsed_result, "rawJson": result_content.value, "exchange": "KRAKEN"}))
+    valid_parsed_response_data = _validate_data(NoobitResponseTrades, pmap({"trades": parsed_result, "rawJson": result_content.value, "exchange": "BINANCE"}))
     return valid_parsed_response_data
 

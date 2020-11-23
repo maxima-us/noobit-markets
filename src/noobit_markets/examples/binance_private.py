@@ -11,6 +11,8 @@ from noobit_markets.exchanges.binance.rest.private.orders import get_closedorder
 from noobit_markets.exchanges.binance.rest.private.trades import get_trades_binance
 from noobit_markets.exchanges.binance.rest.private.trading import post_neworder_binance
 
+from noobit_markets.exchanges.binance.rest.private.exposure import get_exposure_binance
+
 
 
 sym = asyncio.run(
@@ -21,10 +23,10 @@ sym = asyncio.run(
 
 
 # ============================================================
-# Balances
+# BALANCES
 
 
-res = asyncio.run(
+bals = asyncio.run(
     get_balances_binance(
         client=httpx.AsyncClient(),
         # FIXME Does note fail explicitely if we pass in a non callable
@@ -32,14 +34,34 @@ res = asyncio.run(
     )
 )
 
-if res.is_err():
-    print(res)
+if bals.is_err():
+    print(bals)
 else: 
     print("Balances successfully fetched")
 
 
 # ============================================================
-# CLosed Orders
+# EXPOSURE
+
+
+exp = asyncio.run(
+    get_exposure_binance(
+        client=httpx.AsyncClient(),
+        # FIXME Does note fail explicitely if we pass in a non callable
+        asset_from_exchange=lambda x: {k: v for v, k in sym.value.assets.items()}[x],
+        symbol_to_exchange=lambda x: {k: v.exchange_pair for k, v in sym.value.asset_pairs.items()}[x]
+    )
+)
+
+print(exp)
+# if exp.is_err():
+#     print(exp)
+# else: 
+#     print("Balances successfully fetched")
+
+
+# ============================================================
+# CLOSED ORDERS
 
 
 res = asyncio.run(
@@ -72,6 +94,8 @@ res = asyncio.run(
 if res.is_err():
     print(res)
 else: 
+    # for trade in res.value.trades:
+    #     print(trade, "\n")
     print("Trades successfully fetched")
     
     

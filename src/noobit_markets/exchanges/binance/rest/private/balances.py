@@ -148,6 +148,6 @@ async def get_balances_binance(
 
     parsed_result = parse_result(valid_result_content.value, asset_from_exchange)
 
-    valid_parsed_response_data = _validate_data(NoobitResponseBalances, pmap({"balances": parsed_result, "rawJson": result_content.value, "exchange": "KRAKEN"}))
+    valid_parsed_response_data = _validate_data(NoobitResponseBalances, pmap({"balances": parsed_result, "rawJson": result_content.value, "exchange": "BINANCE"}))
     return valid_parsed_response_data
 

@@ -219,6 +219,6 @@ async def get_closedorders_binance(
 
     closed_orders = [item for item in parsed_result if item["ordStatus"] in ["closed", "canceled"]]
 
-    valid_parsed_response_data = _validate_data(NoobitResponseClosedOrders, pmap({"orders": closed_orders, "rawJson": result_content.value, "exchange": "KRAKEN"}))
+    valid_parsed_response_data = _validate_data(NoobitResponseClosedOrders, pmap({"orders": closed_orders, "rawJson": result_content.value, "exchange": "BINANCE"}))
     return valid_parsed_response_data
 
