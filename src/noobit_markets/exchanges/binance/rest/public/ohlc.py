@@ -188,5 +188,5 @@ async def get_ohlc_binance(
 
     parsed_result_ohlc = parse_result(valid_result_content.value, symbol)
 
-    valid_parsed_response_data = _validate_data(NoobitResponseOhlc, pmap({"ohlc": parsed_result_ohlc, "rawJson" :result_content.value}))
+    valid_parsed_response_data = _validate_data(NoobitResponseOhlc, pmap({"ohlc": parsed_result_ohlc, "rawJson" :result_content.value, "exchange": "BINANCE"}))
     return valid_parsed_response_data

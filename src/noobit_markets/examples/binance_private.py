@@ -13,66 +13,66 @@ from noobit_markets.exchanges.binance.rest.private.trading import post_neworder_
 
 
 
-# sym = asyncio.run(
-#     get_symbols_binance(
-#         client=httpx.AsyncClient(),
-#     )
-# )
+sym = asyncio.run(
+    get_symbols_binance(
+        client=httpx.AsyncClient(),
+    )
+)
 
 
-# # ============================================================
-# # Balances
+# ============================================================
+# Balances
 
 
-# res = asyncio.run(
-#     get_balances_binance(
-#         client=httpx.AsyncClient(),
-#         # FIXME Does note fail explicitely if we pass in a non callable
-#         asset_from_exchange=lambda x: {k: v for v, k in sym.value.assets.items()}[x]
-#     )
-# )
+res = asyncio.run(
+    get_balances_binance(
+        client=httpx.AsyncClient(),
+        # FIXME Does note fail explicitely if we pass in a non callable
+        asset_from_exchange=lambda x: {k: v for v, k in sym.value.assets.items()}[x]
+    )
+)
 
-# if res.is_err():
-#     print(res)
-# else: 
-#     print("Balances successfully fetched")
-
-
-# # ============================================================
-# # CLosed Orders
+if res.is_err():
+    print(res)
+else: 
+    print("Balances successfully fetched")
 
 
-# res = asyncio.run(
-#     get_closedorders_binance(
-#         client=httpx.AsyncClient(),
-#         symbol="XBT-USD",
-#         symbol_to_exchange=lambda x: {"XBT-USD": "BTCUSDT"}[x]
-#     )
-# )
-
-# if res.is_err():
-#     print(res)
-# else: 
-#     print("Closed orders successfully fetched")
+# ============================================================
+# CLosed Orders
 
 
+res = asyncio.run(
+    get_closedorders_binance(
+        client=httpx.AsyncClient(),
+        symbol="XBT-USD",
+        symbol_to_exchange=lambda x: {"XBT-USD": "BTCUSDT"}[x]
+    )
+)
 
-# # ============================================================
-# # Trades
+if res.is_err():
+    print(res)
+else: 
+    print("Closed orders successfully fetched")
 
 
-# res = asyncio.run(
-#     get_trades_binance(
-#         client=httpx.AsyncClient(),
-#         symbol="XBT-USD",
-#         symbol_to_exchange= lambda x: {"XBT-USD": "BTCUSDT"}[x]
-#     )
-# )
 
-# if res.is_err():
-#     print(res)
-# else: 
-#     print("Trades successfully fetched")
+# ============================================================
+# Trades
+
+
+res = asyncio.run(
+    get_trades_binance(
+        client=httpx.AsyncClient(),
+        symbol="XBT-USD",
+        symbol_to_exchange= lambda x: {"XBT-USD": "BTCUSDT"}[x]
+    )
+)
+
+if res.is_err():
+    print(res)
+else: 
+    print("Trades successfully fetched")
     
     
 # ============================================================

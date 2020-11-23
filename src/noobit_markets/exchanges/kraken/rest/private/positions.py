@@ -194,7 +194,7 @@ async def get_openpositions_kraken(
 
     parsed_result_data = parse_result(valid_result_content.value.positions, symbol_from_exchange)
 
-    valid_parsed_result_data = _validate_data(NoobitResponseOpenPositions, pmap({"positions": parsed_result_data, "rawJson": result_content.value}))
+    valid_parsed_result_data = _validate_data(NoobitResponseOpenPositions, pmap({"positions": parsed_result_data, "rawJson": result_content.value, "exchange": "KRAKEN"}))
     return valid_parsed_result_data
 
 

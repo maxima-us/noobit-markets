@@ -179,5 +179,5 @@ async def get_instrument_binance(
     # user given symbol should be ok since there is validation in steps above this
     parsed_result = parse_result(valid_result_content.value, symbol)
 
-    valid_parsed_response_data = _validate_data(NoobitResponseInstrument, pmap({**parsed_result, "rawJson": result_content.value}))
+    valid_parsed_response_data = _validate_data(NoobitResponseInstrument, pmap({**parsed_result, "rawJson": result_content.value, "exchange": "BINANCE"}))
     return valid_parsed_response_data

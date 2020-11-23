@@ -27,7 +27,7 @@ from tabulate import tabulate
 class NoobitBaseResponse(FrozenBaseModel):
 
     #? should this be mandatory
-    exchange: typing.Optional[ntypes.EXCHANGE]
+    exchange: ntypes.EXCHANGE
     rawJson: typing.Any
 
 
@@ -451,7 +451,7 @@ class NoobitResponseTrades(NoobitBaseResponse):
 class NoobitResponseBalances(NoobitBaseResponse):
 
     # FIXME replace with more explicit field name ?
-    data: typing.Mapping[ntypes.ASSET, Decimal]
+    balances: typing.Mapping[ntypes.ASSET, Decimal]
 
 
 

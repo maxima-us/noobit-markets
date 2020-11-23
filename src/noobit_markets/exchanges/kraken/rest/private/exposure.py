@@ -106,5 +106,5 @@ async def get_exposure_kraken(
 
     parsed_result = parse_result(valid_result_content.value)
 
-    valid_parsed_result_data = _validate_data(NoobitResponseExposure, pmap({**parsed_result, "rawJson": result_content.value}))
+    valid_parsed_result_data = _validate_data(NoobitResponseExposure, pmap({**parsed_result, "rawJson": result_content.value, "exchange": "KRAKEN"}))
     return valid_parsed_result_data

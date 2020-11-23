@@ -324,7 +324,7 @@ async def get_openorders_kraken(
         symbol
     )
 
-    valid_parsed_result_data = _validate_data(NoobitResponseOpenOrders, pmap({"orders": parsed_result_data, "rawJson": result_content.value}))
+    valid_parsed_result_data = _validate_data(NoobitResponseOpenOrders, pmap({"orders": parsed_result_data, "rawJson": result_content.value, "exchange": "KRAKEN"}))
     return valid_parsed_result_data
 
 
@@ -370,5 +370,5 @@ async def get_closedorders_kraken(
         symbol
     )
 
-    valid_parsed_result_data = _validate_data(NoobitResponseClosedOrders, pmap({"orders": parsed_result_data, "rawJson": result_content.value}))
+    valid_parsed_result_data = _validate_data(NoobitResponseClosedOrders, pmap({"orders": parsed_result_data, "rawJson": result_content.value, "exchange": "KRAKEN"}))
     return valid_parsed_result_data

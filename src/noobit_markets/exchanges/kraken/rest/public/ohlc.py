@@ -218,5 +218,5 @@ async def get_ohlc_kraken(
         symbol
     )
 
-    valid_parsed_response_data = _validate_data(NoobitResponseOhlc, pmap({"ohlc": parsed_result, "rawJson": result_content.value}))
+    valid_parsed_response_data = _validate_data(NoobitResponseOhlc, pmap({"ohlc": parsed_result, "rawJson": result_content.value, "exchange": "KRAKEN"}))
     return valid_parsed_response_data

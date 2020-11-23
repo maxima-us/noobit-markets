@@ -183,7 +183,6 @@ def _single_order(item: BinanceResponseItemOrders, symbol: ntypes.SYMBOL) -> T_O
 async def get_closedorders_binance(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        # TODO should we generalise this (using a return value instead of mapping)
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         auth=BinanceAuth(),
         # FIXME get from endpoint dict
@@ -220,6 +219,6 @@ async def get_closedorders_binance(
 
     closed_orders = [item for item in parsed_result if item["ordStatus"] in ["closed", "canceled"]]
 
-    valid_parsed_response_data = _validate_data(NoobitResponseClosedOrders, pmap({"orders": closed_orders, "rawJson": result_content.value}))
+    valid_parsed_response_data = _validate_data(NoobitResponseClosedOrders, pmap({"orders": closed_orders, "rawJson": result_content.value, "exchange": "KRAKEN"}))
     return valid_parsed_response_data
 

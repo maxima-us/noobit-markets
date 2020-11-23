@@ -219,5 +219,5 @@ async def get_trades_kraken(
         symbol
     )
 
-    valid_parsed_response_data = _validate_data(NoobitResponseTrades, pmap({"trades": parsed_result_trades, "rawJson": result_content.value}))
+    valid_parsed_response_data = _validate_data(NoobitResponseTrades, pmap({"trades": parsed_result_trades, "rawJson": result_content.value, "exchange": "KRAKEN"}))
     return valid_parsed_response_data

@@ -83,7 +83,7 @@ else:
     if bal.is_err():
         print(bal)
     else:
-        table = pymap_table(bal.value.data, headers=["Asset", "Balance"])
+        table = pymap_table(bal.value.balances, headers=["Asset", "Balance"])
         print(table)
         print("Balances ok")
 

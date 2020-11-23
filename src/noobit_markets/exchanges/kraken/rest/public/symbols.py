@@ -201,6 +201,6 @@ async def get_symbols_kraken(
     # ? or should we pass in entire model ? (not passing data attribute)
     parsed_result_data = parse_result(valid_result_content.value.symbols)
 
-    valid_parsed_result_data = _validate_data(NoobitResponseSymbols, pmap({**parsed_result_data, "rawJson": result_content.value}))
+    valid_parsed_result_data = _validate_data(NoobitResponseSymbols, pmap({**parsed_result_data, "rawJson": result_content.value, "exchange": "KRAKEN"}))
     return valid_parsed_result_data
 

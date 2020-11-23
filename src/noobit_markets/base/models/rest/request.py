@@ -97,9 +97,9 @@ class NoobitRequestClosedOrders(FrozenBaseModel):
 # Add Order
 # ============================================================
 
-#FIXME should there also be an `exchange` field ?
 class NoobitRequestAddOrder(FrozenBaseModel):
 
+    #  FIXME ? is this useful here ? shouldn it be oly in the resposne ?
     exchange: ntypes.EXCHANGE
 
     symbol: ntypes.SYMBOL

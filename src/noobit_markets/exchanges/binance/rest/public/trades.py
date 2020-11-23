@@ -167,5 +167,5 @@ async def get_trades_binance(
 
     parsed_result = parse_result(valid_result_content.value, symbol)
 
-    valid_parsed_response_data = _validate_data(NoobitResponseTrades, pmap({"trades": parsed_result, "rawJson": result_content.value}))
+    valid_parsed_response_data = _validate_data(NoobitResponseTrades, pmap({"trades": parsed_result, "rawJson": result_content.value, "exchange": "BINANCE"}))
     return valid_parsed_response_data

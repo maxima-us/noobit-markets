@@ -146,5 +146,5 @@ async def get_orderbook_binance(
 
     parsed_result_ob = parse_result(valid_result_content.value, symbol)
 
-    valid_parsed_response_data = _validate_data(NoobitResponseOrderBook, pmap({**parsed_result_ob, "rawJson" :result_content.value}))
+    valid_parsed_response_data = _validate_data(NoobitResponseOrderBook, pmap({**parsed_result_ob, "rawJson" :result_content.value, "exchange": "BINANCE"}))
     return valid_parsed_response_data

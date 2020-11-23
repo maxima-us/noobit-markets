@@ -187,5 +187,5 @@ async def get_instrument_kraken(
         symbol
     )
 
-    valid_parsed_response_data = _validate_data(NoobitResponseInstrument, pmap({**parsed_result, "rawJson": result_content.value}))
+    valid_parsed_response_data = _validate_data(NoobitResponseInstrument, pmap({**parsed_result, "rawJson": result_content.value, "exchange": "KRAKEN"}))
     return valid_parsed_response_data
