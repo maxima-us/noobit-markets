@@ -27,7 +27,7 @@ async def test_orderbook():
         symbols = await get_orderbook_kraken(
             client,
             "XBT-USD",
-            symbol_mapping["asset_pairs"],
+            lambda x: symbol_mapping["asset_pairs"][x],
             100,
         )
 

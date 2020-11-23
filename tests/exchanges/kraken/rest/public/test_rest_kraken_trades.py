@@ -27,7 +27,7 @@ async def test_trades():
         symbols = await get_trades_kraken(
             client,
             "XBT-USD",
-            symbol_mapping["asset_pairs"],
+            lambda x: symbol_mapping["asset_pairs"][x],
             None,
         )
 
