@@ -44,7 +44,7 @@ async def get_wstoken_kraken(
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.ws_token
-    ) -> Result[KrakenResponseWsToken, Exception]:
+    ) -> Result[KrakenResponseWsToken, pydantic.ValidationError]:
 
     req_url = urljoin(base_url, endpoint)
     # Kraken Doc : Private methods must use POST

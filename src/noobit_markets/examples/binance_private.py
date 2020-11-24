@@ -12,6 +12,7 @@ from noobit_markets.exchanges.binance.rest.private.trades import get_trades_bina
 from noobit_markets.exchanges.binance.rest.private.trading import post_neworder_binance
 
 from noobit_markets.exchanges.binance.rest.private.exposure import get_exposure_binance
+from noobit_markets.exchanges.binance.rest.private.ws_auth import get_wstoken_binance
 
 
 
@@ -124,3 +125,20 @@ if trd.is_err():
 else:
     # print(trd)
     print("Trading New Order ok")
+    
+    
+    
+# ============================================================
+# WS AUTH TOKEN
+
+#! actually isnt authenticated
+wst = asyncio.run(
+    get_wstoken_binance(
+        client=httpx.AsyncClient(),
+    )
+)
+if wst.is_err():
+    print(wst)
+else:
+    print(wst)
+    print("Ws Token ok")
