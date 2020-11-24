@@ -42,11 +42,13 @@ def validate_parsed(msg, parsed_msg):
     try:
         validated_msg = NoobitResponseSpread(
             spread=(parsed_msg,),
-            rawJson=msg
+            rawJson=msg,
+            exchange="KRAKEN"
         )
         return Ok(validated_msg)
 
     except ValidationError as e:
+        print(e)
         return Err(e)
 
 

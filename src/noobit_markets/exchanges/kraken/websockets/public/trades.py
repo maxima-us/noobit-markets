@@ -42,7 +42,8 @@ def validate_parsed(msg, parsed_msg):
     try:
         validated_msg = NoobitResponseTrades(
             trades=parsed_msg,
-            rawJson=msg
+            rawJson=msg,
+            exchange="KRAKEN"
             )
         return Ok(validated_msg)
 

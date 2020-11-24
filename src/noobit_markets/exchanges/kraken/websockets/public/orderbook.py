@@ -38,7 +38,8 @@ def validate_parsed(msg, parsed_msg):
         validated_msg = NoobitResponseOrderBook(
             **parsed_msg,
             utcTime=time.time() * 10**3,
-            rawJson=msg
+            rawJson=msg,
+            exchange="KRAKEN"
         )
         return Ok(validated_msg)
 
