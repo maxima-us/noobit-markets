@@ -89,7 +89,7 @@ def parse_request(
 
 class BinanceResponseItemTrades(FrozenBaseModel):
 
-    symbol: str 
+    symbol: str
     id: str
     orderId: str
     orderListId: int

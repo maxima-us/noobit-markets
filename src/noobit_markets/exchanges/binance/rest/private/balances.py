@@ -74,7 +74,7 @@ class BinanceRequestBalances(BinancePrivateRequest):
 
 
 class BinanceResponseItemBalances(FrozenBaseModel):
-    asset: str 
+    asset: str
     free: Decimal
     locked: Decimal
 
@@ -84,8 +84,8 @@ class BinanceResponseBalances(FrozenBaseModel):
 
     makerCommission: ntypes.PERCENT
     takerCommission: ntypes.PERCENT
-    buyerCommission: ntypes.PERCENT 
-    sellerCommission: ntypes.PERCENT 
+    buyerCommission: ntypes.PERCENT
+    sellerCommission: ntypes.PERCENT
     canTrade: bool
     canWithdraw: bool
     updateTime: pydantic.PositiveInt

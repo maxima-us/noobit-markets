@@ -36,7 +36,7 @@ bals = asyncio.run(
 
 if bals.is_err():
     print(bals)
-else: 
+else:
     print("Balances successfully fetched")
 
 
@@ -56,7 +56,7 @@ exp = asyncio.run(
 print(exp)
 # if exp.is_err():
 #     print(exp)
-# else: 
+# else:
 #     print("Balances successfully fetched")
 
 
@@ -74,7 +74,7 @@ res = asyncio.run(
 
 if res.is_err():
     print(res)
-else: 
+else:
     print("Closed orders successfully fetched")
 
 
@@ -93,12 +93,12 @@ res = asyncio.run(
 
 if res.is_err():
     print(res)
-else: 
+else:
     # for trade in res.value.trades:
     #     print(trade, "\n")
     print("Trades successfully fetched")
-    
-    
+
+
 # ============================================================
 # POST NEW ORDER
 

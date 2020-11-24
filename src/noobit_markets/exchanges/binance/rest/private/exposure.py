@@ -41,8 +41,8 @@ async def get_exposure_binance(
                 symbol = str(f"{asset}-USDT").replace("XBT", "BTC")
                 typed = type(symbol)
                 price = await get_instrument_binance(
-                    client=client, 
-                    symbol=ntypes.PSymbol(symbol), 
+                    client=client,
+                    symbol=ntypes.PSymbol(symbol),
                     symbol_to_exchange=symbol_to_exchange
                 )
                 if price.is_err():

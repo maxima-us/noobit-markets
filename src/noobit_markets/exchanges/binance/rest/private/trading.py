@@ -48,9 +48,9 @@ B_ORDERSTATUS = Literal["NEW", "PARTIALLY_FILLED", "FILLED", "CANCELED", "PENDIN
 class BinanceRequestNewOrder(BinancePrivateRequest):
 
     symbol: str
-    side: B_ORDERSIDE 
-    type: B_ORDERTYPE 
-    timeInForce: B_TIMEINFORCE 
+    side: B_ORDERSIDE
+    type: B_ORDERTYPE
+    timeInForce: B_TIMEINFORCE
     quantity: typing.Optional[Decimal]
     # throws error if we send both quantity and quoteOrderQty
     quoteOrderQty: typing.Optional[Decimal]
@@ -292,9 +292,9 @@ async def post_neworder_binance(
 
     #! sign after validation, otherwise we aill get all the non values too
     signed_req: dict = auth._sign(valid_binance_req.value.dict(exclude_none=True))
-    
+
     #! we should not pass in "params" to the client, but construct the whole url + query string ourself, so we can make sure its sorted properly
-    
+
     #! ====> experimental
     query_dict = signed_req
     qstrings = sorted([(k, v) for k, v in signed_req.items() if not "signature" in k], reverse=True)

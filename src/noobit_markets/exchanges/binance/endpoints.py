@@ -41,13 +41,13 @@ BINANCE_ENDPOINTS = endpoints.RESTEndpoints(**{
             # "trades_history": "api/v3/allOrders", #get only filled order #requires symbol
             "trades_history": "api/v3/myTrades", #get only filled order #requires symbol
 
-            # https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#current-open-orders-user_data 
+            # https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#current-open-orders-user_data
             "open_orders": "api/v3/openOrders", #requires symbol
 
-            # https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#query-order-user_data 
+            # https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#query-order-user_data
             "order_info": "api/v3/order", #check single order
 
-            # not updated yet 
+            # not updated yet
             "open_positions": "OpenPositions",
             "closed_positions": "TradesHistory",
             "ledger": "Ledgers",
@@ -55,13 +55,13 @@ BINANCE_ENDPOINTS = endpoints.RESTEndpoints(**{
             "ledger_info": "QueryLedgers",
             "volume": "TradeVolume", #trade volume (for maker/taker fees)
 
-            # https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#new-order--trade 
+            # https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#new-order--trade
             "new_order": "api/v3/order", #POST
 
             # https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#cancel-order-trade
             "remove_order": "api/v3/order", #DELETE
 
-            # https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#start-user-data-stream-user_stream 
+            # https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#start-user-data-stream-user_stream
             "ws_token": "api/v3/userDataStream" #for SPOT wallet
         }
     }

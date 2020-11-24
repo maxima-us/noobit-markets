@@ -34,7 +34,7 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_r
 
 
 class BinanceRequestClosedOrders(BinancePrivateRequest):
-    symbol: str 
+    symbol: str
 
 
 class _ParsedReq(TypedDict):
@@ -90,9 +90,9 @@ def parse_request(
 
 class BinanceResponseItemOrders(FrozenBaseModel):
 
-    symbol: str 
+    symbol: str
     orderId: pydantic.PositiveInt
-    orderListId: int 
+    orderListId: int
     clientOrderId: str
     price: Decimal
     origQty: Decimal

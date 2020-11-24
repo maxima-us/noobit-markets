@@ -31,7 +31,7 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_r
 
 
 class BinanceRequestInstrument(FrozenBaseModel):
-    symbol: str 
+    symbol: str
 
 
 class _ParsedRes(TypedDict):
@@ -113,7 +113,7 @@ def parse_result(
     ) -> T_InstrumentParsedRes:
 
     parsed_instrument: T_InstrumentParsedRes = {
-        "symbol": symbol, 
+        "symbol": symbol,
         "low": result_data.lowPrice,
         "high": result_data.highPrice,
         "vwap": result_data.weightedAvgPrice,

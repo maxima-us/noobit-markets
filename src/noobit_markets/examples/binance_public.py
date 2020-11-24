@@ -44,7 +44,7 @@ res = asyncio.run(
 
 if res.is_err():
     print(res)
-else: 
+else:
     print("OrderBook ok")
 
 

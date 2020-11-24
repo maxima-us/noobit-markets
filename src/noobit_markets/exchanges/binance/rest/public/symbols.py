@@ -143,7 +143,7 @@ def _single_assetpair(
         "exchange_pair": data.symbol,
         "exchange_base": data.baseAsset,
         "exchange_quote": data.quoteAsset,
-        "noobit_base": data.baseAsset, 
+        "noobit_base": data.baseAsset,
         "noobit_quote": data.quoteAsset,
         "volume_decimals": data.baseAssetPrecision,
         "price_decimals": data.quoteAssetPrecision,
