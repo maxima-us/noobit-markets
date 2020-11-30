@@ -23,7 +23,7 @@ async def fetch(client):
         # None,
         client,
         "XBT-USD",
-        symbol_mapping["asset_pairs"],
+        lambda x: symbol_mapping["asset_pairs"][x],
         #! max is 100
         #? change model max to 100 ??
         100,
