@@ -1,30 +1,33 @@
 import urllib
 import hashlib
-import base64
 import hmac
+import typing
 
+import pydantic
 from dotenv import load_dotenv
-from pyrsistent import pmap
-from pydantic import AnyHttpUrl
+load_dotenv()
 
 from noobit_markets.base.request import *
-from noobit_markets.base.auth import BaseAuth, make_base
+from noobit_markets.base.auth import make_base
+from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 
-load_dotenv()
 
 
 #Binance Private Request Model
-#always needs timestamp and signature param to authenticate 
+#always needs timestamp and signature param to authenticate
 class BinancePrivateRequest(FrozenBaseModel):
 
-    timestamp: PositiveInt
+    timestamp: pydantic.PositiveInt
     signature: typing.Any
 
 # necessary so we do not share same class attributes/methods across all exchanges
-BinanceBase = make_base("BinanceBase")
+BinanceBase: typing.Any = make_base("BinanceBase")
 
 
+# base class is dynamically generated and therefore is considered as invalid by mypy
+# except if we type it as Any
+# TODO see if we can improve on this
 class BinanceAuth(BinanceBase):
 
     # nonce seems to be called `timestamp` here
@@ -42,45 +45,35 @@ class BinanceAuth(BinanceBase):
             # "API-Sign": self._sign(data, url_wo_domain)
         }
 
-        # self.rotate_keys()
-
         return auth_headers
 
 
-    def _sign(self, request_args: dict):
-        """Sign request data according to Kraken's scheme.
+    def _sign(self, request_args: dict) -> dict:
+        """Sign request data according to Binance's scheme.
         Args:
-            data (dict): API request parameters
-            urlpath (str): API URL path sans host
+            request_args: dict of all query params
         Returns
-            signature digest
+            request dict containing signature key/value pair
         """
-        # request_args["timestamp"] = self.nonce
         sorted_req_args = sorted([(k, v) for k, v in request_args.items()], reverse=True)
         postdata = urllib.parse.urlencode(sorted_req_args)
-        print("req string : ", postdata)
-        # Unicode-objects must be encoded before hashing
-        # ! Nonce must be same as self.nonce
-        # encoded = (s + postdata).encode()
-        # message = endpoint.encode() + hashlib.sha256(encoded).digest()
 
         signature = hmac.new(
             self.secret.encode(),
             postdata.encode(),
             hashlib.sha256
         )
-        # sigdigest = base64.b64encode(signature.digest())
 
         # dict isntead of pmap since pmap doesnt support assignment
         request_args["signature"] = signature.hexdigest()
-        # setattr(request_args, "signature", signature.hexdigest())
 
         # binance calls header and sign only later (2 steps) so we rotate here and not in header
         self.rotate_keys()
 
         return request_args
 
-        
+
+        # DOCS:
 
         # SIGNED endpoints require an additional parameter, signature, to be sent in the query string or request body.
         # Endpoints use HMAC SHA256 signatures. The HMAC SHA256 signature is a keyed HMAC SHA256 operation. Use your secretKey as the key and totalParams as the value for the HMAC operation.

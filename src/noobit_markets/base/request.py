@@ -1,3 +1,4 @@
+from types import CoroutineType
 import typing
 import types
 from urllib.parse import urljoin
@@ -6,7 +7,7 @@ from functools import wraps
 
 from pyrsistent import pmap
 import httpx
-from pydantic import AnyHttpUrl, PositiveInt, ValidationError
+from pydantic import AnyHttpUrl, PositiveInt, ValidationError, BaseModel
 
 from noobit_markets.base import ntypes
 from noobit_markets.base.errors import BaseError
@@ -14,7 +15,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 from noobit_markets.base.models.result import Ok, Err, Result
 
-# response models 
+# response models
 from noobit_markets.base.models.rest.request import (
     NoobitRequestOhlc,
     NoobitRequestTrades,
@@ -22,97 +23,27 @@ from noobit_markets.base.models.rest.request import (
     NoobitRequestSpread,
     NoobitRequestInstrument
 )
+import pyrsistent
 
 
-#? Do we still need this
-# def endpoint_to_exchange(
-#         exchange: basetypes.EXCHANGE,
-#         public: Literal["public", "private"],
-#         endpoint: str
-#     ) -> str:
-#     # FIXME make exchange accessible with dot notation
-#     return getattr(endpoints.ENDPOINTS.rest[exchange].public.endpoints, endpoint)
-
-
-# ? needs custom validators for headers apparently
-# class FrozenBasePublicReq(FrozenBaseModel):
-#     url: AnyHttpUrl
-#     headers: httpx.Headers
-#     params: typing.Mapping[str, str]
 
 
 # ============================================================
-# MAKE REQUEST
+# EXPORTS
 # ============================================================
 
 
-def make_httpx_get_request(
-        base_url: AnyHttpUrl,
-        endpoint: str,
-        headers: typing.Optional[httpx.Headers],
-        valid_request_model: FrozenBaseModel
-    ) -> pmap:
-
-    # wont work if some dynamic param is part of url (like for ftx api)
-    full_url = urljoin(base_url, endpoint)
-
-    # ? MODEL ??
-    req_dict = {
-        "url": full_url,
-        "headers": headers,
-        "params": valid_request_model.dict(exclude_none=True)
-    }
-
-    return pmap(req_dict)
+__all__ = [
+    "retry_request",
+    "_validate_data",
+    "validate_nreq_ohlc",
+    "validate_nreq_trades",
+    "validate_nreq_spread",
+    "validate_nreq_orderbook",
+    "validate_nreq_instrument"
+]
 
 
-def make_httpx_post_request(
-        base_url: AnyHttpUrl,
-        endpoint: str,
-        headers: typing.Optional[httpx.Headers],
-        # TODO define FrozenBaseRequest that contains nonce param
-        valid_request_model: FrozenBaseModel
-    ) -> pmap:
-
-    full_url = urljoin(base_url, endpoint)
-
-    req_dict = {
-        "url": full_url,
-        "headers": headers,
-        "data": valid_request_model.dict(exclude_none=True)
-        # FIXME this is just to test private req
-        # "data": valid_request_model
-    }
-
-    return pmap(req_dict)
-
-
-# ============================================================
-# SEND REQUEST
-# ============================================================
-
-
-async def send_public_request(
-        client: httpx.AsyncClient,
-        request_args: pmap
-    ) -> pmap:
-
-    response = await client.get(**request_args)
-
-    # return frozendict(response.json())
-    return pmap(response.__dict__)
-
-
-async def send_private_request(
-        client: httpx.AsyncClient,
-        request_args: pmap
-    ) -> pmap:
-
-    response = await client.post(**request_args)
-
-    # return pmap(response.___dict__)
-    # FIXME this is just for testing purposes
-    return pmap(response.__dict__)
 
 
 # ============================================================
@@ -120,13 +51,28 @@ async def send_private_request(
 # ============================================================
 
 
-#TODO make more explicit model (ie FrozenNoobitResponse) ==> for return value ?
 def retry_request(
         retries: PositiveInt,
         logger: typing.Callable,
-    ) -> Result[FrozenBaseModel, BaseError]:
+    ) -> typing.Callable[
+            ...,
+            typing.Coroutine[
+                typing.Any,
+                typing.Any,
+                Result[FrozenBaseModel, BaseError]
+            ]
+        ]:
 
-    def decorator(func: types.CoroutineType):
+    def decorator(
+        func: typing.Callable[
+            ...,
+            typing.Coroutine[
+                typing.Any,
+                typing.Any,
+                Result[typing.Any, typing.Any]
+                ]
+            ]
+        ):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             retried = 0
@@ -153,18 +99,6 @@ def retry_request(
                     except Exception as e:
                         return e
 
-                    #! returns a tuple of errors
-                    #FIXME kraken returns a tuple of errors
-                    #   binance for examples returns a dict
-                    #   containing error code and error message
-                    # if result.value[0].accept:
-                    #     return result
-                    # else:
-                    #     msg = f"Retrying in {result.value[0].sleep} seconds - Retry Attempts: {retried}"
-                    #     logger(msg)
-                    #     #! returns a tuple of errors
-                    #     await asyncio.sleep(result.value[0].sleep)
-                    #     retried += 1
             else:
                 return result
 
@@ -181,20 +115,21 @@ def retry_request(
 
 
 def _validate_data(
-        model: FrozenBaseModel,
-        fields: dict
+        model: typing.Type[BaseModel],
+        fields: pyrsistent.PMap     # PRecord sublasses PMap so its also acceptable
     ) -> Result:
     try:
-        validated = model(**fields)
+        validated = model(**fields)     #type: ignore
         return Ok(validated)
     except ValidationError as e:
         return Err(e)
     except Exception as e:
         raise e
+
 
 def validate_data_against(data: dict, model: FrozenBaseModel):
     try:
-        validated = model(**data)
+        validated = model(**data)       #type: ignore
         return Ok(validated)
     except ValidationError as e:
         return Err(e)
@@ -202,15 +137,14 @@ def validate_data_against(data: dict, model: FrozenBaseModel):
         raise e
 
 
+#TODO delete, redundant since we already have _validate_data
 def _validate_parsed_req(
         exchange_req_model: FrozenBaseModel,
-        parsed_request: pmap
+        parsed_request: pyrsistent.PMap
     ):
 
     try:
-        validated = exchange_req_model(
-            **parsed_request
-        )
+        validated = exchange_req_model(**parsed_request)    #type: ignore
         return Ok(validated)
 
     except ValidationError as e:

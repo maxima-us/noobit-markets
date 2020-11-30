@@ -3,7 +3,9 @@ import typing
 from urllib.parse import urljoin
 
 import pydantic
+from pydantic.error_wrappers import ValidationError
 from pyrsistent import pmap
+from typing_extensions import TypedDict
 
 from noobit_markets.base.request import (
     retry_request,
@@ -13,8 +15,8 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseTrades
+from noobit_markets.base.models.result import Result, Err
+from noobit_markets.base.models.rest.response import NoobitResponseTrades, T_PublicTradesParsedRes, T_PublicTradesParsedItem
 from noobit_markets.base.models.rest.request import NoobitRequestTrades
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -33,18 +35,25 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_r
 class BinanceRequestTrades(FrozenBaseModel):
 
     symbol: str
-    limit: pydantic.PositiveInt = 1000
+    limit: pydantic.PositiveInt
+
+
+class _ParsedReq(TypedDict):
+    symbol: typing.Any
+    limit: typing.Any
 
 
 def parse_request(
-        valid_request: NoobitRequestTrades
-    ) -> pmap:
+        valid_request: NoobitRequestTrades,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
+    ) -> _ParsedReq:
 
-    payload = {
-        "symbol": valid_request.symbol_mapping[valid_request.symbol],
+    payload: _ParsedReq = {
+        "symbol": symbol_to_exchange(valid_request.symbol),
+        "limit": 1000
     }
 
-    return pmap(payload)
+    return payload
 
 
 
@@ -86,9 +95,9 @@ class BinanceResponseTrades(FrozenBaseModel):
 def parse_result(
         result_data: BinanceResponseTrades,
         symbol: ntypes.SYMBOL
-    ) -> typing.Tuple[pmap]:
+    ) -> T_PublicTradesParsedRes:
 
-    parsed_trades = [_single_trade(data, symbol) for data in result_data]
+    parsed_trades = [_single_trade(data, symbol) for data in result_data.trades]
 
     return tuple(parsed_trades)
 
@@ -96,8 +105,9 @@ def parse_result(
 def _single_trade(
         data: _SingleTrade,
         symbol: ntypes.SYMBOL
-    ):
-    parsed = {
+    ) -> T_PublicTradesParsedItem:
+    
+    parsed: T_PublicTradesParsedItem = {
         "symbol": symbol,
         "orderID": None,
         "trdMatchID": None,
@@ -113,7 +123,7 @@ def _single_trade(
         "text": None
     }
 
-    return pmap(parsed)
+    return parsed
 
 
 
@@ -123,7 +133,7 @@ def _single_trade(
 # ============================================================
 
 
-@retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
+@retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_trades_binance(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
@@ -131,19 +141,19 @@ async def get_trades_binance(
         since: typing.Optional[ntypes.TIMESTAMP] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.trades,
-    ) -> Result[NoobitResponseTrades, Exception]:
+    ) -> Result[NoobitResponseTrades, ValidationError]:
 
     req_url = urljoin(base_url, endpoint)
     method = "GET"
-    headers = {}
+    headers: typing.Dict = {}
 
-    valid_req = validate_nreq_trades(symbol, symbol_to_exchange, since)
-    if valid_req.is_err():
-        return valid_req
+    valid_noobit_req = validate_nreq_trades(symbol, symbol_to_exchange, since)
+    if isinstance(valid_noobit_req, Err):
+        return valid_noobit_req
 
-    parsed_req = parse_request(valid_req.value)
+    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
-    valid_binance_req = _validate_data(BinanceRequestTrades, parsed_req)
+    valid_binance_req = _validate_data(BinanceRequestTrades, pmap(parsed_req))
     if valid_binance_req.is_err():
         return valid_binance_req
 
@@ -151,11 +161,11 @@ async def get_trades_binance(
     if result_content.is_err():
         return result_content
 
-    valid_result_content = _validate_data(BinanceResponseTrades, {"trades" :result_content.value})
+    valid_result_content = _validate_data(BinanceResponseTrades, pmap({"trades" :result_content.value}))
     if valid_result_content.is_err():
         return valid_result_content
 
-    parsed_result = parse_result(valid_result_content.value.trades, symbol)
+    parsed_result = parse_result(valid_result_content.value, symbol)
 
-    valid_parsed_response_data = _validate_data(NoobitResponseTrades, {"trades": parsed_result, "rawJson": result_content.value})
+    valid_parsed_response_data = _validate_data(NoobitResponseTrades, pmap({"trades": parsed_result, "rawJson": result_content.value, "exchange": "BINANCE"}))
     return valid_parsed_response_data

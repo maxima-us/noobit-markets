@@ -13,7 +13,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result, Ok
-from noobit_markets.base.models.rest.response import NoobitResponseSymbols
+from noobit_markets.base.models.rest.response import NoobitResponseSymbols, T_SymbolParsedPair, T_SymbolParsedRes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 # binance
@@ -79,7 +79,6 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_r
 
 class BinanceResponseItemSymbols(FrozenBaseModel):
 
-    #TODO regex capital
     symbol: str
     status: Literal["TRADING", "BREAK",]
     baseAsset: str
@@ -111,59 +110,60 @@ class BinanceResponseSymbols(FrozenBaseModel):
 
 def parse_result(
         result_data: BinanceResponseSymbols
-    ) -> pmap:
+    ) -> T_SymbolParsedRes:
 
-    parsed = {
-        "asset_pairs": parse_to_assetpairs(result_data),
-        "assets": parse_to_assets(result_data)
+    parsed: T_SymbolParsedRes = {
+        "asset_pairs": parse_to_assetpairs(result_data.symbols),
+        "assets": parse_to_assets(result_data.symbols)
     }
 
     #TODO FILTER OUT SYMBOLS THAT ARE NOT TRADING
-    return pmap(parsed)
+    return parsed
 
 
 def parse_to_assetpairs(
-        result_data: BinanceResponseItemSymbols,
-    ) -> pmap:
+        result_data: typing.Tuple[BinanceResponseItemSymbols, ...],
+    ) -> typing.Dict[ntypes.PSymbol, T_SymbolParsedPair]:
 
     parsed = {
-        f"{data.baseAsset}-{data.quoteAsset}": _single_assetpair(data)
+        ntypes.PSymbol(f"{data.baseAsset}-{data.quoteAsset}"): _single_assetpair(data)
         #? filter out pairs that are not trading ?
-        for data in result_data.symbols if data.status == "TRADING" and data.baseAsset != "KP3R"
+        for data in result_data if data.status == "TRADING" and data.baseAsset != "KP3R"
     }
 
-    return pmap(parsed)
+    return parsed
 
 
 # TODO refine Symbols model
 def _single_assetpair(
-    data: pmap,
-) -> pmap:
+    data: BinanceResponseItemSymbols,
+) -> T_SymbolParsedPair:
 
-    parsed = {
-        "exchange_name": data.symbol,
-        "ws_name": None,
-        "base": data.baseAsset,
-        "quote": data.quoteAsset,
+    parsed: T_SymbolParsedPair = {
+        "exchange_pair": data.symbol,
+        "exchange_base": data.baseAsset,
+        "exchange_quote": data.quoteAsset,
+        "noobit_base": data.baseAsset,
+        "noobit_quote": data.quoteAsset,
         "volume_decimals": data.baseAssetPrecision,
         "price_decimals": data.quoteAssetPrecision,
         "leverage_available": None, #can only tell if margin or not
         "order_min": None
     }
 
-    return pmap(parsed)
+    return parsed
 
 
 def parse_to_assets(
-    result_data: BinanceResponseSymbols,
-) -> pmap:
+    result_data: typing.Tuple[BinanceResponseItemSymbols, ...],
+) -> typing.Dict[ntypes.PAsset, str]:
 
     parsed = {
-        (data.baseAsset if not data.baseAsset == "BTC" else "XBT"): data.baseAsset
-        for data in result_data.symbols
+        ntypes.PAsset((data.baseAsset if not data.baseAsset == "BTC" else "XBT")): data.baseAsset
+        for data in result_data
     }
 
-    return pmap(parsed)
+    return parsed
 
 
 
@@ -173,7 +173,7 @@ def parse_to_assets(
 # ============================================================
 
 
-@retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
+@retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_symbols_binance(
         client: ntypes.CLIENT,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
@@ -182,7 +182,7 @@ async def get_symbols_binance(
 
     req_url = urljoin(base_url, endpoint)
     method = "GET"
-    headers = {}
+    headers: typing.Dict = {}
 
     # no query params but needs to wrapped in a result that contains an instance of FrozenBaseModel
     valid_binance_req = Ok(FrozenBaseModel())
@@ -197,5 +197,5 @@ async def get_symbols_binance(
 
     parsed_result = parse_result(valid_result_content.value)
 
-    valid_parsed_response_data = _validate_data(NoobitResponseSymbols, {**parsed_result, "rawJson": result_content.value})
+    valid_parsed_response_data = _validate_data(NoobitResponseSymbols, pmap({**parsed_result, "rawJson": result_content.value, "exchange": "BINANCE"}))
     return valid_parsed_response_data

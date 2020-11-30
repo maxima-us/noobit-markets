@@ -3,8 +3,9 @@ from decimal import Decimal
 from urllib.parse import urljoin
 
 import pydantic
+from pydantic import ValidationError
 from pyrsistent import pmap
-from typing_extensions import Literal
+from typing_extensions import Literal, TypedDict
 
 from noobit_markets.base.request import (
     retry_request,
@@ -14,7 +15,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseClosedOrders, NoobitResponseSymbols
+from noobit_markets.base.models.rest.response import NoobitResponseClosedOrders, NoobitResponseSymbols, T_OrderParsedRes, T_OrderParsedItem
 from noobit_markets.base.models.rest.request import NoobitRequestClosedOrders
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -33,18 +34,24 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_r
 
 
 class BinanceRequestClosedOrders(BinancePrivateRequest):
+    symbol: str
 
-    symbol: pydantic.constr(regex=r'[A-Z]+')
+
+class _ParsedReq(TypedDict):
+    symbol: typing.Any
+    timestamp: typing.Any
 
 
-def parse_request_closedorders(
-        valid_request: NoobitRequestClosedOrders
-    ) -> dict:
+def parse_request(
+        valid_request: NoobitRequestClosedOrders,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
+    ) -> _ParsedReq:
 
-    payload = {
-        "symbol": valid_request.symbol_mapping[valid_request.symbol]
+    payload: _ParsedReq = {
+        "symbol": symbol_to_exchange(valid_request.symbol),
+        # timestamp will be set later, this is just for mypy
+        "timestamp": None
     }
-
     return payload
 
 
@@ -83,9 +90,9 @@ def parse_request_closedorders(
 
 class BinanceResponseItemOrders(FrozenBaseModel):
 
-    symbol: pydantic.constr(regex=r'[A-Z]+')
+    symbol: str
     orderId: pydantic.PositiveInt
-    orderListId: pydantic.conint(ge=-1)
+    orderListId: int
     clientOrderId: str
     price: Decimal
     origQty: Decimal
@@ -104,27 +111,25 @@ class BinanceResponseItemOrders(FrozenBaseModel):
 
 
 class BinanceResponseOrders(FrozenBaseModel):
-
     orders: typing.Tuple[BinanceResponseItemOrders, ...]
 
 
 def parse_result(
         result_data: BinanceResponseOrders,
-        # FIXME commented out just for testing
-        symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE
-    ) -> typing.Tuple[pmap]:
+        symbol: ntypes.SYMBOL
+    ) -> T_OrderParsedRes:
 
-    parsed = [_single_order(item, symbol_mapping) for item in result_data.orders]
+    parsed = [_single_order(item, symbol) for item in result_data.orders]
 
     return tuple(parsed)
 
 
-def _single_order(item: BinanceResponseItemOrders, symbol_mapping) -> pmap:
+def _single_order(item: BinanceResponseItemOrders, symbol: ntypes.SYMBOL) -> T_OrderParsedItem:
 
-    parsed = {
+    parsed: T_OrderParsedItem = {
         "orderID": item.orderId,
-        "symbol":symbol_mapping[item.symbol],
-        "currency": symbol_mapping[item.symbol].split("-")[1],
+        "symbol": symbol,
+        "currency": symbol.split("-")[1],
         "side": item.side.lower(),
         "ordType": item.type.replace("_", "-").lower(),
         "execInst": None,
@@ -151,9 +156,20 @@ def _single_order(item: BinanceResponseItemOrders, symbol_mapping) -> pmap:
         "stopPx": item.stopPrice,
         "avgPx": item.price,
 
-    }
+        "marginRatio": None,
+        "marginAmt": None,
+        "effectiveTime": None,
+        "validUntilTime": None,
+        "expireTime": None,
+        "displayQty": None,
+        "orderPercent": None,
+        "fills": None,
+        "targetStrategy": None,
+        "targetStrategyParameters": None,
+        "text": None
+        }
 
-    return pmap(parsed)
+    return parsed
 
 
 
@@ -165,33 +181,29 @@ def _single_order(item: BinanceResponseItemOrders, symbol_mapping) -> pmap:
 
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_closedorders_binance(
-        # loop: asyncio.BaseEventLoop,
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        # TODO should we generalise this (using a return value instead of mapping)
-        symbols_to_exchange: NoobitResponseSymbols,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         auth=BinanceAuth(),
         # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.private.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.private.endpoints.closed_orders
-    ) -> Result[NoobitResponseClosedOrders, Exception]:
+    ) -> Result[NoobitResponseClosedOrders, ValidationError]:
 
     req_url = urljoin(base_url, endpoint)
     method = "GET"
-    headers = auth.headers()
+    headers: typing.Dict = auth.headers()
 
-    pairs_to_exchange = {k: v.exchange_name for k, v in symbols_to_exchange.asset_pairs.items()}
-
-    valid_noobit_req = _validate_data(NoobitRequestClosedOrders, {"symbol": symbol, "symbol_mapping": pairs_to_exchange})
+    valid_noobit_req = _validate_data(NoobitRequestClosedOrders, pmap({"symbol": symbol, "symbol_mapping": symbol_to_exchange}))
     if valid_noobit_req.is_err():
         return valid_noobit_req
 
-    parsed_req = parse_request_closedorders(valid_noobit_req.value)
+    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
     parsed_req["timestamp"] = auth.nonce
     signed_req = auth._sign(parsed_req)
 
-    valid_binance_req = _validate_data(BinanceRequestClosedOrders, signed_req)
+    valid_binance_req = _validate_data(BinanceRequestClosedOrders, pmap(signed_req))
     if valid_binance_req.is_err():
         return valid_binance_req
 
@@ -199,16 +211,14 @@ async def get_closedorders_binance(
     if result_content.is_err():
         return result_content
 
-    valid_result_content = _validate_data(BinanceResponseOrders, {"orders": result_content.value})
+    valid_result_content = _validate_data(BinanceResponseOrders, pmap({"orders": result_content.value}))
     if valid_result_content.is_err():
         return valid_result_content
 
-    reverse_pairs = {v: k for k, v in pairs_to_exchange.items()}
-
-    parsed_result = parse_result(valid_result_content.value, reverse_pairs)
+    parsed_result = parse_result(valid_result_content.value, symbol)
 
     closed_orders = [item for item in parsed_result if item["ordStatus"] in ["closed", "canceled"]]
 
-    valid_parsed_response_data = _validate_data(NoobitResponseClosedOrders, {"orders": closed_orders, "rawJson": result_content.value})
+    valid_parsed_response_data = _validate_data(NoobitResponseClosedOrders, pmap({"orders": closed_orders, "rawJson": result_content.value, "exchange": "BINANCE"}))
     return valid_parsed_response_data
 

@@ -1,11 +1,13 @@
 import typing
+from typing import Any
 from decimal import Decimal
 from urllib.parse import urljoin
 from datetime import date
 
 import pydantic
+from pydantic.error_wrappers import ValidationError
 from pyrsistent import pmap
-from typing_extensions import Literal
+from typing_extensions import Literal, TypedDict
 
 from noobit_markets.base.request import (
     retry_request,
@@ -15,8 +17,8 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseTrades
+from noobit_markets.base.models.result import Err, Result
+from noobit_markets.base.models.rest.response import NoobitResponseTrades, T_PublicTradesParsedRes, T_PublicTradesParsedItem
 from noobit_markets.base.models.rest.request import NoobitRequestTrades
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -37,10 +39,9 @@ class KrakenRequestTrades(FrozenBaseModel):
     #   pair = asset pair to get Trades data for
     #   since = return commited OHLC data since given id (optional)
 
-    #FIXME incorrect, normal string (XXBTZUSD and not XBT-USD)
-    pair: pydantic.constr(regex=r'[A-Z]+')
+    pair: str
     # needs to be in ns (same as <last> param received from response)
-    since: typing.Optional[pydantic.conint(ge=0)]
+    since: typing.Optional[pydantic.PositiveInt]
 
     @pydantic.validator('since')
     def check_year_from_timestamp(cls, v):
@@ -57,19 +58,24 @@ class KrakenRequestTrades(FrozenBaseModel):
         return v
 
 
+
+class _ParsedReq(TypedDict):
+    pair: Any
+    since: Any
+
+
 def parse_request(
-        valid_request: NoobitRequestTrades
-    ) -> pmap:
+    valid_request: NoobitRequestTrades,
+    symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
+    ) -> _ParsedReq:
 
-
-    payload = {
-        "pair": valid_request.symbol_mapping[valid_request.symbol],
+    payload: _ParsedReq = {
+        "pair": symbol_to_exchange(valid_request.symbol),
         # convert from noobit ts (ms) to expected (ns)
         "since": None if valid_request.since is None else valid_request.since * 10**6
     }
 
-    return pmap(payload)
-
+    return payload
 
 
 
@@ -106,42 +112,38 @@ class FrozenBaseTrades(FrozenBaseModel):
         return v
 
 
+_TradesItem = typing.Tuple[Decimal, Decimal, Decimal, Literal["b", "s"], Literal["m", "l"], Any]
 
 # validate incoming data, before any processing
 # useful to check for API changes on exchanges side
 # needs to be create dynamically since pair changes according to request
 def make_kraken_model_trades(
         symbol: ntypes.SYMBOL,
-        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
-    ) -> FrozenBaseModel:
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
+    ) -> typing.Type[pydantic.BaseModel]:
 
     kwargs = {
-        symbol_mapping[symbol]: (
+        symbol_to_exchange(symbol): (
             # tuple : price, volume, time, buy/sell, market/limit, misc
-            typing.Tuple[
-                typing.Tuple[
-                    # time = timestamp in s, decimal
-                    Decimal, Decimal, Decimal, Literal["b", "s"], Literal["m", "l"], typing.Any
-                ],
-                ...
-            ],
-            ...
+            # time = timestamp in s, decimal
+            typing.Tuple[_TradesItem, ...], ...
         ),
         "__base__": FrozenBaseTrades
     }
 
     model = pydantic.create_model(
         'KrakenResponseTrades',
-        **kwargs
+        **kwargs    #type: ignore
     )
 
     return model
 
 
+
 def parse_result(
-        result_data: typing.Tuple[tuple],
+        result_data: typing.Tuple[_TradesItem, ...],
         symbol: ntypes.SYMBOL
-    ) -> typing.Tuple[pmap]:
+    ) -> T_PublicTradesParsedRes:
 
     parsed_trades = [_single_trade(data, symbol) for data in result_data]
 
@@ -149,11 +151,11 @@ def parse_result(
 
 
 def _single_trade(
-        data: tuple,
+        data: _TradesItem,
         symbol: ntypes.SYMBOL
-    ) -> pmap:
+    ) -> T_PublicTradesParsedItem:
 
-    parsed = {
+    parsed: T_PublicTradesParsedItem = {
         "symbol": symbol,
         "orderID": None,
         "trdMatchID": None,
@@ -167,7 +169,7 @@ def _single_trade(
         "text": data[5]
     }
 
-    return pmap(parsed)
+    return parsed
 
 
 
@@ -177,7 +179,7 @@ def _single_trade(
 # ============================================================
 
 
-@retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
+@retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_trades_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
@@ -185,19 +187,19 @@ async def get_trades_kraken(
         since: typing.Optional[ntypes.TIMESTAMP] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.trades,
-    ) -> Result[NoobitResponseTrades, Exception]:
+    ) -> Result[NoobitResponseTrades,ValidationError]:
 
     req_url = urljoin(base_url, endpoint)
     method = "GET"
-    headers = {}
+    headers: typing.Dict = {}
 
-    valid_req = validate_nreq_trades(symbol, symbol_to_exchange, since)
-    if valid_req.is_err():
-        return valid_req
+    valid_noobit_req = validate_nreq_trades(symbol, symbol_to_exchange, since)
+    if isinstance(valid_noobit_req, Err):
+        return valid_noobit_req
 
-    parsed_req = parse_request(valid_req.value)
+    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
-    valid_kraken_req = _validate_data(KrakenRequestTrades, parsed_req)
+    valid_kraken_req = _validate_data(KrakenRequestTrades, pmap(parsed_req))
     if valid_kraken_req.is_err():
         return valid_kraken_req
 
@@ -213,9 +215,9 @@ async def get_trades_kraken(
         return valid_result_content
 
     parsed_result_trades = parse_result(
-        getattr(valid_result_content.value, symbol_to_exchange[symbol]),
+        getattr(valid_result_content.value, symbol_to_exchange(symbol)),
         symbol
     )
 
-    valid_parsed_response_data = _validate_data(NoobitResponseTrades, {"trades": parsed_result_trades, "rawJson": result_content.value})
+    valid_parsed_response_data = _validate_data(NoobitResponseTrades, pmap({"trades": parsed_result_trades, "rawJson": result_content.value, "exchange": "KRAKEN"}))
     return valid_parsed_response_data

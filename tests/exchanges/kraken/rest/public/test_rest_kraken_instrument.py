@@ -26,7 +26,7 @@ async def test_instrument():
         symbols = await get_instrument_kraken(
             client,
             "XBT-USD",
-            symbol_mapping["asset_pairs"],
+            lambda x: {"XBT-USD": "XXBTZUSD"}[x]
         )
 
         assert isinstance(symbols, Ok)

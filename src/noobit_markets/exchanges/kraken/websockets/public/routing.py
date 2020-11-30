@@ -1,11 +1,8 @@
 import json
-import asyncio
 import time
 
 from . import trades, spread, orderbook
 
-
-FULL_OB = dict()
 
 # TODO separate data_queues and status_queues ????
 async def msg_handler(msg, data_queues, status_queues):
@@ -14,29 +11,21 @@ async def msg_handler(msg, data_queues, status_queues):
     """
 
     if "systemStatus" in msg:
-        # route = "connection_status"
         await status_queues["connection"].put(json.loads(msg))
-    
+
     elif "subscriptionStatus" in msg:
-        # route = "subscription_status"
-
-        # parsed_msg = status.parse_sub(msg)
-        # valid_parsed_msg = status.validate_parsed_sub(msg, parsed_msg)
-        # if valid_parsed_msg.is_ok():
-        #   await feed_queues["subscription"]
-
         await status_queues["subscription"].put(json.loads(msg))
 
 
     elif "heartbeat" in msg:
-        
+
         # messages will normally not be consumed
         if status_queues["heartbeat"].full():
             await status_queues["heartbeat"].get()
 
         # message is just {"event": "heartbeat"}
         # put timestamp instead
-        await status_queues["heartbeat"].put(time.time() * 10**3)        
+        await status_queues["heartbeat"].put(time.time() * 10**3)
 
 
 
@@ -70,7 +59,7 @@ async def msg_handler(msg, data_queues, status_queues):
             parsed_msg = orderbook.parse_msg(msg)
             valid_parsed_msg = orderbook.validate_parsed(msg, parsed_msg)
             if valid_parsed_msg.is_ok():
-                
+
                 # top_spreads = await data_queues["spread_copy"].get()
                 await data_queues["orderbook"].put(valid_parsed_msg)
 

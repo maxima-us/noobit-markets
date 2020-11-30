@@ -1,30 +1,28 @@
 from noobit_markets.base.models.interface import ExchangeInterface
 
-
 # rest private endpoints
-from noobit_markets.exchanges.kraken.rest.private.balances.get import get_balances_kraken
-from noobit_markets.exchanges.kraken.rest.private.exposure.get import get_exposure_kraken
-from noobit_markets.exchanges.kraken.rest.private.trades.get import get_usertrades_kraken
-from noobit_markets.exchanges.kraken.rest.private.positions.get import get_openpositions_kraken
-from noobit_markets.exchanges.kraken.rest.private.orders.get import (
+from noobit_markets.exchanges.kraken.rest.private.balances import get_balances_kraken
+from noobit_markets.exchanges.kraken.rest.private.exposure import get_exposure_kraken
+from noobit_markets.exchanges.kraken.rest.private.trades import get_usertrades_kraken
+from noobit_markets.exchanges.kraken.rest.private.positions import get_openpositions_kraken
+from noobit_markets.exchanges.kraken.rest.private.orders import (
     get_openorders_kraken,
     get_closedorders_kraken,
 )
-from noobit_markets.exchanges.kraken.rest.private.trading.post import post_neworder_kraken
+from noobit_markets.exchanges.kraken.rest.private.trading import post_neworder_kraken
 
 # rest public endpoints
-from noobit_markets.exchanges.kraken.rest.public.ohlc.get import get_ohlc_kraken
-from noobit_markets.exchanges.kraken.rest.public.symbols.get import get_symbols
-from noobit_markets.exchanges.kraken.rest.public.orderbook.get import get_orderbook_kraken
-from noobit_markets.exchanges.kraken.rest.public.trades.get import get_trades_kraken
-from noobit_markets.exchanges.kraken.rest.public.instrument.get import get_instrument_kraken
-from noobit_markets.exchanges.kraken.rest.public.spread.get import get_spread_kraken
+from noobit_markets.exchanges.kraken.rest.public.ohlc import get_ohlc_kraken
+from noobit_markets.exchanges.kraken.rest.public.symbols import get_symbols_kraken
+from noobit_markets.exchanges.kraken.rest.public.orderbook import get_orderbook_kraken
+from noobit_markets.exchanges.kraken.rest.public.trades import get_trades_kraken
+from noobit_markets.exchanges.kraken.rest.public.instrument import get_instrument_kraken
+from noobit_markets.exchanges.kraken.rest.public.spread import get_spread_kraken
 
-# ws public
-from noobit_markets.examples.ws_class import KrakenWsApi
+# kraken ws
+from noobit_markets.exchanges.kraken.websockets.public.api import KrakenWsPublic
+from noobit_markets.exchanges.kraken.websockets.private.api import KrakenWsPrivate
 
-# ws private
-from noobit_markets.examples.ws_class import KrakenWsPrivate
 
 
 KRAKEN = ExchangeInterface(**{
@@ -32,7 +30,7 @@ KRAKEN = ExchangeInterface(**{
         "public": {
             "ohlc": get_ohlc_kraken,
             "orderbook": get_orderbook_kraken,
-            "symbols": get_symbols,
+            "symbols": get_symbols_kraken,
             "trades": get_trades_kraken,
             "instrument": get_instrument_kraken,
             "spread": get_spread_kraken
@@ -49,7 +47,7 @@ KRAKEN = ExchangeInterface(**{
     },
 
     "ws":{
-        "public": KrakenWsApi,
+        "public": KrakenWsPublic,
         "private": KrakenWsPrivate
     }
 })

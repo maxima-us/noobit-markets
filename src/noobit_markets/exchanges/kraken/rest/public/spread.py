@@ -1,9 +1,12 @@
 import typing
+from typing import Any
 from decimal import Decimal
 from datetime import date
 from urllib.parse import urljoin
 
+from typing_extensions import TypedDict
 import pydantic
+from pydantic.error_wrappers import ValidationError
 from pyrsistent import pmap
 
 from noobit_markets.base.request import (
@@ -14,8 +17,8 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseSpread
+from noobit_markets.base.models.result import Err, Result
+from noobit_markets.base.models.rest.response import NoobitResponseSpread, T_SpreadParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestSpread
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -35,8 +38,7 @@ class KrakenRequestSpread(FrozenBaseModel):
     # KRAKEN PAYLOAD
     #   pair = asset pair to get spread data for (example XXBTZUSD)
     #   since = return commited OHLC data since given id (optional)
-
-    pair: pydantic.constr(regex=r'[A-Z]+')
+    pair: str
     # needs to be given in s (same as spread <last> timestamp from spread response)
     since: typing.Optional[pydantic.PositiveInt]
 
@@ -54,16 +56,22 @@ class KrakenRequestSpread(FrozenBaseModel):
         return v
 
 
-def parse_request(
-        valid_request: NoobitRequestSpread
-    ) -> pmap:
+class _ParsedReq(TypedDict):
+    pair: Any
+    since: Any
 
-    payload = {
-        "pair": valid_request.symbol_mapping[valid_request.symbol],
+
+def parse_request(
+    valid_request: NoobitRequestSpread,
+    symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
+    ) -> _ParsedReq:
+
+    payload: _ParsedReq = {
+        "pair": symbol_to_exchange(valid_request.symbol),
         "since": valid_request.since
     }
 
-    return pmap(payload)
+    return payload
 
 
 
@@ -101,50 +109,54 @@ class FrozenBaseSpread(FrozenBaseModel):
         return v
 
 
+_SpreadItem = typing.Tuple[Decimal, Decimal, Decimal]
+
+
 # validate incoming data, before any processing
 # useful to check for API changes on exchanges side
 # needs to be create dynamically since pair changes according to request
 def make_kraken_model_spread(
         symbol: ntypes.SYMBOL,
-        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
-    ) -> FrozenBaseModel:
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
+    ) -> typing.Type[pydantic.BaseModel]:
 
     kwargs = {
         # tuple of time, bid, ask
         # time is timestamp in s
-        symbol_mapping[symbol]: (typing.Tuple[typing.Tuple[Decimal, Decimal, Decimal], ...], ...),
+        symbol_to_exchange(symbol): (typing.Tuple[_SpreadItem, ...], ...),
         "__base__": FrozenBaseSpread
     }
 
     model = pydantic.create_model(
         'KrakenResponseSpread',
-        **kwargs
+        **kwargs        #type: ignore
     )
 
     return model
 
 
 def parse_result(
-        result_data_spread: typing.Tuple[tuple],
+        result_data_spread: typing.Tuple[_SpreadItem, ...],
         symbol: ntypes.SYMBOL
-    ) -> pmap:
+    ) -> typing.Tuple[T_SpreadParsedRes, ...]:
 
     parsed_spread = [_single(data, symbol) for data in result_data_spread]
     return tuple(parsed_spread)
 
 
 def _single(
-        data: tuple,
+        data: _SpreadItem,
         symbol: ntypes.SYMBOL
-    ) -> pmap:
-    parsed = {
+    ) -> T_SpreadParsedRes:
+
+    parsed: T_SpreadParsedRes = {
         "symbol": symbol,
         # noobit timestamps are in ms
         "utcTime": data[0]*10**3,
         "bestBidPrice": data[1],
         "bestAskPrice": data[2]
     }
-    return pmap(parsed)
+    return parsed
 
 
 
@@ -154,28 +166,27 @@ def _single(
 # ============================================================
 
 
-@retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
+@retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_spread_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
-        # since: ntypes.TIMESTAMP,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.spread,
-    ) -> Result[NoobitResponseSpread, Exception]:
+    ) -> Result[NoobitResponseSpread, ValidationError]:
 
 
     req_url = urljoin(base_url, endpoint)
     method = "GET"
-    headers = {}
+    headers: typing.Dict = {}
 
     valid_noobit_req = validate_nreq_spread(symbol, symbol_to_exchange)
-    if valid_noobit_req.is_err():
+    if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
 
-    parsed_req = parse_request(valid_noobit_req.value)
+    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
-    valid_kraken_req = _validate_data(KrakenRequestSpread, parsed_req)
+    valid_kraken_req = _validate_data(KrakenRequestSpread, pmap(parsed_req))
     if valid_kraken_req.is_err():
         return valid_kraken_req
 
@@ -191,9 +202,9 @@ async def get_spread_kraken(
         return valid_result_content
 
     parsed_result_spread = parse_result(
-        getattr(valid_result_content.value, symbol_to_exchange[symbol]),
+        getattr(valid_result_content.value, symbol_to_exchange(symbol)),
         symbol
     )
 
-    valid_parsed_response_data = _validate_data(NoobitResponseSpread, {"spread": parsed_result_spread, "rawJson": result_content.value})
+    valid_parsed_response_data = _validate_data(NoobitResponseSpread, pmap({"spread": parsed_result_spread, "rawJson": result_content.value, "exchange": "KRAKEN"}))
     return valid_parsed_response_data

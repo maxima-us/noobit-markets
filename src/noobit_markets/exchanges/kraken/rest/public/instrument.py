@@ -1,9 +1,13 @@
 import typing
+from typing import Any
 from decimal import Decimal
 from urllib.parse import urljoin
 
+import stackprinter     #type: ignore
+stackprinter.set_excepthook(style="darkbg2")
 
 import pydantic
+from pydantic.error_wrappers import ValidationError
 from pyrsistent import pmap
 
 from noobit_markets.base.request import (
@@ -14,14 +18,15 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseInstrument
+from noobit_markets.base.models.result import Result, Err
+from noobit_markets.base.models.rest.response import NoobitResponseInstrument, T_InstrumentParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestInstrument
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 # Kraken
 from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
+import pyrsistent
 
 
 
@@ -34,22 +39,24 @@ from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_re
 class KrakenRequestInstrument(FrozenBaseModel):
     # KRAKEN PAYLOAD
     #   pair = comma delimited list of asset pairs to get info on
+    # we restrict it to a single symbol
+    pair: str
 
-    #! restrict query to one pair, otherwise parsing response will get messy
-    # pair: constr(regex=r'([A-Z]+,[A-Z]+)*[A-Z]+')
-    pair: pydantic.constr(regex=r'[A-Z]+')
+
+class _ParsedReq(pyrsistent.PRecord):
+    pair = pyrsistent.field(type=str)
 
 
 def parse_request(
-        valid_request: NoobitRequestInstrument
-    ) -> pmap:
+        valid_request: NoobitRequestInstrument,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
+    ) -> _ParsedReq:
 
-    # comma_delimited_list = ",".join(symbol for symbol in valid_request.symbol_mapping[valid_request.symbol])
     payload = {
-        "pair": valid_request.symbol_mapping[valid_request.symbol],
+        "pair": symbol_to_exchange(valid_request.symbol),
     }
 
-    return pmap(payload)
+    return _ParsedReq(**payload)
 
 
 
@@ -87,32 +94,35 @@ class KrakenInstrumentData(FrozenBaseModel):
 # needs to be create dynamically since pair changes according to request
 def make_kraken_model_instrument(
         symbol: ntypes.SYMBOL,
-        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
-    ) -> FrozenBaseModel:
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
+    ) -> typing.Type[pydantic.BaseModel]:
 
     kwargs = {
-        symbol_mapping[symbol]: (KrakenInstrumentData, ...),
+        symbol_to_exchange(symbol): (KrakenInstrumentData, ...),
         "__base__": FrozenBaseModel
     }
 
     model = pydantic.create_model(
         'KrakenResponseInstrument',
-        **kwargs
+        **kwargs    #type: ignore
     )
 
     return model
 
 
-def parse_result(
-        result_data: typing.Tuple[tuple],
-        symbol: ntypes.SYMBOL
-    ) -> pmap:
 
-    parsed_instrument = {
+
+def parse_result(
+        result_data: KrakenInstrumentData,
+        symbol: ntypes.SYMBOL
+    ) -> T_InstrumentParsedRes:
+
+    parsed_instrument: T_InstrumentParsedRes = {
         "symbol": symbol,
         "low": result_data.l[0],
         "high": result_data.h[0],
         "vwap": result_data.p[0],
+        # TODO rename to lastPrice ?
         "last": result_data.c[0],
         "volume": result_data.v[0],
         "trdCount": result_data.t[0],
@@ -124,7 +134,10 @@ def parse_result(
         "prevVolume": result_data.v[1],
         "prevTrdCount": result_data.t[1]
     }
-    return pmap(parsed_instrument)
+
+    # typing this is useless, we only want to check the fields
+    # maybe typeddict ?
+    return parsed_instrument
 
 
 
@@ -133,25 +146,26 @@ def parse_result(
 # FETCH
 # ============================================================
 
-
-@retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
+# retries needs to be a PositiveInt ==> similar to ocaml variants, we will want to define some variants in ntypes
+# ===> ex here this could be a count and then we cast Count(10)
+@retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_instrument_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.instrument,
-    ) -> Result[NoobitResponseInstrument, Exception]:
+    ) -> Result[NoobitResponseInstrument, ValidationError]:
 
     req_url = urljoin(base_url, endpoint)
     method = "GET"
-    headers = {}
+    headers: typing.Dict = {}
 
     valid_noobit_req = validate_nreq_instrument(symbol, symbol_to_exchange)
-    if valid_noobit_req.is_err():
+    if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
 
-    parsed_req = parse_request(valid_noobit_req.value)
+    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
     valid_kraken_req = _validate_data(KrakenRequestInstrument, parsed_req)
     if valid_kraken_req.is_err():
@@ -169,9 +183,9 @@ async def get_instrument_kraken(
         return valid_result_content
 
     parsed_result = parse_result(
-        getattr(valid_result_content.value, symbol_to_exchange[symbol]),
+        getattr(valid_result_content.value, symbol_to_exchange(symbol)),
         symbol
     )
 
-    valid_parsed_response_data = _validate_data(NoobitResponseInstrument, {**parsed_result, "rawJson": result_content.value})
+    valid_parsed_response_data = _validate_data(NoobitResponseInstrument, pmap({**parsed_result, "rawJson": result_content.value, "exchange": "KRAKEN"}))
     return valid_parsed_response_data

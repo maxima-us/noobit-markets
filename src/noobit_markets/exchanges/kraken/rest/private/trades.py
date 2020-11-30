@@ -1,4 +1,5 @@
 import typing
+from typing import Any
 from decimal import Decimal
 from urllib.parse import urljoin
 
@@ -14,7 +15,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseTrades
+from noobit_markets.base.models.rest.response import NoobitResponseTrades, T_PrivateTradesParsedRes, T_PrivateTradesParsedItem
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 # Kraken
@@ -117,16 +118,16 @@ class KrakenResponseUserTrades(FrozenBaseModel):
     count: pydantic.PositiveInt
 
 
+
+
 def parse_result(
         result_data: typing.Mapping[str, SingleTradeInfo],
-        symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE,
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
         symbol: ntypes.SYMBOL
-    ) -> typing.Tuple[dict]:
+    ) -> T_PrivateTradesParsedRes:
 
-
-    # parsed = {asset: amount for asset, amount in result_data.items()}
     parsed = [
-        _single_trade(key, info, symbol_mapping)
+        _single_trade(key, info, symbol_from_exchange)
         for key, info in result_data.items()
     ]
 
@@ -138,15 +139,15 @@ def parse_result(
 def _single_trade(
         key: str,
         info: SingleTradeInfo,
-        symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE
-    ) -> pmap:
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE
+    ) -> T_PrivateTradesParsedItem:
 
-    parsed = {
+    parsed: T_PrivateTradesParsedItem = {
         "trdMatchID": key,
         "transactTime": info.time,
         "orderID": info.ordertxid,
         "clOrdID": None,
-        "symbol": symbol_mapping[info.pair],
+        "symbol": symbol_from_exchange(info.pair),
         "side": info.type,
         # TODO ordertype mapping
         "ordType": info.ordertype,
@@ -158,7 +159,7 @@ def _single_trade(
         "text": info.misc
     }
 
-    return pmap(parsed)
+    return parsed
 
 
 
@@ -172,22 +173,21 @@ def _single_trade(
 async def get_usertrades_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbols_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
         auth=KrakenAuth(),
-        # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.trades_history
     ) -> Result[NoobitResponseTrades, Exception]:
 
     req_url = urljoin(base_url, endpoint)
     method = "POST"
-    # get nonce right away since there is noother param
     data = {"nonce": auth.nonce, "type": "all", "trades": True}
-    headers = auth.headers(endpoint, data)
 
-    valid_kraken_req = _validate_data(KrakenRequestUserTrades, data)
+    valid_kraken_req = _validate_data(KrakenRequestUserTrades, pmap(data))
     if valid_kraken_req.is_err():
         return valid_kraken_req
+
+    headers = auth.headers(endpoint, valid_kraken_req.value.dict())
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
     if result_content.is_err():
@@ -197,9 +197,7 @@ async def get_usertrades_kraken(
     if valid_result_content.is_err():
         return valid_result_content
 
-    symbols_from_exchange = {v: k for k, v in symbols_to_exchange.items()}
+    parsed_result_data = parse_result(valid_result_content.value.trades, symbol_from_exchange, symbol)
 
-    parsed_result_data = parse_result(valid_result_content.value.trades, symbols_from_exchange, symbol)
-
-    valid_parsed_result_data = _validate_data(NoobitResponseTrades, {"trades": parsed_result_data, "rawJson": result_content.value})
+    valid_parsed_result_data = _validate_data(NoobitResponseTrades, pmap({"trades": parsed_result_data, "rawJson": result_content.value, "exchange": "KRAKEN"}))
     return valid_parsed_result_data

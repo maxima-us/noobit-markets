@@ -3,17 +3,17 @@ import time
 from pydantic import ValidationError
 
 from noobit_markets.base.ntypes import SYMBOL_TO_EXCHANGE, SYMBOL, DEPTH
-from noobit_markets.base.websockets import KrakenSubModel 
+from noobit_markets.base.websockets import KrakenSubModel
 from noobit_markets.base.models.result import Result, Ok, Err
 from noobit_markets.base.models.rest.response import NoobitResponseOrderBook
 
 
-def validate_sub(symbol_mapping: SYMBOL_TO_EXCHANGE, symbol: SYMBOL, depth: DEPTH) -> KrakenSubModel:
-    
+def validate_sub(symbol_to_exchange: SYMBOL_TO_EXCHANGE, symbol: SYMBOL, depth: DEPTH) -> Result[KrakenSubModel, Exception]:
+
     msg = {
-        "event": "subscribe", 
-        "pair": [symbol_mapping[symbol], ],
-        "subscription": {"name": "book", "depth": depth} 
+        "event": "subscribe",
+        "pair": [symbol_to_exchange(symbol), ],
+        "subscription": {"name": "book", "depth": depth}
     }
 
     try:
@@ -38,16 +38,19 @@ def validate_parsed(msg, parsed_msg):
         validated_msg = NoobitResponseOrderBook(
             **parsed_msg,
             utcTime=time.time() * 10**3,
-            rawJson=msg
+            rawJson=msg,
+            exchange="KRAKEN"
         )
         return Ok(validated_msg)
-    
+
     except ValidationError as e:
         return Err(e)
 
 
 
 def parse_msg(message):
+    """used by msg_handler in routing.py
+    """
 
     info = message[1]
     pair = message[3].replace("/", "-")
@@ -86,7 +89,6 @@ def parse_snapshot(info, pair):
 def parse_update(info, pair):
 
     keys = list(info.keys())
-    # logging.warning(keys)
 
     try:
         parsed_update = {

@@ -4,8 +4,9 @@ from urllib.parse import urljoin
 from collections import Counter
 
 import pydantic
+from pydantic.error_wrappers import ValidationError
 from pyrsistent import pmap
-from typing_extensions import Literal
+from typing_extensions import Literal, TypedDict
 
 from noobit_markets.base.request import (
     retry_request,
@@ -15,8 +16,8 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseOrderBook
+from noobit_markets.base.models.result import Result, Err
+from noobit_markets.base.models.rest.response import NoobitResponseOrderBook, T_OrderBookParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestOrderBook
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -34,20 +35,26 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_r
 
 class BinanceRequestOrderBook(FrozenBaseModel):
 
-    symbol: pydantic.constr(regex=r'[A-Z]+')
+    symbol: str 
     limit: typing.Optional[Literal[5, 10, 20, 50, 100, 500, 1000, 5000]]
 
 
-def parse_request(
-        valid_request: NoobitRequestOrderBook
-    ) -> pmap:
+class _ParsedReq(TypedDict):
+    symbol: typing.Any
+    limit: typing.Any
 
-    payload = {
-        "symbol": valid_request.symbol_mapping[valid_request.symbol],
+
+def parse_request(
+        valid_request: NoobitRequestOrderBook,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
+    ) -> _ParsedReq:
+
+    payload: _ParsedReq = {
+        "symbol": symbol_to_exchange(valid_request.symbol),
         "limit": valid_request.depth
     }
 
-    return pmap(payload)
+    return payload
 
 
 
@@ -85,9 +92,9 @@ class BinanceResponseOrderBook(FrozenBaseModel):
 def parse_result(
         result_data: BinanceResponseOrderBook,
         symbol: ntypes.SYMBOL
-    ) -> pmap:
+    ) -> T_OrderBookParsedRes:
 
-    parsed = {
+    parsed: T_OrderBookParsedRes = {
         "symbol": symbol,
         #FIXME replace with openUtcTime in all the package for better clarity
         "utcTime": result_data.lastUpdateId,
@@ -95,7 +102,7 @@ def parse_result(
         "bids": Counter({item[0]: item[1] for item in result_data.bids})
     }
 
-    return pmap(parsed)
+    return parsed
 
 
 
@@ -105,7 +112,7 @@ def parse_result(
 # ============================================================
 
 
-@retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
+@retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_orderbook_binance(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
@@ -113,19 +120,19 @@ async def get_orderbook_binance(
         depth: ntypes.DEPTH,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.orderbook,
-    ) -> Result[NoobitResponseOrderBook, Exception]:
+    ) -> Result[NoobitResponseOrderBook, ValidationError]:
 
     req_url = urljoin(base_url, endpoint)
     method = "GET"
-    headers = {}
+    headers: typing.Dict = {}
 
     valid_noobit_req = validate_nreq_orderbook(symbol, symbol_to_exchange, depth)
-    if valid_noobit_req.is_err():
+    if isinstance(valid_noobit_req, Err): 
         return valid_noobit_req
 
-    parsed_req = parse_request(valid_noobit_req.value)
+    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
-    valid_binance_req = _validate_data(BinanceRequestOrderBook, parsed_req)
+    valid_binance_req = _validate_data(BinanceRequestOrderBook, pmap(parsed_req))
     if valid_binance_req.is_err():
         return valid_binance_req
 
@@ -139,5 +146,5 @@ async def get_orderbook_binance(
 
     parsed_result_ob = parse_result(valid_result_content.value, symbol)
 
-    valid_parsed_response_data = _validate_data(NoobitResponseOrderBook, {**parsed_result_ob, "rawJson" :result_content.value})
+    valid_parsed_response_data = _validate_data(NoobitResponseOrderBook, pmap({**parsed_result_ob, "rawJson" :result_content.value, "exchange": "BINANCE"}))
     return valid_parsed_response_data

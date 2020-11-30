@@ -27,7 +27,7 @@ async def test_instrument_binance():
             # None,
             client,
             "XBT-USD",
-            symbol_mapping["asset_pairs"],
+            lambda x: symbol_mapping["asset_pairs"][x],
         )
 
         assert isinstance(symbols, Ok)

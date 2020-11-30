@@ -3,8 +3,9 @@ from decimal import Decimal
 from urllib.parse import urljoin
 
 import pydantic
+from pydantic.error_wrappers import ValidationError
 from pyrsistent import pmap
-from typing_extensions import Literal
+from typing_extensions import Literal, TypedDict
 
 from noobit_markets.base.request import (
     retry_request,
@@ -14,8 +15,8 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseOhlc
+from noobit_markets.base.models.result import Err, Result
+from noobit_markets.base.models.rest.response import NoobitResponseOhlc, T_OhlcParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestOhlc
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -33,7 +34,7 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_r
 
 class BinanceRequestOhlc(FrozenBaseModel):
 
-    symbol: pydantic.constr(regex=r'[A-Z]+')
+    symbol: str 
     interval: Literal["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"]
 
     # needs to be in ms
@@ -52,19 +53,26 @@ class BinanceRequestOhlc(FrozenBaseModel):
     #     return v
 
 
-def parse_request(
-        valid_request: NoobitRequestOhlc
-    ) -> pmap:
+class _ParsedReq(TypedDict):
+    symbol: typing.Any
+    interval: typing.Any
+    startTime: typing.Any
 
-    payload = {
-        "symbol": valid_request.symbol_mapping[valid_request.symbol],
+
+def parse_request(
+        valid_request: NoobitRequestOhlc,
+        symbol_to_exchange
+    ) -> _ParsedReq:
+
+    payload: _ParsedReq = {
+        "symbol": symbol_to_exchange(valid_request.symbol),
         #FIXME mapping cant be at base level, dependent on every exchange
         "interval": valid_request.timeframe.lower(),
         # noobit ts are in ms vs ohlc kraken ts in s
         "startTime": valid_request.since
     }
 
-    return pmap(payload)
+    return payload
 
 
 
@@ -91,11 +99,7 @@ def parse_request(
 #   ]
 # ]
 
-
-class BinanceResponseOhlc(FrozenBaseModel):
-
-    ohlc: typing.Tuple[
-        typing.Tuple[
+_Candle = typing.Tuple[
             int, #open time
             Decimal, Decimal, Decimal, Decimal, # open high low close
             Decimal, #volume
@@ -106,26 +110,28 @@ class BinanceResponseOhlc(FrozenBaseModel):
             Decimal, #taker buy quote asset volume
             Decimal, #ignore
         ]
-        , ...
-    ]
+
+class BinanceResponseOhlc(FrozenBaseModel):
+
+    ohlc: typing.Tuple[_Candle, ...]
 
 
 def parse_result(
-        result_data: typing.Tuple[tuple],
+        result_data: BinanceResponseOhlc,
         symbol: ntypes.SYMBOL
-    ) -> typing.Tuple[pmap]:
+    ) -> typing.Tuple[T_OhlcParsedRes, ...]:
 
-    parsed_ohlc = [_single_candle(data, symbol) for data in result_data]
+    parsed_ohlc = [_single_candle(data, symbol) for data in result_data.ohlc]
 
     return tuple(parsed_ohlc)
 
 
 def _single_candle(
-        data: tuple,
+        data: _Candle,
         symbol: ntypes.SYMBOL
-    ) -> pmap:
+    ) -> T_OhlcParsedRes:
 
-    parsed = {
+    parsed: T_OhlcParsedRes = {
         "symbol": symbol,
         #FIXME replace with openUtcTime in all the package for better clarity
         "utcTime": data[0],
@@ -137,7 +143,7 @@ def _single_candle(
         "trdCount": data[8]
     }
 
-    return pmap(parsed)
+    return parsed
 
 
 
@@ -147,7 +153,7 @@ def _single_candle(
 # ============================================================
 
 
-@retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
+@retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_ohlc_binance(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
@@ -156,19 +162,19 @@ async def get_ohlc_binance(
         since: ntypes.TIMESTAMP,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.ohlc,
-    ) -> Result[NoobitResponseOhlc, Exception]:
+    ) -> Result[NoobitResponseOhlc, ValidationError]:
 
     req_url = urljoin(base_url, endpoint)
     method = "GET"
-    headers = {}
+    headers: typing.Dict = {}
 
     valid_noobit_req = validate_nreq_ohlc(symbol, symbol_to_exchange, timeframe, since)
-    if valid_noobit_req.is_err():
+    if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
 
-    parsed_req = parse_request(valid_noobit_req.value)
+    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
-    valid_binance_req = _validate_data(BinanceRequestOhlc, parsed_req)
+    valid_binance_req = _validate_data(BinanceRequestOhlc, pmap(parsed_req))
     if valid_binance_req.is_err():
         return valid_binance_req
 
@@ -176,11 +182,11 @@ async def get_ohlc_binance(
     if result_content.is_err():
         return result_content
 
-    valid_result_content = _validate_data(BinanceResponseOhlc, {"ohlc": result_content.value})
+    valid_result_content = _validate_data(BinanceResponseOhlc, pmap({"ohlc": result_content.value}))
     if valid_result_content.is_err():
         return valid_result_content
 
-    parsed_result_ohlc = parse_result(valid_result_content.value.ohlc, symbol)
+    parsed_result_ohlc = parse_result(valid_result_content.value, symbol)
 
-    valid_parsed_response_data = _validate_data(NoobitResponseOhlc, {"ohlc": parsed_result_ohlc, "rawJson" :result_content.value})
+    valid_parsed_response_data = _validate_data(NoobitResponseOhlc, pmap({"ohlc": parsed_result_ohlc, "rawJson" :result_content.value, "exchange": "BINANCE"}))
     return valid_parsed_response_data

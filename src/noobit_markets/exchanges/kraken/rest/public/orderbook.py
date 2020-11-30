@@ -1,9 +1,11 @@
 import typing
+from typing import Any
 import time
 from decimal import Decimal
 from urllib.parse import urljoin
 from collections import Counter
 
+from typing_extensions import TypedDict
 import pydantic
 from pyrsistent import pmap
 
@@ -15,8 +17,8 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseOrderBook
+from noobit_markets.base.models.result import Err, Result
+from noobit_markets.base.models.rest.response import NoobitResponseOrderBook, T_OrderBookParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestOrderBook
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -36,19 +38,26 @@ class KrakenRequestOrderBook(FrozenBaseModel):
     # KRAKEN PAYLOAD
     #   pair = asset pair to get market depth for
     #   count = maximum number of asks/bids (optional)
+    pair: str
+    count: ntypes.COUNT
 
-    pair: pydantic.constr(regex=r'[A-Z]+')
-    count: typing.Optional[pydantic.PositiveInt]
+
+class _ParsedReq(TypedDict):
+    pair: Any
+    count: Any
 
 
-def parse_request(valid_request: NoobitRequestOrderBook) -> pmap:
+def parse_request(
+    valid_request: NoobitRequestOrderBook,
+    symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
+    ) -> _ParsedReq:
 
-    parsed = {
-        "pair": valid_request.symbol_mapping[valid_request.symbol],
+    parsed: _ParsedReq = {
+        "pair": symbol_to_exchange(valid_request.symbol),
         "count": valid_request.depth
     }
 
-    return pmap(parsed)
+    return parsed
 
 
 
@@ -58,38 +67,41 @@ def parse_request(valid_request: NoobitRequestOrderBook) -> pmap:
 #============================================================
 
 
+_BidAskItem = typing.Tuple[Decimal, Decimal, Decimal]
+
 class KrakenBook(FrozenBaseModel):
 
     # tuples of price, volume, time
     # where timestamps are in s
-    asks: typing.Tuple[typing.Tuple[Decimal, Decimal, Decimal], ...]
-    bids: typing.Tuple[typing.Tuple[Decimal, Decimal, Decimal], ...]
+    asks: typing.Tuple[_BidAskItem, ...]
+    bids: typing.Tuple[_BidAskItem, ...]
 
 
 def make_kraken_model_orderbook(
         symbol: ntypes.SYMBOL,
-        symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
-    ) -> FrozenBaseModel:
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
+    ) -> typing.Type[pydantic.BaseModel]:
 
     kwargs = {
-        symbol_mapping[symbol]: (KrakenBook, ...),
+        symbol_to_exchange(symbol): (KrakenBook, ...),
         "__base__": FrozenBaseModel
         }
 
     model = pydantic.create_model(
         "KrakenResponseOrderBook",
-        **kwargs
+        **kwargs    #type: ignore
     )
 
     return model
 
 
+
 def parse_result(
         result_data: KrakenBook,
         symbol: ntypes.SYMBOL
-    ) -> pmap:
+    ) -> T_OrderBookParsedRes:
 
-    parsed_book = {
+    parsed_book: T_OrderBookParsedRes = {
         # noobit timestamp in ms
         "utcTime": time.time() * 10**3,
         "symbol": symbol,
@@ -98,7 +110,7 @@ def parse_result(
         "bids": Counter({item[0]: item[1] for item in result_data.bids})
     }
 
-    return pmap(parsed_book)
+    return parsed_book
 
 
 
@@ -108,7 +120,7 @@ def parse_result(
 # ============================================================
 
 
-@retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
+@retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_orderbook_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
@@ -116,20 +128,20 @@ async def get_orderbook_kraken(
         depth: ntypes.DEPTH,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.orderbook,
-    ) -> Result[NoobitResponseOrderBook, Exception]:
+    ) -> Result[NoobitResponseOrderBook, pydantic.ValidationError]:
 
 
     req_url = urljoin(base_url, endpoint)
     method = "GET"
-    headers = {}
+    headers: typing.Dict = {}
 
     valid_req = validate_nreq_orderbook(symbol, symbol_to_exchange, depth)
-    if valid_req.is_err():
+    if isinstance(valid_req, Err):
         return valid_req
 
-    parsed_req = parse_request(valid_req.value)
+    parsed_req = parse_request(valid_req.value, symbol_to_exchange)
 
-    valid_kraken_req = _validate_data(KrakenRequestOrderBook, parsed_req)
+    valid_kraken_req = _validate_data(KrakenRequestOrderBook, pmap(parsed_req))
     if valid_kraken_req.is_err():
         return valid_kraken_req
 
@@ -145,9 +157,9 @@ async def get_orderbook_kraken(
         return valid_result_content
 
     parsed_result = parse_result(
-        getattr(valid_result_content.value, symbol_to_exchange[symbol]),
+        getattr(valid_result_content.value, symbol_to_exchange(symbol)),
         symbol
     )
 
-    valid_parsed_response_data = _validate_data(NoobitResponseOrderBook, {**parsed_result, "rawJson": result_content.value})
+    valid_parsed_response_data = _validate_data(NoobitResponseOrderBook, pmap({**parsed_result, "rawJson": result_content.value, "exchange": "KRAKEN"}))
     return valid_parsed_response_data

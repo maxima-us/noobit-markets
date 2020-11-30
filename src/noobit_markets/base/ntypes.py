@@ -1,12 +1,46 @@
 import typing
 from typing import Union, TypeVar, Type
 from decimal import Decimal
+import re
 
 from typing_extensions import Literal
 import httpx
 import aiohttp
 from pydantic import conint, constr, PositiveInt
 import pydantic
+
+
+
+
+# ============================================================
+# BASE CLASSES
+# ============================================================
+
+class NInt(pydantic.ConstrainedInt):
+
+    def __init__(self, _value: int):
+        self._value = _value
+
+    def __str__(self):
+        return self._value
+        # return f"<{self.__class__.__name__}>:{self._value}"
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__}>:{self._value}"
+
+
+class Nstr(pydantic.ConstrainedStr):
+
+    def __init__(self, _value: str):
+        self._value = _value
+
+    def __str__(self):
+        # we want to be able to concat strings
+        return self._value
+        # return f"<{self.__class__.__name__}>:{self._value}"
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__}>:{self._value}"
 
 
 
@@ -25,14 +59,23 @@ CLIENT = typing.Union[
 
 # exchanges
 EXCHANGE = Literal[
-    "KRAKEN"
+    "KRAKEN",
+    "BINANCE",
+    "FTX"
 ]
 
 
-PERCENT = conint(ge=0, le=100)
-# PERCENT = pydantic.ConstrainedInt
+class PPercent(NInt):
+    ge=0
+    le=100
+    strict=False
 
+class PCount(NInt):
+    ge=0
+    strict=False
 
+COUNT = PCount
+PERCENT = PPercent
 
 
 # ============================================================
@@ -58,26 +101,37 @@ TIMEFRAME = Literal[
 
 
 # ============================================================
-# ASSETS
+# ASSETS & SYMBOLS
 # ============================================================
 
+# base class for SYMBOLS and ASSETS
 
-# for Kraken: shortest : SC // longest: WAVES
-ASSET = constr(regex=r'[A-Z]{2,5}')
 
-# same as assetpair
-SYMBOL = constr(regex=r'[A-Z]+-[A-Z]+')
-# SYMBOL: str = constr(regex=r'[A-Z]+-[A-Z]+')
-# SYMBOL= str
+# pydantic symbol
+class PSymbol(Nstr):
+    regex=re.compile(r'[A-Z]+-[A-Z]+')
+    strict=True
+
+# pydantic asset
+class PAsset(Nstr):
+    regex=re.compile(r'[A-Z]{2,5}')
+    strict=True
+
+# ? should be keep this ??
+SYMBOL = PSymbol
+ASSET = PAsset
 
 # symbol mappings (symbol = assetpair)
-SYMBOL_FROM_EXCHANGE = typing.Mapping[str, SYMBOL]
-SYMBOL_TO_EXCHANGE = typing.Mapping[SYMBOL, str]
-
+# SYMBOL_FROM_EXCHANGE = typing.Mapping[str, PSymbol]
+# SYMBOL_TO_EXCHANGE = typing.Mapping[PSymbol, str]
+SYMBOL_FROM_EXCHANGE = typing.Callable[[str], PSymbol]
+SYMBOL_TO_EXCHANGE = typing.Callable[[PSymbol], str]
 
 # asset mappings
-ASSET_TO_EXCHANGE = typing.Mapping[ASSET, str]
-ASSET_FROM_EXCHANGE = typing.Mapping[str, ASSET]
+# ASSET_TO_EXCHANGE = typing.Dict[PAsset, str]
+# ASSET_FROM_EXCHANGE = typing.Mapping[str, PAsset]
+ASSET_FROM_EXCHANGE = typing.Callable[[str], PAsset]
+ASSET_TO_EXCHANGE = typing.Callable[[PAsset], str]
 
 
 
@@ -86,12 +140,29 @@ ASSET_FROM_EXCHANGE = typing.Mapping[str, ASSET]
 # ENDPOINTS
 # ============================================================
 
-DEPTH = PositiveInt
 
-# couter means only last value for a given key will be taken
-ASK = BID = ASKS = BIDS = typing.Mapping[Decimal, Decimal]
+# class PDepth(NInt):
+#     ge=0
+#     le=100
+#     strict=False
+
+# # ? should we keep this ?
+# DEPTH = PDepth
+
+#! valid option are 10, 25, 100, 500, 1000 ==> https://docs.kraken.com/websockets/#message-subscribe
+#! ftx limits to 100 ==> https://docs.ftx.com/?python#get-orderbook
+DEPTH = Literal[10, 25, 100]
+
+# counter means only last value for a given key will be taken
+# ASK = BID = ASKS = BIDS = typing.Mapping[float, float]
+ASKS = typing.Mapping[Decimal, Decimal]
+BIDS = typing.Mapping[Decimal, Decimal]
+ASK = typing.Mapping[Decimal, Decimal]
+BID = typing.Mapping[Decimal, Decimal]
 
 # tuple of <best bid>, <best ask>, <timestamp>
+# ? should this stay a tuple or do we only want last value
+# ? most exchanges dont give historic spread like kraken
 SPREAD = typing.Tuple[Decimal, Decimal, Decimal]
 
 # tuple of <timestamp>, <open>, <high>, <low>, <close>, <volume>
@@ -112,12 +183,13 @@ ORDERTYPE = Literal[
     "limit",
     "stop-loss",
     "take-profit",
-    "settle-position",
+    # "settle-position",
 
     # binance
     "stop-loss-limit",
     "take-profit-limit",
-    "limit-maker"
+    "limit-maker",
+    "stop market"   #TODO received this from kraken api, occurs when a stop gets hit
 ]
 
 
@@ -143,6 +215,9 @@ ORDERSTATUS = Literal[
 
 
 TIMEINFORCE = Literal[
+    "GTC",
+    "IOC",
+    "FOK",
     "good-till-cancel",
     "immediate-or-cancel",
     "fill-or-kill",
@@ -160,3 +235,18 @@ TRANSACTIONTYPE = Literal[
     "withdrawal",
     "deposit"
 ]
+
+
+
+if __name__ == "__main__":
+
+    class Symbol(pydantic.BaseModel):
+        pair: PSymbol
+        base: PAsset
+        quote: PAsset
+
+    try:
+        err = Symbol(pair=PSymbol("XBXB-ZEBZE"), base=PAsset("PROEUYTNCBCHFSOF"), quote="spaghetti")
+        print(err)
+    except pydantic.ValidationError as e:
+        raise e

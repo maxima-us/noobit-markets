@@ -1,7 +1,13 @@
+import typing
+
 from noobit_markets.base.errors import *
 
+
+# undocumented errors we encountered: 'EGeneral:Invalid arguments:volume'
+
 # see: https://support.kraken.com/hc/en-us/articles/360001491786-API-Error-Codes
-ERRORS_FROM_EXCHANGE = {
+# typing.Type makes mypy accept subclasses of Exception as well
+ERRORS_FROM_EXCHANGE: typing.Mapping[str, typing.Type[Exception]] = {
 
         # Errors related to rate limits
         'EOrder:Rate limit exceeded': DDoSProtection,
@@ -31,21 +37,21 @@ ERRORS_FROM_EXCHANGE = {
         'EOrder:Margin allowance exceeded': Exception,
         'EOrder:Insufficient margin': Exception,
         'EOrder:Insufficient funds': InsufficientFunds,
-        'EOrder:Order minimum not met': Exception,
-        'EOrder:Orders limit exceeded': Exception,
+        'EOrder:Order minimum not met': InvalidOrder,
+        'EOrder:Orders limit exceeded': InvalidOrder,
         'EOrder:Positions limit exceeded': Exception,
         'EOrder:Trading agreement required': Exception,
 
         # Network timeout errors
 
         # Not documented by Kraken
-        'EOrder:Invalid order': OrderNotFound
-        # 'EQuery:Invalid asset pair': BadSymbol,  # {"error":["EQuery:Invalid asset pair"]}
+        'EGeneral:Invalid arguments:volume': InvalidOrder,
+        'EOrder:Invalid order': InvalidOrder,
+        'EQuery:Invalid asset pair': BadSymbol,
         # 'EFunding:Unknown withdraw key': ExchangeError,
         # 'EFunding:Invalid amount': InsufficientFunds,
         # 'EDatabase:Internal error': ExchangeNotAvailable,
-        # 'EQuery:Unknown asset': ExchangeError,
-        # # Exceptions not defined by CCXT
+        'EQuery:Unknown asset': BadSymbol,
 }
 
 # in https://www.kraken.com/features/api#add-standard-order

@@ -4,7 +4,9 @@ from decimal import Decimal
 from urllib.parse import urljoin
 
 import pydantic
+from pydantic import ValidationError
 from pyrsistent import pmap
+from typing_extensions import TypedDict
 
 from noobit_markets.base.request import (
     retry_request,
@@ -14,8 +16,8 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseSpread
+from noobit_markets.base.models.result import Err, Result
+from noobit_markets.base.models.rest.response import NoobitResponseSpread, T_SpreadParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestSpread
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -32,19 +34,23 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_r
 
 
 class BinanceRequestSpread(FrozenBaseModel):
+    symbol: str 
 
-    symbol: pydantic.constr(regex=r'[A-Z]+')
+
+class _ParsdReq(TypedDict):
+    symbol: typing.Any
 
 
 def parse_request(
-        valid_request: NoobitRequestSpread
-    ) -> pmap:
+        valid_request: NoobitRequestSpread,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
+    ) -> _ParsdReq:
 
-    payload = {
-        "symbol": valid_request.symbol_mapping[valid_request.symbol],
+    payload: _ParsdReq = {
+        "symbol": symbol_to_exchange(valid_request.symbol),
     }
 
-    return pmap(payload)
+    return payload
 
 
 
@@ -78,11 +84,10 @@ class BinanceResponseSpread(FrozenBaseModel):
 def parse_result(
         result_data: BinanceResponseSpread,
         symbol: ntypes.SYMBOL,
-        symbol_mapping: ntypes.SYMBOL_FROM_EXCHANGE
-    ) -> typing.Tuple[pmap]:
+    ) -> typing.Tuple[T_SpreadParsedRes, ...]:
 
-    parsed_spread = {
-        "symbol": symbol_mapping[result_data.symbol],
+    parsed_spread: T_SpreadParsedRes = {
+        "symbol": symbol ,
         # noobit times in ms
         "utcTime":  time.time() * 10**3,
         "bestBidPrice": result_data.bidPrice,
@@ -91,7 +96,7 @@ def parse_result(
 
     #FIXME kraken returns a list of spreads over time
     #   think about how we want to merge this with kraken spread
-    return tuple([pmap(parsed_spread),])
+    return tuple([parsed_spread,])
 
 
 
@@ -101,26 +106,26 @@ def parse_result(
 # ============================================================
 
 
-@retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
+@retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_spread_binance(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.spread,
-    ) -> Result[NoobitResponseSpread, Exception]:
+    ) -> Result[NoobitResponseSpread, ValidationError]:
 
     req_url = urljoin(base_url, endpoint)
     method = "GET"
-    headers = {}
+    headers: typing.Dict = {}
 
     valid_noobit_req = validate_nreq_spread(symbol, symbol_to_exchange)
-    if valid_noobit_req.is_err():
+    if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
 
-    parsed_req = parse_request(valid_noobit_req.value)
+    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
-    valid_binance_req = _validate_data(BinanceRequestSpread, parsed_req)
+    valid_binance_req = _validate_data(BinanceRequestSpread, pmap(parsed_req))
     if valid_binance_req.is_err():
         return valid_binance_req
 
@@ -132,9 +137,9 @@ async def get_spread_binance(
     if valid_result_content.is_err():
         return valid_result_content
 
-    symbol_from_exchange = {v: k for k, v in symbol_to_exchange.items()}
+    # FIXME ideally we would want to map exchange symbol to noobit symbol
+    # user given symbol should be ok since there is validation in steps above this
+    parsed_result = parse_result(valid_result_content.value, symbol)
 
-    parsed_result = parse_result(valid_result_content.value, symbol, symbol_from_exchange )
-
-    valid_parsed_response_data = _validate_data(NoobitResponseSpread, {"spread": parsed_result, "rawJson": result_content.value})
+    valid_parsed_response_data = _validate_data(NoobitResponseSpread, pmap({"spread": parsed_result, "rawJson": result_content.value, "exchange": "BINANCE"}))
     return valid_parsed_response_data

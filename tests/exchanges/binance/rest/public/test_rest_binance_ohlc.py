@@ -27,7 +27,7 @@ async def test_ohlc():
             # loop=None,
             client=client,
             symbol="XBT-USD",
-            symbol_to_exchange=symbol_mapping["asset_pairs"],
+            symbol_to_exchange=lambda x: symbol_mapping["asset_pairs"][x],
             timeframe="1H",
             since=None
         )
