@@ -5,6 +5,7 @@ import inspect
 from abc import ABC
 from decimal import Decimal
 from collections import deque
+import re
 
 from typing_extensions import Literal, TypedDict
 import pydantic
@@ -28,6 +29,9 @@ class SubModel(pydantic.BaseModel):
   msg: pydantic.BaseModel
 
 
+
+# ========================================
+# KRAKEN
 class KrakenSubMsg(pydantic.BaseModel):
   event: Literal["subscribe", "unsubscribe"]
   reqid: typing.Optional[int]
@@ -39,6 +43,31 @@ class KrakenSubModel(SubModel):
 
   msg: KrakenSubMsg
 
+
+# ========================================
+# BINANCE
+
+
+class FeedSub(ntypes.Nstr):
+    regex = re.compile(r'[aA-zZ]+@(trade|aggTrade|depth|miniTicker|ticker|bookTicker)')
+
+
+class BinanceSubMsg(pydantic.BaseModel):
+    id: int
+    params: typing.Optional[typing.Tuple[FeedSub, ...]]
+    method: Literal["SUBSCRIBE", "UNSUBSCRIBE", "LIST_SUBSCRIPTIONS"]
+
+    pydantic.validator("params")
+    def check_method(cls, v, values):
+        if v in ["SUBSCRIBE", "UNSUBSCRIBE"]:
+            if not values.get("params"):
+                raise ValueError("Empty mandatory field: <params>")
+
+class BinanceSubModel(SubModel):
+    msg: BinanceSubMsg
+
+
+# ========================================
 
 
 async def subscribe(client: WebSocketClientProtocol, sub_model: SubModel, q_maxsize = 0) -> Result:
@@ -128,6 +157,8 @@ class BaseWsApi(WsApiProto):
 
 
     async def _dispatch(self):
+        """base function dispatching messages to the appropriate queue --- calls msg_handler
+        """
         _retries = 0
         _delay = 1
 
@@ -135,6 +166,8 @@ class BaseWsApi(WsApiProto):
             try:
 
                 async for msg in self.client:
+
+                    print(msg)
                     if self._terminate: break
                     await self.msg_handler(msg, self._data_queues, self._status_queues)
                     await asyncio.sleep(0)

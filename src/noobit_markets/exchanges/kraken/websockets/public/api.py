@@ -12,7 +12,6 @@ from noobit_markets.base.models.rest.response import NoobitResponseOrderBook, No
 
 # noobit kraken ws
 from noobit_markets.exchanges.kraken.websockets.public import trades, spread, orderbook
-from noobit_markets.exchanges.kraken.websockets.base import BaseWsApi
 
 
 
