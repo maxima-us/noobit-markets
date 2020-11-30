@@ -15,7 +15,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 
 #Binance Private Request Model
-#always needs timestamp and signature param to authenticate 
+#always needs timestamp and signature param to authenticate
 class BinancePrivateRequest(FrozenBaseModel):
 
     timestamp: pydantic.PositiveInt
@@ -45,8 +45,6 @@ class BinanceAuth(BinanceBase):
             # "API-Sign": self._sign(data, url_wo_domain)
         }
 
-        # self.rotate_keys()
-
         return auth_headers
 
 
@@ -57,25 +55,17 @@ class BinanceAuth(BinanceBase):
         Returns
             request dict containing signature key/value pair
         """
-        # request_args["timestamp"] = self.nonce
         sorted_req_args = sorted([(k, v) for k, v in request_args.items()], reverse=True)
         postdata = urllib.parse.urlencode(sorted_req_args)
-        # print("req string : ", postdata)
-        # Unicode-objects must be encoded before hashing
-        # ! Nonce must be same as self.nonce
-        # encoded = (s + postdata).encode()
-        # message = endpoint.encode() + hashlib.sha256(encoded).digest()
 
         signature = hmac.new(
             self.secret.encode(),
             postdata.encode(),
             hashlib.sha256
         )
-        # sigdigest = base64.b64encode(signature.digest())
 
         # dict isntead of pmap since pmap doesnt support assignment
         request_args["signature"] = signature.hexdigest()
-        # setattr(request_args, "signature", signature.hexdigest())
 
         # binance calls header and sign only later (2 steps) so we rotate here and not in header
         self.rotate_keys()
@@ -83,7 +73,7 @@ class BinanceAuth(BinanceBase):
         return request_args
 
 
-        # DOCS: 
+        # DOCS:
 
         # SIGNED endpoints require an additional parameter, signature, to be sent in the query string or request body.
         # Endpoints use HMAC SHA256 signatures. The HMAC SHA256 signature is a keyed HMAC SHA256 operation. Use your secretKey as the key and totalParams as the value for the HMAC operation.

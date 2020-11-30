@@ -18,7 +18,7 @@ ERRORS_FROM_EXCHANGE: typing.Mapping[int, typing.Type[Exception]] = {
     1013: InvalidOrder, #! not documented by API
     1014: InvalidOrder,
     1015: RateLimitExceeded, #not sur
-    1016: Deprecated, 
+    1016: Deprecated,
     1020: NotSupported,
     1021: InvalidNonce, #invalid timestamp requested
     1022: InvalidSignature,
@@ -51,7 +51,7 @@ ERRORS_FROM_EXCHANGE: typing.Mapping[int, typing.Type[Exception]] = {
     2014: AuthenticationError, #bad api key format
     2015: AuthenticationError, #rejected mbx key / invalid api key or permission denied
     2016: UndefinedError, #!no trading window / try ticker/24hrs instead.
-    
+
     3000: ExchangeError, #?internal server error
     3001: PermissionDenied, #?please enable 2FA first
     3002: BadSymbol, #we dont have this asset
@@ -92,7 +92,7 @@ ERRORS_FROM_EXCHANGE: typing.Mapping[int, typing.Type[Exception]] = {
     3999: PermissionDenied, #? This function is only available for invited users.
     4001: BadRequest, # invalid operation
     4002: BadRequest, # invalid get
-    4004: PermissionDenied, #? you dont login or auth 
+    4004: PermissionDenied, #? you dont login or auth
     4005: RateLimitExceeded, #too many new requests
     4006: UndefinedError, #support main account only
     4007: InvalidAddress, # address validation is not passed
@@ -119,7 +119,7 @@ ERRORS_FROM_EXCHANGE: typing.Mapping[int, typing.Type[Exception]] = {
     4035: InvalidAddress, # address is not on the whitelist
     # ...
     5002: InsufficientFunds, # insufficient balance
-    5003: InsufficientFunds, # empty balance for this asset 
+    5003: InsufficientFunds, # empty balance for this asset
 
     5007: UndefinedError, #! quantity must be greater than 0
 
@@ -145,19 +145,19 @@ _ERROR_MSGS = {
 
     #1000 UNKNOWN
     "An unknown error occured while processing the request"
-    
+
     #1001 DISCONNECTED
     "Internal error; unable to process your request. Please try again"
-    
+
     #1002 UNAUTHORIZED
     "You are not authorized to execute this request"
-    
+
     #1003 TOO_MANY_REQUESTS
     "Too many requests queued"
     "Too much request weight used; please use the websocket for live updates to avoid polling the API"
     "Too much request weight used; current limit is %s request weight per %s %s. Please use the websocket for live updates to avoid polling the API"
     "Way too much request weight used; IP banned until %s. Please use the websocket for live updates to avoid bans"
-    
+
     #1006 UNEXPECTED_RESP
     "An unexpected response was received from the message bus. Execution status unknown"
 
@@ -185,7 +185,7 @@ _ERROR_MSGS = {
     "Signature for this request is not valid"
 
     #1099 Not found, authenticated, or authorized
-    
+
 
     #1100 ILLEGAL_CHARS
     "Illegal characters found in a parameter"

@@ -135,7 +135,7 @@ class NoobitRequestAddOrder(FrozenBaseModel):
     # expireTime: typing.Optional[ntypes.TIMESTAMP] = Field(...)
 
     # validation: bool = False
-    
+
     #! param at the end for validaiton purposes (validated in the order htat they are declared)
     ordType: ntypes.ORDERTYPE
 
@@ -168,7 +168,7 @@ class NoobitRequestAddOrder(FrozenBaseModel):
     # @validator("timeInForce")
     # def _check_limit_order(cls, v, values):
     #     if values["ordType"] in ["limit", "stop-loss-limit", "take-profit-limit"]:
-    #         if not v: 
+    #         if not v:
     #             raise ValueError(f"Must set timeInForce for order type: {values['ordType']}")
     #         return v
     #     else:
@@ -177,9 +177,6 @@ class NoobitRequestAddOrder(FrozenBaseModel):
 
     @validator("ordType")
     def _check_mandatory_args(cls, v, values):
-
-        print("Values :", values)
-        print("V :", v)
 
         if v == "market":
             # one of orderQty or quoteOrderQty
@@ -195,7 +192,7 @@ class NoobitRequestAddOrder(FrozenBaseModel):
                 raise ValueError("Unexpected field: timeInForce")
             if values.get("price", None):
                 raise ValueError("Unexpected field: price")
-       
+
         if v == "limit":
             # check mandatory params
             if not values.get("timeInForce", None):
@@ -246,5 +243,5 @@ class NoobitRequestAddOrder(FrozenBaseModel):
                 raise ValueError("Unexpected field: execInst")
             if values.get("quoteOrderQty", None):
                 raise ValueError("Unexpected field quoteOrderQty")
-            
+
         return v

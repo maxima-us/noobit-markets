@@ -54,11 +54,10 @@ exp = asyncio.run(
     )
 )
 
-print(exp)
-# if exp.is_err():
-#     print(exp)
-# else:
-#     print("Balances successfully fetched")
+if exp.is_err():
+    print(exp)
+else:
+    print("Exposure successfully fetched")
 
 
 # ============================================================
@@ -125,9 +124,9 @@ if trd.is_err():
 else:
     # print(trd)
     print("Trading New Order ok")
-    
-    
-    
+
+
+
 # ============================================================
 # WS AUTH TOKEN
 

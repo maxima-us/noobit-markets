@@ -34,7 +34,7 @@ async def result_or_err(resp_obj: httpx.Response) -> Result:
 
 
 def parse_error_content(
-        error_content: dict,    #value returned from result_or_err 
+        error_content: dict,    #value returned from result_or_err
         sent_request: pyrsistent.PMap
     ) -> typing.Tuple[Exception, ...]:
     """error_content is value returned from result_or_err

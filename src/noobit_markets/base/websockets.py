@@ -167,7 +167,6 @@ class BaseWsApi(WsApiProto):
 
                 async for msg in self.client:
 
-                    print(msg)
                     if self._terminate: break
                     await self.msg_handler(msg, self._data_queues, self._status_queues)
                     await asyncio.sleep(0)

@@ -17,7 +17,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 
 #Kraken Private Request Model
-#always needs nonce param to authenticate 
+#always needs nonce param to authenticate
 class KrakenPrivateRequest(FrozenBaseModel):
 
     nonce: pydantic.PositiveInt
@@ -30,7 +30,7 @@ KrakenBase: typing.Any = make_base("KrakenBase")
 # base class is dynamically generated and therefore is considered as invalid by mypy
 # except if we type it as Any
 # TODO see if we can improve on this
-class KrakenAuth(KrakenBase):   
+class KrakenAuth(KrakenBase):
 
 
     def __init__(self):

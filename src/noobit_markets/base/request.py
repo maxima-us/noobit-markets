@@ -15,7 +15,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 from noobit_markets.base.models.result import Ok, Err, Result
 
-# response models 
+# response models
 from noobit_markets.base.models.rest.request import (
     NoobitRequestOhlc,
     NoobitRequestTrades,
@@ -55,20 +55,20 @@ def retry_request(
         retries: PositiveInt,
         logger: typing.Callable,
     ) -> typing.Callable[
-            ..., 
+            ...,
             typing.Coroutine[
-                typing.Any, 
-                typing.Any, 
+                typing.Any,
+                typing.Any,
                 Result[FrozenBaseModel, BaseError]
             ]
         ]:
 
     def decorator(
         func: typing.Callable[
-            ..., 
+            ...,
             typing.Coroutine[
-                typing.Any, 
-                typing.Any, 
+                typing.Any,
+                typing.Any,
                 Result[typing.Any, typing.Any]
                 ]
             ]

@@ -59,9 +59,9 @@ class BaseError(Exception):
         self.exception = self.__class__.__name__
         self.sent_request = sent_request
         self.status_code = status.BAD_REQUEST
-        
+
         # if False we retry the request
-        self.accept = True 
+        self.accept = True
 
         msg = f"EXCEPTION:{self.exception}\n{14*' '}Raw Error: {self.raw_error}\n{14*' '}Request: {self.sent_request}"
         super().__init__(msg)

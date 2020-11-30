@@ -296,19 +296,15 @@ async def post_neworder_binance(
     #! we should not pass in "params" to the client, but construct the whole url + query string ourself, so we can make sure its sorted properly
 
     #! ====> experimental
-    query_dict = signed_req
     qstrings = sorted([(k, v) for k, v in signed_req.items() if not "signature" in k], reverse=True)
     qstrings_join = urlencode(qstrings)
     full_url = "?".join([req_url, qstrings_join])
     full_url += f"&signature={signed_req['signature']}"
-    # print("\n", full_url)
     #! <=====
 
     result_content = await get_result_content_from_req(client, method, full_url, FrozenBaseModel(), headers)
     if result_content.is_err():
         return result_content
-
-    # print("Result Content :", result_content.value)
 
     valid_result_content = _validate_data(BinanceResponseNewOrder, result_content.value)
     if valid_result_content.is_err():

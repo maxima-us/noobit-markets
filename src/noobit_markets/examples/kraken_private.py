@@ -38,8 +38,8 @@ else:
     print(symbols.asset_pairs["DOT-USD"])
 
     # exchange_name='XXBTZUSD' ws_name='XBT/USD' base='XXBT' quote='ZUSD' volume_decimals=8 price_decimals=1 leverage_available=(2, 3, 4, 5) order_min=Decimal('0.001')
-    
-    
+
+
     # ============================================================
     # POST NEW ORDER
 
@@ -48,7 +48,7 @@ else:
         post_neworder_kraken(
             client=httpx.AsyncClient(),
             symbol="DOT-USD",
-            # FIXME wouldnt it be better to pass noobit objetct as symbol_to_exchange 
+            # FIXME wouldnt it be better to pass noobit objetct as symbol_to_exchange
             # (that way we could get both `to` and `from` exchange, as well as decimal places and min orders)
             symbol_to_exchange=lambda x: {k: v.exchange_pair for k, v in symbols.asset_pairs.items()}[x],
             side="buy",
@@ -67,8 +67,8 @@ else:
     # else:
     #     print(trd)
     #     print("Trading New Order ok")
-    
-    
+
+
     # ============================================================
     # BALANCES
 
@@ -87,7 +87,7 @@ else:
         print(table)
         print("Balances ok")
 
-    
+
     # ============================================================
     # EXPOSURE
 
@@ -168,8 +168,8 @@ else:
 
     # ============================================================
     # USER TRADES
-    
-    
+
+
     utr = asyncio.run(
         get_usertrades_kraken(
             client=httpx.AsyncClient(),
@@ -186,7 +186,7 @@ else:
         # print(utr.value.trades)
         print("User Trades ok")
 
-    
+
     # ============================================================
     # WS AUTH TOKEN
 

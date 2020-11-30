@@ -79,8 +79,8 @@ async def resp_json(resp_obj: httpx.Response):
 result_or_err_sig = typing.Callable[
     [httpx.Response],
     typing.Coroutine[
-        typing.Any, 
-        typing.Any, 
+        typing.Any,
+        typing.Any,
         Result[typing.Any, typing.Any]
     ]
 ]
@@ -88,9 +88,9 @@ result_or_err_sig = typing.Callable[
 
 parse_err_content_sig = typing.Callable[
     [
-        typing.Iterable[BaseError], 
+        typing.Iterable[BaseError],
         str
-    ], 
+    ],
     typing.Tuple[BaseError]
 ]
 
@@ -116,16 +116,16 @@ async def get_req_content(
     query = valid_req.dict(exclude_none=True)
 
     if method == "GET":
-        payload["params"] = query 
+        payload["params"] = query
 
     elif method == "POST":
         payload["data"] = query
 
-    else: 
+    else:
         raise NotImplementedError(f"Unsupported method : {method}")
 
     resp = await client.request(**payload)  #type: ignore
-    
+
     # valid_status = get_response_status_code(resp)
     # if valid_status.is_err():
 

@@ -17,7 +17,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result, Ok
-from noobit_markets.base.models.rest.response import NoobitResponseNewOrder, T_NewOrderParsedRes, NoobitResponseItemOrder 
+from noobit_markets.base.models.rest.response import NoobitResponseNewOrder, T_NewOrderParsedRes, NoobitResponseItemOrder
 from noobit_markets.base.models.rest.request import NoobitRequestAddOrder
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -175,11 +175,11 @@ def parse_request(
         "price2": valid_request.price if valid_request.ordType in ["stop-loss-limit", "take-profit-limit"] else None,
         "volume": valid_request.orderQty if valid_request.orderQty else valid_request.quoteOrderQty,
         "leverage": None,
-        #`vqic` flag is deactivated, so we cant actually pass `quoteOrderQty` 
+        #`vqic` flag is deactivated, so we cant actually pass `quoteOrderQty`
         # "oflags": ("post",) if valid_request.ordType == "limit" else ("viqc",) if valid_request.ordType == "market" and valid_request.quoteOrderQty else ("fciq",),
         "oflags": ("post", ) if valid_request.ordType == "limit" else ("fciq",),
         # noobit ts are in ms vs ohlc kraken ts in s
-        "starttm": None, 
+        "starttm": None,
         "expiretm": None,
         "userref": valid_request.clOrdID,
         # "validate": True,
@@ -290,14 +290,14 @@ async def post_neworder_kraken(
     [newOrderID] = valid_parsed_response_data.value.txid
 
     # # TODO we want to return a more complete info on the trade:
-    # # ?     ==> should we fetch the order corresponding to the txid we get back ? 
+    # # ?     ==> should we fetch the order corresponding to the txid we get back ?
     # tx_info = await get_usertrades_kraken(client, symbol, lambda x : {"DOTUSD": ntypes.PSymbol("DOT-USD")}, auth)
     # return [trade for trade in tx_info.value.trades if trade.orderID == valid_parsed_response_data.value.txid]
-    
+
     if ordType == "market":
         # FIXME symbol_from_exchange lambda isnt entirely accurate
         # will be ok for most pairs but some have 4/5 letters for base
-        cl_ord = await get_closedorders_kraken(client, symbol, lambda x: ntypes.PSymbol(f"{x[0:3]}-{x[-3:]}"), auth) 
+        cl_ord = await get_closedorders_kraken(client, symbol, lambda x: ntypes.PSymbol(f"{x[0:3]}-{x[-3:]}"), auth)
         if isinstance(cl_ord, Ok):
             [order_info] = [order for order in cl_ord.value.orders if order.orderID == newOrderID]
         else:
@@ -307,7 +307,7 @@ async def post_neworder_kraken(
         await asyncio.sleep(0.1)
         # FIXME symbol_from_exchange lambda isnt entirely accurate
         # will be ok for most pairs but some have 4/5 letters for base
-        op_ord = await get_openorders_kraken(client, symbol, lambda x: ntypes.PSymbol(f"{x[0:3]}-{x[-3:]}") ,auth) 
+        op_ord = await get_openorders_kraken(client, symbol, lambda x: ntypes.PSymbol(f"{x[0:3]}-{x[-3:]}") ,auth)
         if isinstance(op_ord, Ok):
             [order_info] = [order for order in op_ord.value.orders if order.orderID == newOrderID]
         else:
