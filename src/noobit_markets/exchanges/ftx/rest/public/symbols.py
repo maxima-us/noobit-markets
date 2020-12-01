@@ -4,6 +4,9 @@ from decimal import Decimal
 import pydantic
 from pyrsistent import pmap
 
+import stackprinter     #type: ignore
+stackprinter.set_excepthook(style="darkbg2")
+
 from noobit_markets.base.request import (
     retry_request,
     _validate_data
@@ -11,8 +14,8 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result, Ok
-from noobit_markets.base.models.rest.response import NoobitResponseSymbols
+from noobit_markets.base.models.result import Result, Ok, Err
+from noobit_markets.base.models.rest.response import NoobitResponseSymbols, T_SymbolParsedPair, T_SymbolParsedRes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 # Kraken
@@ -99,39 +102,60 @@ class FtxResponseSymbols(FrozenBaseModel):
 
 def parse_result(
         result_data: FtxResponseSymbols,
-    ) -> tuple:
+    ) -> T_SymbolParsedRes:
+
+
+    parsed: T_SymbolParsedRes = {
+        "asset_pairs": parse_to_assetpairs(result_data),
+        "assets": parse_to_assets(result_data)
+    }
+    return parsed
+
+
+def parse_to_assets(
+        result_data: FtxResponseSymbols,
+    ) -> typing.Dict[ntypes.PAsset, str]:
+
+    bases = {
+        ntypes.PAsset(item.baseCurrency): item.baseCurrency for item in result_data.symbols if item.type == "spot"
+    }
+    quotes = {
+        ntypes.PAsset(item.quoteCurrency): item.quoteCurrency for item in result_data.symbols if item.type == "spot"
+    }
+
+    bases.update(quotes)
+
+    return bases
+
+
+
+def parse_to_assetpairs(
+        result_data: FtxResponseSymbols
+    ) -> typing.Dict[ntypes.SYMBOL, T_SymbolParsedPair]:
 
     list_assetpairs = [_single_assetpair(item) for item in result_data.symbols if item.type == "spot"]
-    indexed_assetpairs = {item["exchange_name"].replace("/", "-"): item for item in list_assetpairs}
+    indexed_assetpairs = {item["exchange_pair"].replace("/", "-"): item for item in list_assetpairs}
 
-
-    return {
-        "asset_pairs": indexed_assetpairs,
-        "assets": {"XBT-USD": "BTCUSD"}
-    }
+    return indexed_assetpairs
 
 
 def _single_assetpair(
     data: FtxResponseItemSymbols,
-) -> pmap:
+) -> T_SymbolParsedPair:
 
-    parsed = {
-        "exchange_name": f"{data.baseCurrency}/{data.quoteCurrency}",
-        # FIXME should this be same as exchange name ?
-        "ws_name": None,
-        "base": data.baseCurrency,
-        "quote": data.quoteCurrency,
-        "volume_decimals": _get_dec_places(data.sizeIncrement),      #! will not be same as price decimals (eg. 0.01 vs 8)
-        "price_decimals": _get_dec_places(data.priceIncrement),      #! will not be same as volume decimals (e.g 0.01 vs 8)
+    parsed: T_SymbolParsedPair = {
+        "exchange_pair": data.name,
+        "exchange_base": data.baseCurrency,
+        "exchange_quote": data.quoteCurrency,
+        "noobit_base": data.name.split("/")[0],
+        "noobit_quote": data.name.split("/")[1],
+        "volume_decimals": -1*data.sizeIncrement.as_tuple().exponent,      #! will not be same as price decimals (eg. 0.01 vs 8)
+        "price_decimals": -1*data.priceIncrement.as_tuple().exponent,      #! will not be same as volume decimals (e.g 0.01 vs 8)
         "leverage_available": None,                                  #! not available
         "order_min": data.minProvideSize
     }
 
-    return pmap(parsed)
-
-
-def _get_dec_places(n: float): return n - int(n)
-
+    return parsed
 
 
 
@@ -140,34 +164,31 @@ def _get_dec_places(n: float): return n - int(n)
 # ============================================================
 
 
-@retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
+@retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_symbols_ftx(
         client: ntypes.CLIENT,
         base_url: pydantic.AnyHttpUrl = endpoints.FTX_ENDPOINTS.public.url,
         endpoint: str = endpoints.FTX_ENDPOINTS.public.endpoints.symbols,
-    ) -> Result[NoobitResponseSymbols, Exception]:
+    ) -> Result[NoobitResponseSymbols, pydantic.ValidationError]:
 
     # ftx has variable urls besides query params
     # format: https://ftx.com/api/markets/
     req_url = "/".join([base_url, endpoint])
     method = "GET"
-    headers = {}
+    headers: typing.Dict = {}
 
     # no query params but needs to wrapped in a result that contains an instance of FrozenBaseModel
     valid_ftx_req = Ok(FrozenBaseModel())
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_ftx_req.value, headers)
-    if result_content.is_err():
+    if isinstance(result_content, Err):
         return result_content
 
-    # input: pmap // output: Result[FtxResponseOhlc, ValidationError]
-    valid_result_content = _validate_data(FtxResponseSymbols, {"symbols": result_content.value})
+    valid_result_content = _validate_data(FtxResponseSymbols, pmap({"symbols": result_content.value}))
     if valid_result_content.is_err():
         return valid_result_content
 
-    # input: typing.Tuple[tuple] // output: typing.Tuple[pmap]
     parsed_result = parse_result(valid_result_content.value)
 
-    # input: typing.Tuple[pmap] //  output: Result[NoobitResponseOhlc, ValidationError]
-    valid_parsed_response_data = _validate_data(NoobitResponseSymbols, {**parsed_result, "rawJson": result_content.value})
+    valid_parsed_response_data = _validate_data(NoobitResponseSymbols, pmap({**parsed_result, "rawJson": result_content.value, "exchange": "FTX"}))
     return valid_parsed_response_data

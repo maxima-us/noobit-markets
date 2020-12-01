@@ -9,13 +9,14 @@ from noobit_markets.exchanges.ftx.rest.public.trades import get_trades_ftx
 from noobit_markets.exchanges.ftx.rest.public.symbols import get_symbols_ftx
 
 
-
+# ========================================
+# OHLC
 
 res = asyncio.run(
     get_ohlc_ftx(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
-        symbol_to_exchange={"XBT-USD": "BTC/USD"},
+        symbol_to_exchange=lambda x: {"XBT-USD": "BTC/USD"}[x],
         timeframe="1H",
         since=None
     )
@@ -26,12 +27,17 @@ else:
     print("OHLC ok")
 
 
+
+# ========================================
+# ORDERBOOK
+
+
 res = asyncio.run(
     get_orderbook_ftx(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
-        symbol_to_exchange={"XBT-USD": "BTC/USD"},
-        depth=50
+        symbol_to_exchange=lambda x: {"XBT-USD": "BTC/USD"}[x],
+        depth=10
     )
 )
 
@@ -41,12 +47,17 @@ else:
     print("Orderbook ok")
 
 
+
+# ========================================
+# TRADES
+
+
 async def trades():
     async with aiohttp.ClientSession() as client:
         return await get_trades_ftx(
             client=client,
             symbol="XBT-USD",
-            symbol_to_exchange={"XBT-USD": "BTC/USD"},
+            symbol_to_exchange=lambda x: {"XBT-USD": "BTC/USD"}[x],
             since=None
         )
 
@@ -58,16 +69,21 @@ else:
     print("Trades ok")
 
 
-# res = asyncio.run(
-#     get_instrument_binance(
-#         client=httpx.AsyncClient(),
-#         symbol="XBT-USD",
-#         symbol_to_exchange={"XBT-USD": "BTCUSDT"},
-#     )
-# )
+# # res = asyncio.run(
+# #     get_instrument_binance(
+# #         client=httpx.AsyncClient(),
+# #         symbol="XBT-USD",
+# #         symbol_to_exchange={"XBT-USD": "BTCUSDT"},
+# #     )
+# # )
 
-# if res.is_err():
-#     print(res)
+# # if res.is_err():
+# #     print(res)
+
+
+
+# ========================================
+# SYMBOLS
 
 
 res = asyncio.run(
@@ -82,13 +98,13 @@ else:
     print("Symbols ok")
 
 
-# res = asyncio.run(
-#     get_spread_binance(
-#         client=httpx.AsyncClient(),
-#         symbol="XBT-USD",
-#         symbol_to_exchange={"XBT-USD": "BTCUSDT"},
-#     )
-# )
+# # res = asyncio.run(
+# #     get_spread_binance(
+# #         client=httpx.AsyncClient(),
+# #         symbol="XBT-USD",
+# #         symbol_to_exchange={"XBT-USD": "BTCUSDT"},
+# #     )
+# # )
 
-# if res:
-#     print(res)
+# # if res:
+# #     print(res)

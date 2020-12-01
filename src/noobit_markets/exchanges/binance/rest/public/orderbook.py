@@ -35,7 +35,7 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_r
 
 class BinanceRequestOrderBook(FrozenBaseModel):
 
-    symbol: str 
+    symbol: str
     limit: typing.Optional[Literal[5, 10, 20, 50, 100, 500, 1000, 5000]]
 
 
@@ -127,7 +127,7 @@ async def get_orderbook_binance(
     headers: typing.Dict = {}
 
     valid_noobit_req = validate_nreq_orderbook(symbol, symbol_to_exchange, depth)
-    if isinstance(valid_noobit_req, Err): 
+    if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
 
     parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)

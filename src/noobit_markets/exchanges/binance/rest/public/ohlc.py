@@ -34,7 +34,7 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_r
 
 class BinanceRequestOhlc(FrozenBaseModel):
 
-    symbol: str 
+    symbol: str
     interval: Literal["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"]
 
     # needs to be in ms

@@ -106,7 +106,7 @@ def _single_trade(
         data: _SingleTrade,
         symbol: ntypes.SYMBOL
     ) -> T_PublicTradesParsedItem:
-    
+
     parsed: T_PublicTradesParsedItem = {
         "symbol": symbol,
         "orderID": None,
