@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pydantic
 from pyrsistent import pmap
-from typing_extensions import Literal
+from typing_extensions import Literal, TypedDict
 
 from noobit_markets.base.request import (
     retry_request,
@@ -14,8 +14,8 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseTrades
+from noobit_markets.base.models.result import Result, Err
+from noobit_markets.base.models.rest.response import NoobitResponseTrades, T_PublicTradesParsedItem, T_PublicTradesParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestTrades
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -31,27 +31,45 @@ from noobit_markets.exchanges.ftx.rest.base import get_result_content_from_req
 # ============================================================
 
 
+class FtxLimit(ntypes.NInt):
+    ge=0
+    le=100
+    strict=False
+
+
 class FtxRequestTrades(FrozenBaseModel):
     # https://docs.ftx.com/?python#get-trades
 
     market_name: str
-    limit: typing.Optional[pydantic.conint(ge=0, le=100)] = None
-    start_time: typing.Optional[pydantic.PositiveInt] = None
-    end_time: typing.Optional[pydantic.PositiveInt] = None
+    limit: typing.Optional[FtxLimit]
+    start_time: typing.Optional[pydantic.PositiveInt]
+    end_time: typing.Optional[pydantic.PositiveInt]
+
+
+
+# hint fields to mypy
+class _ParsedReq(TypedDict):
+    market_name: typing.Any
+    limit: typing.Any
+    start_time: typing.Any
+    end_time: typing.Any
+
 
 
 def parse_request(
-        valid_request: NoobitRequestTrades
-    ) -> pmap:
+        valid_request: NoobitRequestTrades,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
+    ) -> _ParsedReq:
 
-    payload = {
-        "market_name": valid_request.symbol_mapping[valid_request.symbol],
+    payload: _ParsedReq = {
+        "market_name": symbol_to_exchange(valid_request.symbol),
         "limit": 100,
-        "start_time": valid_request.since
+        "start_time": valid_request.since,
+        "end_time": None
         # noobit ts are in ms vs ohlc kraken ts in s
     }
 
-    return pmap(payload)
+    return payload
 
 
 
@@ -95,7 +113,7 @@ class FtxResponseTrades(FrozenBaseModel):
 def parse_result(
         result_data: FtxResponseTrades,
         symbol: ntypes.SYMBOL
-    ) -> tuple:
+    ) -> T_PublicTradesParsedRes:
 
     parsed_trades = [_single_trade(data, symbol) for data in result_data.trades]
 
@@ -105,9 +123,9 @@ def parse_result(
 def _single_trade(
         data: FtxResponseItemTrades,
         symbol: ntypes.SYMBOL
-    ):
+    ) -> T_PublicTradesParsedItem:
 
-    parsed = {
+    parsed: T_PublicTradesParsedItem = {
         "symbol": symbol,
         "orderID": None,
         "trdMatchID": data.id,
@@ -124,7 +142,7 @@ def _single_trade(
         "text": None
     }
 
-    return pmap(parsed)
+    return parsed
 
 
 
@@ -134,7 +152,7 @@ def _single_trade(
 #============================================================
 
 
-@retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
+@retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_trades_ftx(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
@@ -142,21 +160,21 @@ async def get_trades_ftx(
         since: typing.Optional[ntypes.TIMESTAMP] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.FTX_ENDPOINTS.public.url,
         endpoint: str = endpoints.FTX_ENDPOINTS.public.endpoints.trades,
-    ) -> Result[NoobitResponseTrades, Exception]:
+    ) -> Result[NoobitResponseTrades, pydantic.ValidationError]:
 
     # ftx has variable urls besides query params
     # format: https://ftx.com/api/markets/{market_name}/candles
-    req_url = "/".join([base_url, "markets", symbol_to_exchange[symbol], endpoint])
+    req_url = "/".join([base_url, "markets", symbol_to_exchange(symbol), endpoint])
     method = "GET"
-    headers = {}
+    headers: typing.Dict = {}
 
     valid_noobit_req = validate_nreq_trades(symbol, symbol_to_exchange, since)
-    if valid_noobit_req.is_err():
+    if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
 
-    parsed_req = parse_request(valid_noobit_req.value)
+    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
-    valid_ftx_req = _validate_data(FtxRequestTrades, parsed_req)
+    valid_ftx_req = _validate_data(FtxRequestTrades, pmap(parsed_req))
     if valid_ftx_req.is_err():
         return valid_ftx_req
 
@@ -164,11 +182,11 @@ async def get_trades_ftx(
     if result_content.is_err():
         return result_content
 
-    valid_result_content = _validate_data(FtxResponseTrades, {"trades": result_content.value})
+    valid_result_content = _validate_data(FtxResponseTrades, pmap({"trades": result_content.value}))
     if valid_result_content.is_err():
         return valid_result_content
 
     parsed_result = parse_result(valid_result_content.value, symbol)
 
-    valid_parsed_response_data = _validate_data(NoobitResponseTrades, {"trades": parsed_result, "rawJson": result_content.value})
+    valid_parsed_response_data = _validate_data(NoobitResponseTrades, pmap({"trades": parsed_result, "rawJson": result_content.value, "exchange": "FTX"}))
     return valid_parsed_response_data

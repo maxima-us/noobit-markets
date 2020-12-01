@@ -14,14 +14,15 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseOrderBook
+from noobit_markets.base.models.result import Result, Err
+from noobit_markets.base.models.rest.response import NoobitResponseOrderBook, T_OrderBookParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestOrderBook
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 # Kraken
 from noobit_markets.exchanges.ftx import endpoints
 from noobit_markets.exchanges.ftx.rest.base import get_result_content_from_req
+from typing_extensions import TypedDict
 
 
 
@@ -35,20 +36,28 @@ class FtxRequestOrderBook(FrozenBaseModel):
     # https://docs.ftx.com/?python#get-orderbook
 
     market_name: str
-    depth: pydantic.conint(ge=0, le=100)
+    depth: ntypes.DEPTH
+
+
+
+# indicate fields to mypy
+class _ParsedReq(TypedDict):
+    market_name: typing.Any
+    depth: typing.Any
+
 
 
 def parse_request(
-        valid_request: NoobitRequestOrderBook
-    ) -> pmap:
+        valid_request: NoobitRequestOrderBook,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
+    ) -> _ParsedReq:
 
-    payload = {
-        "market_name": valid_request.symbol_mapping[valid_request.symbol],
+    payload: _ParsedReq = {
+        "market_name": symbol_to_exchange(valid_request.symbol),
         "depth": valid_request.depth
-        # noobit ts are in ms vs ohlc kraken ts in s
     }
 
-    return pmap(payload)
+    return payload
 
 
 
@@ -87,16 +96,16 @@ class FtxResponseOrderBook(FrozenBaseModel):
 def parse_result(
         result_data: FtxResponseOrderBook,
         symbol: ntypes.SYMBOL
-    ) -> pmap:
+    ) -> T_OrderBookParsedRes:
 
-    parsed_orderbook = {
+    parsed_orderbook: T_OrderBookParsedRes = {
         "symbol": symbol,
         "utcTime": (time.time()) * 10**3,
         "asks": Counter({item[0]: item[1] for item in result_data.asks}),
         "bids": Counter({item[0]: item[1] for item in result_data.bids}),
     }
 
-    return pmap(parsed_orderbook)
+    return parsed_orderbook
 
 
 
@@ -106,7 +115,7 @@ def parse_result(
 # ============================================================
 
 
-@retry_request(retries=10, logger=lambda *args: print("===xxxxx>>>> : ", *args))
+@retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_orderbook_ftx(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
@@ -114,22 +123,22 @@ async def get_orderbook_ftx(
         depth: ntypes.DEPTH,
         base_url: pydantic.AnyHttpUrl = endpoints.FTX_ENDPOINTS.public.url,
         endpoint: str = endpoints.FTX_ENDPOINTS.public.endpoints.orderbook,
-    ) -> Result[NoobitResponseOrderBook, Exception]:
+    ) -> Result[NoobitResponseOrderBook, pydantic.ValidationError]:
 
     # ftx has variable urls besides query params
     # format: https://ftx.com/api/markets/{market_name}/candles
     # FIXME use urljoin
-    req_url = "/".join([base_url, "markets", symbol_to_exchange[symbol], endpoint])
+    req_url = "/".join([base_url, "markets", symbol_to_exchange(symbol), endpoint])
     method = "GET"
-    headers = {}
+    headers: typing.Dict = {}
 
     valid_noobit_req = validate_nreq_orderbook(symbol, symbol_to_exchange, depth)
-    if valid_noobit_req.is_err():
+    if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
 
-    parsed_req = parse_request(valid_noobit_req.value)
+    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
-    valid_ftx_req = _validate_data(FtxRequestOrderBook, parsed_req)
+    valid_ftx_req = _validate_data(FtxRequestOrderBook, pmap(parsed_req))
     if valid_ftx_req.is_err():
         return valid_ftx_req
 
@@ -143,5 +152,5 @@ async def get_orderbook_ftx(
 
     parsed_result = parse_result(valid_result_content.value, symbol)
 
-    valid_parsed_response_data = _validate_data(NoobitResponseOrderBook, {**parsed_result, "rawJson":result_content.value})
+    valid_parsed_response_data = _validate_data(NoobitResponseOrderBook, pmap({**parsed_result, "rawJson":result_content.value, "exchange": "FTX"}))
     return valid_parsed_response_data
