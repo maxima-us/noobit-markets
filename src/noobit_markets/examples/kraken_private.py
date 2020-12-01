@@ -114,7 +114,7 @@ else:
             #! Problem is we can now not inspect the dict anymore
             #! so if we get an error, it will be way harder to debug
             #! but also provides more flexbility as shown in this example
-            symbol_from_exchange=lambda x: f"{x[0:3]}-{x[-3:]}",
+            symbol_to_exchange=lambda x: symbol_to_exchange[x],
             # symbols_from_exchange=lambda x: {v.ws_name.replace("/", ""): k for k, v in symbols.asset_pairs.items()}.get(x),
             symbol=ntypes.PSymbol("DOT-USD")       #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
         )
@@ -132,7 +132,8 @@ else:
     clo = asyncio.run(
         get_closedorders_kraken(
             client=httpx.AsyncClient(),
-            symbol_from_exchange=lambda x: {f"{v.noobit_base}{v.noobit_quote}": k for k, v in symbols.asset_pairs.items()}[x],
+            symbol_to_exchange=lambda x: symbol_to_exchange[x],
+            # symbol_from_exchange=lambda x: {f"{v.noobit_base}{v.noobit_quote}": k for k, v in symbols.asset_pairs.items()}[x],
             # symbol_from_exchange=lambda x: f"{x[0:3]}-{x[-3:]}",
             symbol=ntypes.PSymbol("DOT-USD")      #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
         )
@@ -175,7 +176,8 @@ else:
             client=httpx.AsyncClient(),
             symbol=ntypes.PSymbol("XBT-USD"),        #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
             # symbol_from_exchange=lambda x: {v.exchange_name: k for k, v in symbols.asset_pairs.items()}.get(x, None),
-            symbol_from_exchange=lambda x: {f"{v.exchange_base}{v.exchange_quote}": k for k, v in symbols.asset_pairs.items()}.get(x),
+            # symbol_from_exchange=lambda x: {f"{v.exchange_base}{v.exchange_quote}": k for k, v in symbols.asset_pairs.items()}.get(x),
+            symbol_to_exchange=lambda x: symbol_to_exchange[x],
         )
     )
     if utr.is_err():

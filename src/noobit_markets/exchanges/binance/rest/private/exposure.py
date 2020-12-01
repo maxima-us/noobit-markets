@@ -34,7 +34,6 @@ async def get_exposure_binance(
     if isinstance(bals, Err):
         return bals
 
-
     else:
         for asset, amount in bals.value.balances.items():
             if not asset in ["USDT", "USD"]:

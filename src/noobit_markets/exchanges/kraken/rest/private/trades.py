@@ -122,16 +122,16 @@ class KrakenResponseUserTrades(FrozenBaseModel):
 
 def parse_result(
         result_data: typing.Mapping[str, SingleTradeInfo],
-        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         symbol: ntypes.SYMBOL
     ) -> T_PrivateTradesParsedRes:
 
     parsed = [
-        _single_trade(key, info, symbol_from_exchange)
+        _single_trade(key, info, symbol_to_exchange, symbol)
         for key, info in result_data.items()
     ]
 
-    filtered = [item for item in parsed if item["symbol"] == symbol]
+    filtered = [item for item in parsed if item["symbol"]]
 
     return tuple(filtered)
 
@@ -139,7 +139,8 @@ def parse_result(
 def _single_trade(
         key: str,
         info: SingleTradeInfo,
-        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbol: ntypes.SYMBOL
     ) -> T_PrivateTradesParsedItem:
 
     parsed: T_PrivateTradesParsedItem = {
@@ -147,7 +148,7 @@ def _single_trade(
         "transactTime": info.time,
         "orderID": info.ordertxid,
         "clOrdID": None,
-        "symbol": symbol_from_exchange(info.pair),
+        "symbol": symbol if symbol_to_exchange(symbol) == info.pair else None,
         "side": info.type,
         # TODO ordertype mapping
         "ordType": info.ordertype,
@@ -173,11 +174,11 @@ def _single_trade(
 async def get_usertrades_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.trades_history
-    ) -> Result[NoobitResponseTrades, Exception]:
+    ) -> Result[NoobitResponseTrades, pydantic.ValidationError]:
 
     req_url = urljoin(base_url, endpoint)
     method = "POST"
@@ -197,7 +198,7 @@ async def get_usertrades_kraken(
     if valid_result_content.is_err():
         return valid_result_content
 
-    parsed_result_data = parse_result(valid_result_content.value.trades, symbol_from_exchange, symbol)
+    parsed_result_data = parse_result(valid_result_content.value.trades, symbol_to_exchange, symbol)
 
     valid_parsed_result_data = _validate_data(NoobitResponseTrades, pmap({"trades": parsed_result_data, "rawJson": result_content.value, "exchange": "KRAKEN"}))
     return valid_parsed_result_data

@@ -189,31 +189,32 @@ class KrakenResponseClosedOrders(FrozenBaseModel):
 
 def parse_result_openorders(
         result_data: typing.Mapping[str, SingleOpenOrder],
-        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         symbol: ntypes.SYMBOL
     ) -> T_OrderParsedRes:
 
     parsed = [
-        _single_order(key, order, symbol_from_exchange)
+        _single_order(key, order, symbol_to_exchange, symbol)
         for key, order in result_data.items()
     ]
 
-    filtered = [item for item in parsed if item["symbol"] == symbol]
+    filtered = [item for item in parsed if item["symbol"]]
     return tuple(filtered)
 
 
 def parse_result_closedorders(
         result_data: typing.Mapping[str, SingleClosedOrder],
-        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         symbol: ntypes.SYMBOL
-    ) -> T_OrderParsedRes: 
+    ) -> T_OrderParsedRes:
 
     parsed = [
-        _single_order(key, order, symbol_from_exchange)
+        _single_order(key, order, symbol_to_exchange, symbol)
         for key, order in result_data.items()
     ]
 
-    filtered = [item for item in parsed if item["symbol"] == symbol]
+    filtered = [item for item in parsed if item["symbol"]]
+    print(filtered[1])
     return tuple(filtered)
 
 
@@ -222,15 +223,16 @@ def _single_order(
         # can be either closed or open orders
         # but SingleClosedOrder subclasses SingleOpenOrder
         order: typing.Union[SingleOpenOrder, SingleClosedOrder],
-        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbol: ntypes.SYMBOL
     ) -> T_OrderParsedItem:
 
 
     parsed: T_OrderParsedItem = {
 
             "orderID": key,
-            "symbol": symbol_from_exchange(order.descr.pair),
-            "currency": (symbol_from_exchange(order.descr.pair)).split("-")[1],
+            "symbol": symbol if symbol_to_exchange(symbol) == order.descr.pair else None,
+            "currency": symbol.split("-")[1] if symbol_to_exchange(symbol) == order.descr.pair else None,
             # "currency": "USD",
             "side": order.descr.type,
             "ordType": order.descr.ordertype,
@@ -293,7 +295,7 @@ def _single_order(
 async def get_openorders_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE ,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE ,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.open_orders
@@ -320,7 +322,7 @@ async def get_openorders_kraken(
 
     parsed_result_data = parse_result_openorders(
         valid_result_content.value.open,
-        symbol_from_exchange,
+        symbol_to_exchange,
         symbol
     )
 
@@ -339,7 +341,7 @@ async def get_openorders_kraken(
 async def get_closedorders_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE ,
+        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE ,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.closed_orders
@@ -366,7 +368,7 @@ async def get_closedorders_kraken(
 
     parsed_result_data = parse_result_closedorders(
         valid_result_content.value.closed,
-        symbol_from_exchange,
+        symbol_to_exchange,
         symbol
     )
 

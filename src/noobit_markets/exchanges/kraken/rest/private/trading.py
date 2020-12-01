@@ -282,7 +282,7 @@ async def post_neworder_kraken(
 
     parsed_result = parse_result(valid_result_content.value)
 
-    valid_parsed_response_data = _validate_data(NoobitResponseNewOrder, pmap({"descr":parsed_result["descr"], "txid": parsed_result["txid"], "rawJson": result_content.value}))
+    valid_parsed_response_data = _validate_data(NoobitResponseNewOrder, pmap({"descr":parsed_result["descr"], "txid": parsed_result["txid"], "rawJson": result_content.value, "exchange": "KRAKEN"}))
     if valid_parsed_response_data.is_err():
         return valid_parsed_response_data
     # return valid_parsed_response_data
@@ -297,7 +297,7 @@ async def post_neworder_kraken(
     if ordType == "market":
         # FIXME symbol_from_exchange lambda isnt entirely accurate
         # will be ok for most pairs but some have 4/5 letters for base
-        cl_ord = await get_closedorders_kraken(client, symbol, lambda x: ntypes.PSymbol(f"{x[0:3]}-{x[-3:]}"), auth)
+        cl_ord = await get_closedorders_kraken(client, symbol, symbol_to_exchange, auth)
         if isinstance(cl_ord, Ok):
             [order_info] = [order for order in cl_ord.value.orders if order.orderID == newOrderID]
         else:
@@ -307,7 +307,7 @@ async def post_neworder_kraken(
         await asyncio.sleep(0.1)
         # FIXME symbol_from_exchange lambda isnt entirely accurate
         # will be ok for most pairs but some have 4/5 letters for base
-        op_ord = await get_openorders_kraken(client, symbol, lambda x: ntypes.PSymbol(f"{x[0:3]}-{x[-3:]}") ,auth)
+        op_ord = await get_openorders_kraken(client, symbol, symbol_to_exchange ,auth)
         if isinstance(op_ord, Ok):
             [order_info] = [order for order in op_ord.value.orders if order.orderID == newOrderID]
         else:
