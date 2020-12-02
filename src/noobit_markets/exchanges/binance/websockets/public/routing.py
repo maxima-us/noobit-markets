@@ -17,7 +17,6 @@ async def msg_handler(msg, data_queues, status_queues):
     #! maybe check number of messages from each feed ==> if > 1, we are subed
 
     msg = json.loads(msg)
-    print(msg)
 
     # `e` always corresponse to `event type`
     feed = getattr(msg, "e")

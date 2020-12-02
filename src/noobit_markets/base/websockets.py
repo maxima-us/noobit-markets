@@ -243,6 +243,7 @@ class BaseWsPublic(BaseWsApi):
         "trade": asyncio.Queue(),
         "spread": asyncio.Queue(),
         #? test out, maybe better to just make a copy on each messag ? idk
+        # spread copy used to filter out orderbook updates
         "spread_copy": asyncio.Queue(),
         "orderbook": asyncio.Queue(),
     }

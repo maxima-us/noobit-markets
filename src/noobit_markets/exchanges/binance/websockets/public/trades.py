@@ -48,12 +48,12 @@ def validate_parsed(msg, parsed_msg):
         return Err(e)
 
 
-def parse_msg(message):
+def parse_msg(message, symbol):
 
 
     try:
         parsed_trades = [
-            _parse_single(message)
+            _parse_single(message, symbol)
         ]
 
     except Exception as e:
@@ -92,20 +92,20 @@ class _BinanceResponseItem(TypedDict):
     M: bool
 
 
-def _parse_single(info: _BinanceResponseItem, pair) -> T_PublicTradesParsedItem:
+def _parse_single(info: _BinanceResponseItem, symbol: SYMBOL) -> T_PublicTradesParsedItem:
 
     # if message is None: return
 
     parsed_trade: T_PublicTradesParsedItem = {
-            "trdMatchID": info.a,
+            "trdMatchID": info["a"],
             "orderID": None,
-            "symbol": info.s,
-            "side": "sell" if info.m else "buy",
+            "symbol": symbol,
+            "side": "sell" if info["m"] else "buy",
             "ordType": "market",
-            "avgPx": info.p,
-            "cumQty": info.q,
-            "grossTradeAmt": Decimal(info.p) * Decimal(info.q),
-            "transactTime": Decimal(info.T),
+            "avgPx": info["p"],
+            "cumQty": info["q"],
+            "grossTradeAmt": Decimal(info["p"]) * Decimal(info["q"]),
+            "transactTime": Decimal(info["T"]),
             "text": None
         }
 

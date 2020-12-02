@@ -3,8 +3,7 @@ import asyncio
 import httpx
 
 
-from noobit_markets.exchanges.ftx.rest.public.symbols.get import get_symbols_ftx
-from noobit_markets.exchanges.ftx.rest.private.balances.get import get_balances_ftx
+from noobit_markets.exchanges.ftx.rest.private.balances import get_balances_ftx
 # from noobit_markets.exchanges.binance.rest.private.orders.get import get_closedorders_binance
 # from noobit_markets.exchanges.binance.rest.private.trades.get import get_trades_binance
 

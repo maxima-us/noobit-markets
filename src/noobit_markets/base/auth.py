@@ -30,6 +30,11 @@ class BaseAuth(object):
             # get dict from env where keys are either api_key or api_secret
             key_dict = {k: v for k, v in dict(os.environ).items() if self.exchange_name.upper() in k}
             # match corresponding api_key and api_secret
+            
+            if not key_dict:
+                raise ValueError(f"Missing API keys for exchange : {self.exchange_name}")
+
+            
             for k, v in key_dict.items():
                 if "KEY" in k:
                     pair = pmap({

@@ -53,13 +53,7 @@ class KrakenAuth(KrakenBase):
 
 
     def _sign(self, request_args: pyrsistent.PMap, endpoint: str):
-        """Sign request data according to Kraken's scheme.
-        Args:
-            data (dict): API request parameters
-            urlpath (str): API URL path sans host
-        Returns
-            signature digest
-        """
+        
         postdata = urllib.parse.urlencode(request_args)
 
         # Unicode-objects must be encoded before hashing

@@ -26,6 +26,11 @@ async def main(loop):
         symbol = ntypes.PSymbol("XBT-USD")
 
 
+        async def coro1():
+            async for msg in kws.orderbook(symbol_mapping, symbol):
+                print(msg.value.asks, "\n")
+
+
         async def coro2():
             async for msg in kws.trade(symbol_mapping, symbol):
                 # print("received new trade")
@@ -34,7 +39,7 @@ async def main(loop):
                     print("new trade @ :", trade.avgPx, trade.side, trade.ordType, trade.cumQty, trade.symbol)
 
 
-        results = await asyncio.gather(coro2())
+        results = await asyncio.gather(coro1())
         return results
 
 

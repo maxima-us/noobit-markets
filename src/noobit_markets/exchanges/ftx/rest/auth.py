@@ -14,16 +14,17 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 load_dotenv()
 
 
-#Kraken Private Request Model
-#always needs nonce param to authenticate
 class FtxPrivateRequest(FrozenBaseModel):
 
     pass
 
 
 # necessary so we do not share same class attributes/methods across all exchanges
-FtxBase = make_base("FtxBase")
+FtxBase: typing.Any = make_base("FtxBase")
 
+# base class is dynamically generated and therefore is considered as invalid by mypy
+# except if we type it as Any
+# TODO see if we can improve on this
 class FtxAuth(FtxBase):
 
     #https://blog.ftx.com/blog/api-authentication/
@@ -44,8 +45,7 @@ class FtxAuth(FtxBase):
         super().__init__("FTX")
 
 
-    # bug if we return pmap
-    def headers(self, method: Literal["GET", "POST"], req_path: str, body: typing.Optional[pmap]=None) -> dict:
+    def headers(self, method: Literal["GET", "POST"], req_path: str, body: typing.Optional[typing.Dict]=None) -> dict:
 
         ts = self.nonce
 
@@ -60,7 +60,7 @@ class FtxAuth(FtxBase):
         return auth_headers
 
 
-    def _sign(self, method: Literal["GET", "POST"], req_path, body, timestamp: int):
+    def _sign(self, method: Literal["GET", "POST"], req_path: str, body: typing.Optional[typing.Dict], timestamp: int):
 
         message = f"{timestamp}{method}{req_path}"
         if method == "POST": message += json.dumps(body)
