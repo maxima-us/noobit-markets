@@ -4,6 +4,7 @@ Define the unified response model we expect for each endpoint.
 A class whose name is prefixed by `T_` is only there for mypy
 """
 
+from abc import ABC, abstractproperty
 import typing
 from decimal import Decimal
 
@@ -29,6 +30,41 @@ class NoobitBaseResponse(FrozenBaseModel):
     #? should this be mandatory
     exchange: ntypes.EXCHANGE
     rawJson: typing.Any
+
+
+# provide more representations options
+class NResultWrapper(ABC):
+
+
+    def __init__(self, vser: Result[NoobitBaseResponse, ValidationError]):
+
+        self.vser = vser
+
+    # # in practice the input would be for ex `KrakenResponseOrderBook`
+    # def cast(self, model: NoobitResponseOhlc) 
+    #     try:
+    #         self.vser = self.model(symbol=symbol, asks=asks, bids=bids)
+    #         return Ok(self)
+    #     except ValidationError as e:
+    #         return Err(e)
+
+    def is_ok(self):
+        return self.vser.is_ok()
+
+    def is_err(self):
+        return self.vser.is_err()
+
+    @property
+    def result(self):
+        return self.vser
+
+    @property
+    def dict(self):
+        return self.vser.value.dict()
+    
+    @abstractproperty
+    def table(self):
+        raise NotImplementedError
 
 
 
@@ -133,39 +169,13 @@ class NoobitResponseOhlc(NoobitBaseResponse):
     ohlc: typing.Tuple[NoobitResponseItemOhlc, ...]
 
 
-# FIXME still up for debate whether we should implement this
-class NOhlc:
-
-    # model = NoobitResponseOhlc
-
-    def __init__(self, return_value: Result[NoobitResponseOhlc, ValidationError]):
-
-        self._ok: bool = return_value.is_ok()
-        self._err: bool = return_value.is_err()
-
-        
-        self._vser = return_value
-
-    # # in practice the input would be for ex `KrakenResponseOrderBook`
-    # def cast(self, model: NoobitResponseOhlc) 
-    #     try:
-    #         self.vser = self.model(symbol=symbol, asks=asks, bids=bids)
-    #         return Ok(self)
-    #     except ValidationError as e:
-    #         return Err(e)
-
-
-    def is_ok(self):
-        return self._ok
-
-    def is_err(self):
-        return self._err
-
-
-    @property
+class NOhlc(NResultWrapper):
+    
+    property
     def table(self):
-        if self._ok:
-            _ohlc = self._vser.value.ohlc
+        self.vser: Result[NoobitResponseOhlc, ValidationError]
+        if self.is_ok():
+            _ohlc = self.vser.value.ohlc
             table = tabulate(
                 {
                     "Open": [k.open for k in _ohlc],
@@ -178,7 +188,6 @@ class NOhlc:
             return table
         else:
             return "Returned an invalid result"
-
 
 
 # ============================================================
@@ -206,6 +215,35 @@ class NoobitResponseOrderBook(NoobitBaseResponse):
     symbol: ntypes.SYMBOL
     asks: ntypes.ASKS
     bids: ntypes.BIDS
+
+
+
+# ====================
+# wrapper for nicer representations
+
+#TODO find other naming schema as this might be confused for NTypes
+class NOrderBook(NResultWrapper):
+
+
+    @property
+    def table(self):
+        self.vser: Result[NoobitResponseOrderBook, ValidationError]
+        if self.is_ok():
+            _asks = self.vser.value.asks
+            _bids = self.vser.value.bids
+            table = tabulate(
+                {
+                    "Ask Price": [k for k in _asks.keys()],
+                    "Ask Volume": [k for k in _asks.values()],
+                    "Bid Price": [k for k in _bids.keys()],
+                    "Bid Volume": [k for k in _bids.values()],
+                },
+                headers="keys"
+            )
+            return table
+        else:
+            return "Returned an invalid result"
+
 
 
 
@@ -293,6 +331,36 @@ class NoobitResponseSymbols(NoobitBaseResponse):
     asset_pairs: typing.Mapping[ntypes.SYMBOL, NoobitResponseItemSymbols]
     assets: typing.Mapping[ntypes.PAsset, str]
 
+
+# ====================
+# wrapper for more representations
+
+class NSymbol(NResultWrapper):
+
+
+    @property
+    def table(self):
+        self.vser: Result[NoobitResponseSymbols, ValidationError]
+        if self.is_ok():
+            _pairs = self.vser.value.asset_pairs
+            _assets = self.vser.value.assets
+            table = tabulate(
+                {
+                    "Noobit Symbol": [k for k in _pairs.keys()],
+                    "Exchange Pair": [k.exchange_pair for k in _pairs.values()],
+                    "Exchange Base": [k.exchange_base for k in _pairs.values()],
+                    "Exchange Quote": [k.exchange_quote for k in _pairs.values()],
+                    "Noobit Base": [k.noobit_base for k in _pairs.values()],
+                    "Noobit Quote": [k.noobit_quote for k in _pairs.values()],
+                    "Volume Decimals": [k.volume_decimals for k in _pairs.values()],
+                    "Price Decimals": [k.price_decimals for k in _pairs.values()],
+                    "Order min": [k.order_min for k in _pairs.values()],
+                },
+                headers="keys"
+            )
+            return table
+        else:
+            return "Returned an invalid result"
 
 
 
@@ -431,6 +499,33 @@ class NoobitResponseTrades(NoobitBaseResponse):
     # last: typing.Optional[ntypes.TIMESTAMP] = Field(...)
 
 
+# ====================
+# wrapper for nicer representations
+
+class NTrades(NResultWrapper):
+
+
+    @property
+    def table(self):
+        self.vser: Result[NoobitResponseTrades, ValidationError]
+        if self.is_ok():
+            _trades = self.vser.value.trades
+            table = tabulate(
+                {
+                    "Symbol": [k.symbol for k in _trades],
+                    "Avg Price": [k.avgPx for k in _trades],
+                    "Filled Qty": [k.cumQty for k in _trades],
+                    "Side": [k.side for k in _trades],
+                    "Type": [k.ordType for k in _trades],
+                    "Trade ID": [k.trdMatchID for k in _trades],
+                    "Order ID": [k.orderID for k in _trades],
+                    "Client Order ID": [k.clOrdID for k in _trades] 
+                },
+                headers="keys"
+            )
+            return table
+        else:
+            return "Returned an invalid result"
 
 
 
@@ -454,6 +549,27 @@ class NoobitResponseBalances(NoobitBaseResponse):
     balances: typing.Mapping[ntypes.ASSET, Decimal]
 
 
+# ====================
+# wrapper for nicer representations
+
+class NBalances(NResultWrapper):
+
+
+    @property
+    def table(self):
+        self.vser: Result[NoobitResponseBalances, ValidationError]
+        if self.is_ok():
+            _bals = self.vser.value.balances
+            table = tabulate(
+                {
+                    "Symbol": [k for k in _bals.keys()],
+                    "Balance": [k for k in _bals.values()]
+                },
+                headers="keys"
+            )
+            return table
+        else:
+            return "Returned an invalid result"
 
 
 # ============================================================
@@ -500,6 +616,33 @@ class NoobitResponseExposure(NoobitBaseResponse):
     marginAmt: Decimal = Decimal(0)
 
     unrealisedPnL: Decimal = Decimal(0)
+
+
+# ====================
+# wrapper for nicer representations
+
+class NExposure(NResultWrapper):
+
+
+    @property
+    def table(self):
+        self.vser: Result[NoobitResponseExposure, ValidationError]
+        if self.is_ok():
+            _val = self.vser.value
+            table = tabulate(
+                {
+                    "Total Net Value": [_val.totalNetValue],
+                    "Cash Outstanding": [_val.cashOutstanding],
+                    "Margin Excess": [_val.marginExcess],
+                    "Margin Ratio": [_val.marginRatio],
+                    "Margin Amt": [_val.marginAmt],
+                    "Unrealised PnL": [_val.unrealisedPnL],
+                },
+                headers="keys"
+            )
+            return table
+        else:
+            return "Returned an invalid result"
 
 
 

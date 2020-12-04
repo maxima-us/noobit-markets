@@ -1,7 +1,7 @@
 import asyncio
 import httpx
-from noobit_markets.base.models.rest.response import NoobitResponseSymbols
-from noobit_markets.base.models.rest.response import NOhlc 
+from noobit_markets.base.models.rest.response import NOrderBook, NoobitResponseSymbols
+from noobit_markets.base.models.rest.response import NOhlc, NSymbol, NTrades
 
 from noobit_markets.exchanges.kraken.rest.public.ohlc import get_ohlc_kraken
 from noobit_markets.exchanges.kraken.rest.public.orderbook import get_orderbook_kraken
@@ -26,13 +26,16 @@ res = asyncio.run(
         since=None
     )
 )
+
+
+# NOhlc gives us access to more representations
 _n = NOhlc(res)
 
 if _n.is_err():
-    print(_n._vser)
+    print(_n.result)
 else:
-    # FIXME still in development
-    print(_n.table) 
+    #FIXME still in development
+    # print(_n.table) 
     print("Ohlc ok")
 
 
@@ -40,7 +43,6 @@ else:
 #     print(res)
 # else:
 #     print('Ohlc ok')
-
 
 #============================================================
 # ORDERBOOK
@@ -51,14 +53,24 @@ res = asyncio.run(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
         symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
-        depth=10
+        depth=25
     )
 )
 
-if res.is_err():
-    print(res)
+_ob = NOrderBook(res)
+
+if _ob.is_err():
+    print(_ob.result)
 else:
-    print("OrderBook ok")
+    # print("Asks :", _ob.result.value.asks)
+    # print("Bids :", _ob.result.value.bids)
+    # print(_ob.table)
+    print("Orderbook ok")
+
+# if res.is_err():
+#     print(res)
+# else:
+#     print("OrderBook ok")
 
 
 #============================================================
@@ -72,11 +84,20 @@ res = asyncio.run(
         symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
     )
 )
+_trd = NTrades(res)
 
-if res.is_err():
-    print(res)
+if _trd.is_err():
+    print(_trd.result)
 else:
+    # print("Asks :", _ob.result.value.asks)
+    # print("Bids :", _ob.result.value.bids)
+    print(_trd.table)
     print("Trades ok")
+
+# if res.is_err():
+#     print(res)
+# else:
+#     print("Trades ok")
 
 
 #============================================================
@@ -106,12 +127,19 @@ res = asyncio.run(
         client=httpx.AsyncClient(),
     )
 )
+_sym = NSymbol(res)
 
-if res.is_err():
-    print(res)
+if _sym.is_err():
+    print(_sym.result)
 else:
-    assert isinstance(res.value, NoobitResponseSymbols)
-    print("Symbols Ok")
+    # print(_sym.table)
+    print("Symbols ok")
+
+# if res.is_err():
+#     print(res)
+# else:
+#     assert isinstance(res.value, NoobitResponseSymbols)
+#     print("Symbols Ok")
 
 
 #============================================================

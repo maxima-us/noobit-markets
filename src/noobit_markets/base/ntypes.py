@@ -22,7 +22,7 @@ class NInt(pydantic.ConstrainedInt):
         self._value = _value
 
     def __str__(self):
-        return self._value
+        return str(self._value)
         # return f"<{self.__class__.__name__}>:{self._value}"
 
     def __repr__(self):

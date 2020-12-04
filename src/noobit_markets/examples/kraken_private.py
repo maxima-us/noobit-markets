@@ -16,6 +16,7 @@ from noobit_markets.exchanges.kraken.rest.private.trading import post_neworder_k
 
 from noobit_markets.base._tabulate import pylist_table, pymap_table
 from noobit_markets.base import ntypes
+from noobit_markets.base.models.rest.response import NBalances, NTrades
 
 
 
@@ -54,7 +55,7 @@ else:
             side="buy",
             ordType="market",
             clOrdID="1234567",
-            orderQty=1,
+            orderQty=0.1,
             price=None,
             timeInForce=None,
             quoteOrderQty=None,
@@ -80,12 +81,22 @@ else:
             asset_from_exchange=lambda x : asset_from_exchange[x] if ".S" not in x else ntypes.PAsset(x)
         )
     )
-    if bal.is_err():
-        print(bal)
+    _bals = NBalances(bal)
+
+    if _bals.is_err():
+        print(_bals.result)
     else:
-        table = pymap_table(bal.value.balances, headers=["Asset", "Balance"])
-        print(table)
+        # print("Asks :", _ob.result.value.asks)
+        # print("Bids :", _ob.result.value.bids)
+        print(_bals.table)
         print("Balances ok")
+    
+    # if bal.is_err():
+    #     print(bal)
+    # else:
+    #     table = pymap_table(bal.value.balances, headers=["Asset", "Balance"])
+    #     print(table)
+    #     print("Balances ok")
 
 
     # ============================================================
@@ -180,13 +191,20 @@ else:
             symbol_to_exchange=lambda x: symbol_to_exchange[x],
         )
     )
-    if utr.is_err():
-        print(utr)
+    _trd = NTrades(utr)
+
+    if _trd.is_err():
+        print(_trd.result)
     else:
-        # table = pylist_table(utr.value.trades)
-        # print(table)
-        # print(utr.value.trades)
-        print("User Trades ok")
+        # print("Asks :", _ob.result.value.asks)
+        # print("Bids :", _ob.result.value.bids)
+        print(_trd.table)
+        print("Trades ok")
+
+    # if utr.is_err():
+    #     print(utr)
+    # else:
+    #     print("User Trades ok")
 
 
     # ============================================================
