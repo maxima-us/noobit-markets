@@ -11,17 +11,45 @@ from noobit_markets.exchanges.kraken.rest.public.symbols import get_symbols_krak
 from noobit_markets.exchanges.kraken.rest.public.spread import get_spread_kraken
 
 
+
+
+#============================================================
+# SYMBOLS
+
+
+symbols = asyncio.run(
+    get_symbols_kraken(
+        client=httpx.AsyncClient(),
+    )
+)
+_sym = NSymbol(symbols)
+
+if _sym.is_err():
+    print(_sym.result)
+else:
+    # print(_sym.table)
+    print("Symbols ok")
+
+# if res.is_err():
+#     print(res)
+# else:
+#     assert isinstance(res.value, NoobitResponseSymbols)
+#     print("Symbols Ok")
+
+
+
 #============================================================
 # OHLC
 
 
-res = asyncio.run(
+ohlc = asyncio.run(
     get_ohlc_kraken(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
         # ==> if we pass invalid symbol, lambda function will return none and we will get following error:
         # Err(ValidationError(model='KrakenRequestOhlc', errors=[{'loc': ('pair',), 'msg': 'none is not an allowed value', 'type': 'type_error.none.not_allowed'}]))
-        symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
+        # symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
+        symbols_resp=symbols.value,
         timeframe="15M",
         since=None
     )
@@ -29,7 +57,7 @@ res = asyncio.run(
 
 
 # NOhlc gives us access to more representations
-_n = NOhlc(res)
+_n = NOhlc(ohlc)
 
 if _n.is_err():
     print(_n.result)
@@ -48,16 +76,17 @@ else:
 # ORDERBOOK
 
 
-res = asyncio.run(
+book = asyncio.run(
     get_orderbook_kraken(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
-        symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
-        depth=25
+        # symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
+        symbols_resp=symbols.value,
+        depth=10
     )
 )
 
-_ob = NOrderBook(res)
+_ob = NOrderBook(book)
 
 if _ob.is_err():
     print(_ob.result)
@@ -77,14 +106,15 @@ else:
 # TRADES
 
 
-res = asyncio.run(
+trades = asyncio.run(
     get_trades_kraken(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
-        symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
+        # symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
+        symbols_resp=symbols.value
     )
 )
-_trd = NTrades(res)
+_trd = NTrades(trades)
 
 if _trd.is_err():
     print(_trd.result)
@@ -104,15 +134,16 @@ else:
 # INSTRUMENT
 
 
-res = asyncio.run(
+instrument = asyncio.run(
     get_instrument_kraken(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
-        symbol_to_exchange= lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
+        # symbols_resp= lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
+        symbols_resp=symbols.value
     )
 )
 
-_inst = NInstrument(res)
+_inst = NInstrument(instrument)
 
 if _inst.is_err():
     print(_inst.result)
@@ -126,43 +157,22 @@ else:
 #     print("Instrument ok")
 
 
-#============================================================
-# SYMBOLS
-
-
-res = asyncio.run(
-    get_symbols_kraken(
-        client=httpx.AsyncClient(),
-    )
-)
-_sym = NSymbol(res)
-
-if _sym.is_err():
-    print(_sym.result)
-else:
-    # print(_sym.table)
-    print("Symbols ok")
-
-# if res.is_err():
-#     print(res)
-# else:
-#     assert isinstance(res.value, NoobitResponseSymbols)
-#     print("Symbols Ok")
 
 
 #============================================================
 # SPREAD
 
 
-res = asyncio.run(
+spread = asyncio.run(
     get_spread_kraken(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
-        symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
+        # symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
+        symbols_resp=symbols.value
     )
 )
 
-if res.is_err():
-    print(res)
+if spread.is_err():
+    print(spread)
 else:
     print("Spread ok")

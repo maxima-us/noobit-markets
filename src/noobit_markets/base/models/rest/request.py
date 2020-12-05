@@ -1,5 +1,6 @@
 import typing
 from decimal import Decimal
+from noobit_markets.base.models.rest.response import NoobitResponseSymbols
 
 from pydantic import PositiveInt, Field, validator
 
@@ -17,7 +18,7 @@ from noobit_markets.base import ntypes
 class NoobitRequestOhlc(FrozenBaseModel):
 
     symbol: ntypes.SYMBOL
-    symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
+    symbols_resp: NoobitResponseSymbols
     timeframe: ntypes.TIMEFRAME
     since: typing.Optional[ntypes.TIMESTAMP]
 
@@ -32,7 +33,7 @@ class NoobitRequestOhlc(FrozenBaseModel):
 class NoobitRequestOrderBook(FrozenBaseModel):
 
     symbol: ntypes.SYMBOL
-    symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
+    symbols_resp: NoobitResponseSymbols
     depth: ntypes.DEPTH
 
 
@@ -46,7 +47,7 @@ class NoobitRequestOrderBook(FrozenBaseModel):
 class NoobitRequestTrades(FrozenBaseModel):
 
     symbol: ntypes.SYMBOL
-    symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
+    symbols_resp: NoobitResponseSymbols
     since: typing.Optional[ntypes.TIMESTAMP]
 
 
@@ -60,7 +61,7 @@ class NoobitRequestTrades(FrozenBaseModel):
 class NoobitRequestInstrument(FrozenBaseModel):
 
     symbol: ntypes.SYMBOL
-    symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
+    symbols_resp: NoobitResponseSymbols
 
 
 
@@ -73,7 +74,7 @@ class NoobitRequestInstrument(FrozenBaseModel):
 class NoobitRequestSpread(FrozenBaseModel):
 
     symbol: ntypes.SYMBOL
-    symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
+    symbols_resp: NoobitResponseSymbols 
     since: typing.Optional[ntypes.TIMESTAMP]
 
 

@@ -37,6 +37,7 @@ def validate_sub(symbol_to_exchange: SYMBOL_TO_EXCHANGE, symbol: SYMBOL) -> Resu
 
 bidsorasks = typing.List[typing.Tuple[str, str]]
 
+
 class BinanceBookMsg(TypedDict):
     lastUpdateId: int
     bids: bidsorasks 

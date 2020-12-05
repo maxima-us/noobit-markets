@@ -1,36 +1,48 @@
+import asyncio
+
 import pytest
 import httpx
+import aiohttp
 
 from noobit_markets.exchanges.kraken.rest.public.instrument import get_instrument_kraken
+from noobit_markets.exchanges.kraken.rest.public.symbols import get_symbols_kraken
 
-from noobit_markets.base.models.result import Ok, Err, Result
-from noobit_markets.base.models.rest.response import NoobitResponseInstrument
+from noobit_markets.base.models.result import Ok
+from noobit_markets.base.models.rest.response import NoobitResponseInstrument, NoobitResponseSymbols
+
+
+symbols = asyncio.run(
+    get_symbols_kraken(
+        client=httpx.AsyncClient(),
+    )
+)
+
+async def fetch(client, symbols_resp):
+
+        instrument = await get_instrument_kraken(
+            client,
+            "XBT-USD",
+            symbols.value
+        )
+
+        assert isinstance(instrument, Ok)
+        assert isinstance(instrument.value, NoobitResponseInstrument)
 
 
 @pytest.mark.asyncio
 @pytest.mark.vcr()
-async def test_instrument():
+async def test_instrument_httpx():
 
     async with httpx.AsyncClient() as client:
+        await fetch(client, symbols)
 
-        symbol_mapping = {
-            "asset_pairs": {
-                "XBT-USD": "XXBTZUSD"
-            },
-            "assets": {
-                "XBT": "XXBT",
-                "USD": "ZUSD"
-            }
-        }
 
-        symbols = await get_instrument_kraken(
-            client,
-            "XBT-USD",
-            lambda x: {"XBT-USD": "XXBTZUSD"}[x]
-        )
+@pytest.mark.asyncio
+@pytest.mark.vcr()
+async def test_instrument_aiohttp():
 
-        assert isinstance(symbols, Ok)
-        assert isinstance(symbols.value, NoobitResponseInstrument)
+    async with aiohttp.ClientSession() as client:
+        await fetch(client, symbols)
 
 
 if __name__ == '__main__':

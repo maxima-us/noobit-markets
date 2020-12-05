@@ -18,7 +18,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes, mappings
 from noobit_markets.base.models.result import Result, Err
-from noobit_markets.base.models.rest.response import NoobitResponseOhlc, T_OhlcParsedRes
+from noobit_markets.base.models.rest.response import NoobitResponseOhlc, NoobitResponseSymbols, T_OhlcParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestOhlc
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -177,7 +177,8 @@ def _single_candle(
 async def get_ohlc_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbols_resp: NoobitResponseSymbols,
+        # symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         timeframe: ntypes.TIMEFRAME,
         since: ntypes.TIMESTAMP,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
@@ -185,11 +186,13 @@ async def get_ohlc_kraken(
     ) -> Result[NoobitResponseOhlc, ValidationError]:
 
 
+    symbol_to_exchange = lambda x : {k: v.exchange_pair for k, v in symbols_resp.asset_pairs.items()}[x]
+    
     req_url = urljoin(base_url, endpoint)
     method = "GET"
     headers: typing.Dict = {}
 
-    valid_noobit_req = validate_nreq_ohlc(symbol, symbol_to_exchange, timeframe, since)
+    valid_noobit_req = _validate_data(NoobitRequestOhlc, pmap({"symbol": symbol, "symbols_resp": symbols_resp, "timeframe": timeframe, "since": since}))
     if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
 

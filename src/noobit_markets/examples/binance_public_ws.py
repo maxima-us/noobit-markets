@@ -4,10 +4,10 @@ import asyncio
 import httpx
 
 from noobit_markets.base import ntypes
+from noobit_markets.base.models.rest.response import NOrderBook
 
 from noobit_markets.exchanges.binance.rest.private.ws_auth import get_wstoken_binance
 from noobit_markets.exchanges.binance.websockets.public.api import BinanceWsPublic
-from noobit_markets.exchanges.binance.websockets.public.routing import msg_handler
 
 
 feed_map = {
@@ -21,14 +21,16 @@ async def main(loop):
             
         # TODO put this in our interface
         #       ==> then call with : ksw = interface.KRAKEN.ws.public
-        kws = BinanceWsPublic(client, msg_handler, loop, feed_map)
+        kws = BinanceWsPublic(client, None, loop, feed_map)
         symbol_mapping = lambda x: {"XBT-USD": "btcusdt"}[x]
         symbol = ntypes.PSymbol("XBT-USD")
 
 
         async def coro1():
             async for msg in kws.orderbook(symbol_mapping, symbol):
-                print(msg.value.asks, "\n")
+                _ob = NOrderBook(msg)
+                if _ob.is_ok():
+                    print(_ob.table)
 
 
         async def coro2():

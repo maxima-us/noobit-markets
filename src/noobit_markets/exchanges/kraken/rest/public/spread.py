@@ -18,7 +18,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Err, Result
-from noobit_markets.base.models.rest.response import NoobitResponseSpread, T_SpreadParsedRes
+from noobit_markets.base.models.rest.response import NoobitResponseSpread, NoobitResponseSymbols, T_SpreadParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestSpread
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -170,17 +170,20 @@ def _single(
 async def get_spread_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbols_resp: NoobitResponseSymbols,
+        # symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.spread,
     ) -> Result[NoobitResponseSpread, ValidationError]:
 
 
+    symbol_to_exchange = lambda x : {k: v.exchange_pair for k, v in symbols_resp.asset_pairs.items()}[x]
+    
     req_url = urljoin(base_url, endpoint)
     method = "GET"
     headers: typing.Dict = {}
 
-    valid_noobit_req = validate_nreq_spread(symbol, symbol_to_exchange)
+    valid_noobit_req = _validate_data(NoobitRequestSpread, pmap({"symbol": symbol, "symbols_resp": symbols_resp}))
     if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
 

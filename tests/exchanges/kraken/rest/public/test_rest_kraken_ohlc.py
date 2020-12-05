@@ -1,39 +1,52 @@
+import asyncio
+
 import pytest
 import httpx
-from pydantic import ValidationError
+import aiohttp
 
 from noobit_markets.exchanges.kraken.rest.public.ohlc import get_ohlc_kraken
+from noobit_markets.exchanges.kraken.rest.public.symbols import get_symbols_kraken
 
-from noobit_markets.base.models.result import Ok, Err, Result
+from noobit_markets.base.models.result import Ok
 from noobit_markets.base.models.rest.response import NoobitResponseOhlc
 
 
-@pytest.mark.asyncio
-@pytest.mark.vcr()
-async def test_ohlc():
+symbols = asyncio.run(
+    get_symbols_kraken(
+        client=httpx.AsyncClient(),
+    )
+)
 
-    async with httpx.AsyncClient() as client:
 
-        symbol_mapping = {
-            "asset_pairs": {
-                "XBT-USD": "XXBTZUSD"
-            },
-            "assets": {
-                "XBT": "XXBT",
-                "USD": "ZUSD"
-            }
-        }
+async def fetch(client, symbols_resp):
 
-        symbols = await get_ohlc_kraken(
+        ohlc = await get_ohlc_kraken(
             client=client,
             symbol="XBT-USD",
-            symbol_to_exchange=lambda x: symbol_mapping["asset_pairs"][x],
+            symbols_resp=symbols.value,
             timeframe="1H",
             since=None
         )
 
-        assert isinstance(symbols, Ok)
-        assert isinstance(symbols.value, NoobitResponseOhlc)
+        assert isinstance(ohlc, Ok)
+        assert isinstance(ohlc.value, NoobitResponseOhlc)
+
+
+@pytest.mark.asyncio
+@pytest.mark.vcr()
+async def test_ohlc_httpx():
+
+    async with httpx.AsyncClient() as client:
+        await fetch(client, symbols)
+
+
+@pytest.mark.asyncio
+@pytest.mark.vcr()
+async def test_ohlc_aiohttp():
+
+    async with aiohttp.ClientSession() as client:
+        await fetch(client, symbols)
+
 
 
 if __name__ == '__main__':

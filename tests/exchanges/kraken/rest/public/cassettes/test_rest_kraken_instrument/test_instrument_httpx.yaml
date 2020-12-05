@@ -1,0 +1,48 @@
+interactions:
+- request:
+    body: ''
+    headers: {}
+    method: GET
+    uri: https://api.kraken.com/0/public/Ticker?pair=XXBTZUSD
+  response:
+    content: '{"error":[],"result":{"XXBTZUSD":{"a":["19107.00000","1","1.000"],"b":["19106.90000","1","1.000"],"c":["19107.00000","0.06332429"],"v":["1912.05820234","3474.48744316"],"p":["18913.54014","18883.43842"],"t":[12267,20848],"l":["18511.00000","18511.00000"],"h":["19175.00000","19175.00000"],"o":"18655.00000"}}}'
+    headers:
+      age:
+      - '4'
+      cache-control:
+      - public,max-age=3,smaxage=3
+      cf-cache-status:
+      - UPDATING
+      cf-ray:
+      - 5fcf8f5c6d1d1ebe-AMS
+      cf-request-id:
+      - 06d597edbf00001ebe36825000000001
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Sat, 05 Dec 2020 17:41:47 GMT
+      expect-ct:
+      - max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"
+      server:
+      - cloudflare
+      set-cookie:
+      - __cfduid=d09b136c88b195b9a2f5093009869d96b1607190107; expires=Mon, 04-Jan-21
+        17:41:47 GMT; path=/; domain=.kraken.com; HttpOnly; SameSite=Lax
+      - __cf_bm=9fcd3dd482d6c295b4c369e55ad64a57334b4ec9-1607190107-1800-AYci5N1AU79RLyOtOe2BNU0E1o7kj/IUIB5RNm8PWWMa9SiL4NAYV0KDf/3GAw1jk/Gu91M4cAgFocV7UlS2VGE=;
+        path=/; expires=Sat, 05-Dec-20 18:11:47 GMT; domain=.kraken.com; HttpOnly;
+        Secure; SameSite=None
+      - __cfruid=afbb43cd029d0ccc1c8616c595bbab9310557e80-1607190107; path=/; domain=.kraken.com;
+        HttpOnly; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=15768000
+      transfer-encoding:
+      - chunked
+      vary:
+      - Accept-Encoding
+    http_version: HTTP/1.1
+    status_code: 200
+version: 1
