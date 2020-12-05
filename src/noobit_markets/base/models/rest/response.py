@@ -128,6 +128,34 @@ class NoobitResponseInstrument(NoobitBaseResponse):
     prevTrdCount: typing.Optional[Decimal]
 
 
+# ====================
+# wrapper for nicer representations
+
+class NInstrument(NResultWrapper):
+    
+    @property
+    def table(self):
+        self.vser: Result[NoobitResponseInstrument, ValidationError]
+        if self.is_ok():
+            _inst = self.vser.value
+            tb = tabulate(
+                {
+                    "Symbol": [_inst.symbol],
+                    "Low": [_inst.low],
+                    "High": [_inst.high],
+                    "Vwap": [_inst.vwap],
+                    "Last": [_inst.last],
+                    "Mark Price": [_inst.markPrice],
+                    "Volume": [_inst.volume],
+                    "Trade Count": [_inst.trdCount],
+                    "Best Ask": [_inst.bestAsk],
+                    "Best Bid": [_inst.bestBid],
+                },
+                headers="keys"
+            )
+            return tb
+        else:
+            return "Returned an invalid result"
 
 
 # ============================================================
@@ -169,9 +197,12 @@ class NoobitResponseOhlc(NoobitBaseResponse):
     ohlc: typing.Tuple[NoobitResponseItemOhlc, ...]
 
 
+# ====================
+# wrapper for nicer representations
+
 class NOhlc(NResultWrapper):
     
-    property
+    @property
     def table(self):
         self.vser: Result[NoobitResponseOhlc, ValidationError]
         if self.is_ok():

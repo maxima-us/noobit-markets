@@ -1,7 +1,7 @@
 import asyncio
 import httpx
 from noobit_markets.base.models.rest.response import NOrderBook, NoobitResponseSymbols
-from noobit_markets.base.models.rest.response import NOhlc, NSymbol, NTrades
+from noobit_markets.base.models.rest.response import NOhlc, NSymbol, NTrades, NInstrument
 
 from noobit_markets.exchanges.kraken.rest.public.ohlc import get_ohlc_kraken
 from noobit_markets.exchanges.kraken.rest.public.orderbook import get_orderbook_kraken
@@ -91,7 +91,7 @@ if _trd.is_err():
 else:
     # print("Asks :", _ob.result.value.asks)
     # print("Bids :", _ob.result.value.bids)
-    print(_trd.table)
+    # print(_trd.table)
     print("Trades ok")
 
 # if res.is_err():
@@ -112,10 +112,18 @@ res = asyncio.run(
     )
 )
 
-if res.is_err():
-    print(res)
+_inst = NInstrument(res)
+
+if _inst.is_err():
+    print(_inst.result)
 else:
+    print(_inst.table)
     print("Instrument ok")
+
+# if res.is_err():
+#     print(res)
+# else:
+#     print("Instrument ok")
 
 
 #============================================================
