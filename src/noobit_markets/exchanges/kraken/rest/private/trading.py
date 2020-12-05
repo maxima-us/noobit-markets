@@ -17,7 +17,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result, Ok
-from noobit_markets.base.models.rest.response import NoobitResponseNewOrder, T_NewOrderParsedRes, NoobitResponseItemOrder
+from noobit_markets.base.models.rest.response import NoobitResponseNewOrder, NoobitResponseSymbols, T_NewOrderParsedRes, NoobitResponseItemOrder
 from noobit_markets.base.models.rest.request import NoobitRequestAddOrder
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -226,7 +226,8 @@ def parse_result(
 async def post_neworder_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbols_resp: NoobitResponseSymbols,
+        # symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         side: ntypes.ORDERSIDE,
         ordType: ntypes.ORDERTYPE,
         clOrdID: str,
@@ -242,6 +243,8 @@ async def post_neworder_kraken(
         **kwargs,
     ) -> Result[NoobitResponseItemOrder, Exception]:
 
+    
+    symbol_to_exchange= lambda x: {k: v.exchange_pair for k, v in symbols_resp.asset_pairs.items()}[x]
 
     req_url = urljoin(base_url, endpoint)
     method = "POST"
@@ -297,7 +300,7 @@ async def post_neworder_kraken(
     if ordType == "market":
         # FIXME symbol_from_exchange lambda isnt entirely accurate
         # will be ok for most pairs but some have 4/5 letters for base
-        cl_ord = await get_closedorders_kraken(client, symbol, symbol_to_exchange, auth)
+        cl_ord = await get_closedorders_kraken(client, symbol, symbols_resp, auth)
         if isinstance(cl_ord, Ok):
             [order_info] = [order for order in cl_ord.value.orders if order.orderID == newOrderID]
         else:
@@ -307,7 +310,7 @@ async def post_neworder_kraken(
         await asyncio.sleep(0.1)
         # FIXME symbol_from_exchange lambda isnt entirely accurate
         # will be ok for most pairs but some have 4/5 letters for base
-        op_ord = await get_openorders_kraken(client, symbol, symbol_to_exchange ,auth)
+        op_ord = await get_openorders_kraken(client, symbol, symbols_resp, auth)
         if isinstance(op_ord, Ok):
             [order_info] = [order for order in op_ord.value.orders if order.orderID == newOrderID]
         else:

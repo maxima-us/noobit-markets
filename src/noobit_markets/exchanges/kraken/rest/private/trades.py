@@ -15,7 +15,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseTrades, T_PrivateTradesParsedRes, T_PrivateTradesParsedItem
+from noobit_markets.base.models.rest.response import NoobitResponseSymbols, NoobitResponseTrades, T_PrivateTradesParsedRes, T_PrivateTradesParsedItem
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 # Kraken
@@ -46,7 +46,7 @@ class KrakenRequestUserTrades(KrakenPrivateRequest):
 #   "TZ63HS-YBD4M-3RDG7H": {
 #     "ordertxid": "OXXRD7-L67OU-QWHJEZ",
 #     "postxid": "TKH1SE-M7IF3-CFI4LT",
-#     "pair": "ETH-USD",
+#     "pair": "XETHZUSD",
 #     "time": 1588032030.4648,
 #     "type": "buy",
 #     "ordertype": "market",
@@ -60,7 +60,7 @@ class KrakenRequestUserTrades(KrakenPrivateRequest):
 #   "TESD4J-6G7RU-K5C9TU": {
 #     "ordertxid": "ORZGFF-GENRB-Z20HTV",
 #     "postxid": "T6HT2W-ER1S7-5MVQGW",
-#     "pair": "ETH-USD",
+#     "pair": "XETHZUSD",
 #     "time": 1588032024.6599,
 #     "type": "buy",
 #     "ordertype": "market",
@@ -75,7 +75,7 @@ class KrakenRequestUserTrades(KrakenPrivateRequest):
 #     "ordertxid": "OL1AHL-OOF5D-V3KKJM",
 #     "postxid": "TKH0SE-M1IF3-CFI1LT",
 #     "posstatus": "closed",
-#     "pair": "ETH-USD",
+#     "pair": "XETHZUSD",
 #     "time": 1585353611.261,
 #     "type": "sell",
 #     "ordertype": "market",
@@ -122,16 +122,16 @@ class KrakenResponseUserTrades(FrozenBaseModel):
 
 def parse_result(
         result_data: typing.Mapping[str, SingleTradeInfo],
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
         symbol: ntypes.SYMBOL
     ) -> T_PrivateTradesParsedRes:
 
     parsed = [
-        _single_trade(key, info, symbol_to_exchange, symbol)
+        _single_trade(key, info, symbol_from_exchange)
         for key, info in result_data.items()
     ]
 
-    filtered = [item for item in parsed if item["symbol"]]
+    filtered = [item for item in parsed if item["symbol"] == symbol]
 
     return tuple(filtered)
 
@@ -139,8 +139,7 @@ def parse_result(
 def _single_trade(
         key: str,
         info: SingleTradeInfo,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
-        symbol: ntypes.SYMBOL
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
     ) -> T_PrivateTradesParsedItem:
 
     parsed: T_PrivateTradesParsedItem = {
@@ -148,7 +147,7 @@ def _single_trade(
         "transactTime": info.time,
         "orderID": info.ordertxid,
         "clOrdID": None,
-        "symbol": symbol if symbol_to_exchange(symbol) == info.pair else None,
+        "symbol": symbol_from_exchange(info.pair),
         "side": info.type,
         # TODO ordertype mapping
         "ordType": info.ordertype,
@@ -174,11 +173,15 @@ def _single_trade(
 async def get_usertrades_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbols_resp: NoobitResponseSymbols,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.trades_history
     ) -> Result[NoobitResponseTrades, pydantic.ValidationError]:
+    
+
+    # format: "DOTUSD" or "XETHZUSD" (doc incorrect on this one) 
+    symbol_from_exchange= lambda x: {v.exchange_pair: k for k, v in symbols_resp.asset_pairs.items()}[x]
 
     req_url = urljoin(base_url, endpoint)
     method = "POST"
@@ -197,8 +200,8 @@ async def get_usertrades_kraken(
     valid_result_content = _validate_data(KrakenResponseUserTrades, result_content.value)
     if valid_result_content.is_err():
         return valid_result_content
-
-    parsed_result_data = parse_result(valid_result_content.value.trades, symbol_to_exchange, symbol)
+        
+    parsed_result_data = parse_result(valid_result_content.value.trades, symbol_from_exchange, symbol)
 
     valid_parsed_result_data = _validate_data(NoobitResponseTrades, pmap({"trades": parsed_result_data, "rawJson": result_content.value, "exchange": "KRAKEN"}))
     return valid_parsed_result_data

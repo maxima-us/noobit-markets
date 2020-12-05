@@ -13,7 +13,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseBalances
+from noobit_markets.base.models.rest.response import NoobitResponseBalances, NoobitResponseSymbols
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 # Kraken
@@ -58,12 +58,15 @@ def parse_result(
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_balances_kraken(
         client: ntypes.CLIENT,
-        asset_from_exchange: ntypes.ASSET_FROM_EXCHANGE,
+        symbols_resp: NoobitResponseSymbols,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.balances
     ) -> Result[NoobitResponseBalances, Exception]:
 
+    asset_from_exchange = lambda x: {v: k for k, v in symbols_resp.assets.items()}[x]
+
+    
     req_url = urljoin(base_url, endpoint)
     # Kraken Doc : Private methods must use POST
     method = "POST"

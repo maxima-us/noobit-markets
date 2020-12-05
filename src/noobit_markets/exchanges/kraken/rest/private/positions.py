@@ -21,7 +21,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseOpenPositions, T_PositionsParsedRes
+from noobit_markets.base.models.rest.response import NoobitResponseOpenPositions, NoobitResponseSymbols, T_PositionsParsedRes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 # Kraken
@@ -164,13 +164,16 @@ def _single_position(key: str, info: OpenPositionInfo, symbol_from_exchange: nty
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_openpositions_kraken(
         client: ntypes.CLIENT,
-        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
+        symbols_resp: NoobitResponseSymbols,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.open_positions
     ) -> Result[NoobitResponseOpenPositions, typing.Type[Exception]]:
 
 
+    # TODO we dont really know the format here
+    symbol_from_exchange= lambda x: {v.exchange_pair: k for k, v in symbols_resp.asset_pairs.items()}[x]
+    
     req_url = urljoin(base_url, endpoint)
     method = "POST"
     data = {

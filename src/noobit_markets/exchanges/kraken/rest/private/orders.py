@@ -22,7 +22,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseOpenOrders, NoobitResponseClosedOrders, T_OrderParsedRes, T_OrderParsedItem
+from noobit_markets.base.models.rest.response import NoobitResponseOpenOrders, NoobitResponseClosedOrders, NoobitResponseSymbols, T_OrderParsedRes, T_OrderParsedItem
 from noobit_markets.base.models.rest.request import NoobitRequestClosedOrders
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -186,35 +186,33 @@ class KrakenResponseClosedOrders(FrozenBaseModel):
     count: pydantic.PositiveInt
 
 
-
 def parse_result_openorders(
         result_data: typing.Mapping[str, SingleOpenOrder],
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
         symbol: ntypes.SYMBOL
     ) -> T_OrderParsedRes:
 
     parsed = [
-        _single_order(key, order, symbol_to_exchange, symbol)
+        _single_order(key, order, symbol_from_exchange)
         for key, order in result_data.items()
     ]
 
-    filtered = [item for item in parsed if item["symbol"]]
+    filtered = [item for item in parsed if item["symbol"] == symbol]
     return tuple(filtered)
 
 
 def parse_result_closedorders(
         result_data: typing.Mapping[str, SingleClosedOrder],
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
         symbol: ntypes.SYMBOL
     ) -> T_OrderParsedRes:
 
     parsed = [
-        _single_order(key, order, symbol_to_exchange, symbol)
+        _single_order(key, order, symbol_from_exchange)
         for key, order in result_data.items()
     ]
 
-    filtered = [item for item in parsed if item["symbol"]]
-    print(filtered[1])
+    filtered = [item for item in parsed if item["symbol"] == symbol]
     return tuple(filtered)
 
 
@@ -223,16 +221,16 @@ def _single_order(
         # can be either closed or open orders
         # but SingleClosedOrder subclasses SingleOpenOrder
         order: typing.Union[SingleOpenOrder, SingleClosedOrder],
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
-        symbol: ntypes.SYMBOL
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
     ) -> T_OrderParsedItem:
 
 
     parsed: T_OrderParsedItem = {
 
             "orderID": key,
-            "symbol": symbol if symbol_to_exchange(symbol) == order.descr.pair else None,
-            "currency": symbol.split("-")[1] if symbol_to_exchange(symbol) == order.descr.pair else None,
+            "symbol": symbol_from_exchange(order.descr.pair),
+            # "currency": symbol.split("-")[1] if symbol_to_exchange(symbol) == order.descr.pair else None,
+            "currency": symbol_from_exchange(order.descr.pair).split("-")[1],
             # "currency": "USD",
             "side": order.descr.type,
             "ordType": order.descr.ordertype,
@@ -295,12 +293,16 @@ def _single_order(
 async def get_openorders_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE ,
+        symbols_resp: NoobitResponseSymbols,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.open_orders
     ) -> Result[NoobitResponseOpenOrders, Exception]:
 
+
+    # format: "ETHUSD"
+    symbol_from_exchange = lambda x: {f"{v.noobit_base}{v.noobit_quote}": k for k, v in symbols_resp.asset_pairs.items()}[x]
+    
     req_url = urljoin(base_url, endpoint)
     # Kraken Doc : Private methods must use POST
     method = "POST"
@@ -322,7 +324,7 @@ async def get_openorders_kraken(
 
     parsed_result_data = parse_result_openorders(
         valid_result_content.value.open,
-        symbol_to_exchange,
+        symbol_from_exchange,
         symbol
     )
 
@@ -341,14 +343,18 @@ async def get_openorders_kraken(
 async def get_closedorders_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE ,
+        symbols_resp: NoobitResponseSymbols,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.closed_orders
     ) -> Result[NoobitResponseClosedOrders, Exception]:
 
+
+    # format: "ETHUSD"
+    symbol_from_exchange = lambda x: {f"{v.noobit_base}{v.noobit_quote}": k for k, v in symbols_resp.asset_pairs.items()}[x]
+    
     req_url = urljoin(base_url, endpoint)
-    # Kraken Doc : Private methods must use POST
+     # Kraken Doc : Private methods must use POST
     method = "POST"
     data = {"nonce": auth.nonce, "trades": True}
 
@@ -368,7 +374,7 @@ async def get_closedorders_kraken(
 
     parsed_result_data = parse_result_closedorders(
         valid_result_content.value.closed,
-        symbol_to_exchange,
+        symbol_from_exchange,
         symbol
     )
 

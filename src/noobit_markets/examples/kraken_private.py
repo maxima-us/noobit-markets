@@ -16,7 +16,7 @@ from noobit_markets.exchanges.kraken.rest.private.trading import post_neworder_k
 
 from noobit_markets.base._tabulate import pylist_table, pymap_table
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.rest.response import NBalances, NTrades
+from noobit_markets.base.models.rest.response import NBalances, NExposure, NTrades
 
 
 
@@ -51,7 +51,8 @@ else:
             symbol="DOT-USD",
             # FIXME wouldnt it be better to pass noobit objetct as symbol_to_exchange
             # (that way we could get both `to` and `from` exchange, as well as decimal places and min orders)
-            symbol_to_exchange=lambda x: {k: v.exchange_pair for k, v in symbols.asset_pairs.items()}[x],
+            # symbol_to_exchange=lambda x: {k: v.exchange_pair for k, v in symbols.asset_pairs.items()}[x],
+            symbols_resp=sym.value,
             side="buy",
             ordType="market",
             clOrdID="1234567",
@@ -78,7 +79,8 @@ else:
         get_balances_kraken(
             client=httpx.AsyncClient(),
             # if we also want to see the staking assets (eg `DOT.S`)
-            asset_from_exchange=lambda x : asset_from_exchange[x] if ".S" not in x else ntypes.PAsset(x)
+            # asset_from_exchange=lambda x : asset_from_exchange[x] if ".S" not in x else ntypes.PAsset(x)
+            symbols_resp=sym.value
         )
     )
     _bals = NBalances(bal)
@@ -108,11 +110,22 @@ else:
             client=httpx.AsyncClient(),
         )
     )
-    if expo.is_err():
-        print(expo)
+
+    _exp = NExposure(expo)
+
+    if _exp.is_err():
+        print(_exp.result)
     else:
-        # (print(expo.value))
+        # print("Asks :", _ob.result.value.asks)
+        # print("Bids :", _ob.result.value.bids)
+        print(_exp.table)
         print("Exposure ok")
+    
+    # if expo.is_err():
+    #     print(expo)
+    # else:
+    #     # (print(expo.value))
+    #     print("Exposure ok")
 
 
     # ============================================================
@@ -125,8 +138,9 @@ else:
             #! Problem is we can now not inspect the dict anymore
             #! so if we get an error, it will be way harder to debug
             #! but also provides more flexbility as shown in this example
-            symbol_to_exchange=lambda x: symbol_to_exchange[x],
+            # symbol_to_exchange=lambda x: symbol_to_exchange[x],
             # symbols_from_exchange=lambda x: {v.ws_name.replace("/", ""): k for k, v in symbols.asset_pairs.items()}.get(x),
+            symbols_resp=sym.value,
             symbol=ntypes.PSymbol("DOT-USD")       #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
         )
     )
@@ -143,13 +157,13 @@ else:
     clo = asyncio.run(
         get_closedorders_kraken(
             client=httpx.AsyncClient(),
-            symbol_to_exchange=lambda x: symbol_to_exchange[x],
+            # symbol_to_exchange=lambda x: symbol_to_exchange[x],
             # symbol_from_exchange=lambda x: {f"{v.noobit_base}{v.noobit_quote}": k for k, v in symbols.asset_pairs.items()}[x],
             # symbol_from_exchange=lambda x: f"{x[0:3]}-{x[-3:]}",
+            symbols_resp=sym.value,
             symbol=ntypes.PSymbol("DOT-USD")      #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
         )
     )
-
 
     if clo.is_err():
         print(clo)
@@ -169,7 +183,8 @@ else:
         get_openpositions_kraken(
             client=httpx.AsyncClient(),
             # symbols_to_exchange={k: v.exchange_name for k, v in symbols.asset_pairs.items()},
-            symbol_from_exchange=lambda x: {f"{v.exchange_base}{v.exchange_quote}": k for k, v in symbols.asset_pairs.items()}.get(x),
+            # symbol_from_exchange=lambda x: {f"{v.exchange_base}{v.exchange_quote}": k for k, v in symbols.asset_pairs.items()}.get(x),
+            symbols_resp=sym.value
         )
     )
     if opp.is_err():
@@ -185,12 +200,14 @@ else:
     utr = asyncio.run(
         get_usertrades_kraken(
             client=httpx.AsyncClient(),
-            symbol=ntypes.PSymbol("XBT-USD"),        #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
+            symbol=ntypes.PSymbol("DOT-USD"),        #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
             # symbol_from_exchange=lambda x: {v.exchange_name: k for k, v in symbols.asset_pairs.items()}.get(x, None),
             # symbol_from_exchange=lambda x: {f"{v.exchange_base}{v.exchange_quote}": k for k, v in symbols.asset_pairs.items()}.get(x),
-            symbol_to_exchange=lambda x: symbol_to_exchange[x],
+            # symbol_to_exchange=lambda x: symbol_to_exchange[x],
+            symbols_resp=sym.value
         )
     )
+
     _trd = NTrades(utr)
 
     if _trd.is_err():

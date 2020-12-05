@@ -27,7 +27,7 @@ _sym = NSymbol(symbols)
 if _sym.is_err():
     print(_sym.result)
 else:
-    # print(_sym.table)
+    print(_sym.table)
     print("Symbols ok")
 
 # if res.is_err():
@@ -148,7 +148,7 @@ _inst = NInstrument(instrument)
 if _inst.is_err():
     print(_inst.result)
 else:
-    print(_inst.table)
+    # print(_inst.table)
     print("Instrument ok")
 
 # if res.is_err():
