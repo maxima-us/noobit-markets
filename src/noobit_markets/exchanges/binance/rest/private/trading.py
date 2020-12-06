@@ -18,7 +18,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseItemOrder, T_NewOrderParsedRes, T_OrderParsedItem
+from noobit_markets.base.models.rest.response import NoobitResponseItemOrder, NoobitResponseSymbols, T_NewOrderParsedRes, T_OrderParsedItem
 from noobit_markets.base.models.rest.request import NoobitRequestAddOrder
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -245,7 +245,7 @@ def parse_result(
 async def post_neworder_binance(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbols_resp: NoobitResponseSymbols,
         side: ntypes.ORDERSIDE,
         ordType: ntypes.ORDERTYPE,
         clOrdID: str,
@@ -261,6 +261,8 @@ async def post_neworder_binance(
     ) -> Result[NoobitResponseItemOrder, ValidationError]:
 
 
+    symbol_to_exchange= lambda x: {k: v.exchange_pair for k, v in symbols_resp.asset_pairs.items()}[x]
+    
     req_url = urljoin(base_url, endpoint)
     method = "POST"
     headers: typing.Dict = auth.headers()

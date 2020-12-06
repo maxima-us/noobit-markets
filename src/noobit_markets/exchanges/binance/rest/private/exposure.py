@@ -9,7 +9,7 @@ from pyrsistent import pmap
 from noobit_markets.base.request import _validate_data
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Err, Result
-from noobit_markets.base.models.rest.response import NoobitResponseExposure
+from noobit_markets.base.models.rest.response import NoobitResponseExposure, NoobitResponseSymbols
 
 from noobit_markets.exchanges.binance.rest.auth import BinanceAuth, BinancePrivateRequest
 
@@ -18,18 +18,19 @@ from ..public.instrument import get_instrument_binance
 
 
 async def get_exposure_binance(
-    client: ntypes.CLIENT,
-    asset_from_exchange: ntypes.ASSET_FROM_EXCHANGE,
-    symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
-    auth=BinanceAuth()
-) -> Result[NoobitResponseExposure, ValidationError]:
+        client: ntypes.CLIENT,
+        symbols_resp: NoobitResponseSymbols,
+        auth=BinanceAuth()
+    ) -> Result[NoobitResponseExposure, ValidationError]:
     """
     Binance does not have an endpoint for this, so we have to check fiat value
     of each asset in balances individually ==> slow
     """
 
+    # asset_from_exchange = lambda x: {v: k for k, v in symbols_resp.assets.items()}[x]
+    
     totalNetValue = Decimal(0)
-    bals = await get_balances_binance(client, asset_from_exchange, auth)
+    bals = await get_balances_binance(client, symbols_resp, auth)
 
     if isinstance(bals, Err):
         return bals
@@ -37,12 +38,12 @@ async def get_exposure_binance(
     else:
         for asset, amount in bals.value.balances.items():
             if not asset in ["USDT", "USD"]:
-                symbol = str(f"{asset}-USDT").replace("XBT", "BTC")
-                typed = type(symbol)
+                symbol = str(f"{asset}-USDT")
                 price = await get_instrument_binance(
                     client=client,
                     symbol=ntypes.PSymbol(symbol),
-                    symbol_to_exchange=symbol_to_exchange
+                    # symbol_to_exchange=symbol_to_exchange
+                    symbols_resp=symbols_resp
                 )
                 if price.is_err():
                     raise price.value

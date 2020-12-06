@@ -23,7 +23,7 @@ async def fetch(client, symbols_resp):
             client,
             "XBT-USD",
             # lambda x: symbol_mapping["asset_pairs"][x],
-            symbols.value,
+            symbols_resp.value,
             100,
         )
 

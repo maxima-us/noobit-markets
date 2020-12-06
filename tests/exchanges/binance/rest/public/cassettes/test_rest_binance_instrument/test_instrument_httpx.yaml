@@ -5,7 +5,7 @@ interactions:
     method: GET
     uri: https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT
   response:
-    content: '{"symbol":"BTCUSDT","priceChange":"-87.55000000","priceChangePercent":"-0.673","weightedAvgPrice":"13052.72198404","prevClosePrice":"13007.06000000","lastPrice":"12919.50000000","lastQty":"0.01000000","bidPrice":"12919.63000000","bidQty":"5.04551300","askPrice":"12919.64000000","askQty":"0.00900000","openPrice":"13007.05000000","highPrice":"13238.81000000","lowPrice":"12780.00000000","volume":"52956.35361700","quoteVolume":"691224561.05144348","openTime":1603646145275,"closeTime":1603732545275,"firstId":442261556,"lastId":442988972,"count":727417}'
+    content: '{"symbol":"BTCUSDT","priceChange":"53.47000000","priceChangePercent":"0.280","weightedAvgPrice":"19116.65262838","prevClosePrice":"19091.27000000","lastPrice":"19144.74000000","lastQty":"0.00437200","bidPrice":"19144.85000000","bidQty":"0.03986200","askPrice":"19144.86000000","askQty":"0.00550000","openPrice":"19091.27000000","highPrice":"19342.00000000","lowPrice":"18857.00000000","volume":"33925.51956700","quoteVolume":"648542372.79968606","openTime":1607190960189,"closeTime":1607277360189,"firstId":498315292,"lastId":499111375,"count":796084}'
     headers:
       access-control-allow-methods:
       - GET, HEAD, OPTIONS
@@ -18,13 +18,13 @@ interactions:
       content-encoding:
       - gzip
       content-length:
-      - '297'
+      - '292'
       content-security-policy:
       - default-src 'self'
       content-type:
       - application/json;charset=UTF-8
       date:
-      - Mon, 26 Oct 2020 17:15:45 GMT
+      - Sun, 06 Dec 2020 17:56:00 GMT
       expires:
       - '0'
       pragma:
@@ -34,11 +34,11 @@ interactions:
       strict-transport-security:
       - max-age=31536000; includeSubdomains
       via:
-      - 1.1 2d905d2c9a6d0b833a673c4fbaea5b54.cloudfront.net (CloudFront)
+      - 1.1 1dd9956539498e00dad2092ceea48484.cloudfront.net (CloudFront)
       x-amz-cf-id:
-      - K9zrqJr3EW2OWbYmZgRtqlhSxyp-eTYv40G6RVPMYCKMRQXo4DT4tA==
+      - PkmrNV0xRW2IcszT1EY4UT7l7oPmgDzGhQh3YpixFYxJ5I4pWJx3ag==
       x-amz-cf-pop:
-      - NRT12-C2
+      - CDG3-C1
       x-cache:
       - Miss from cloudfront
       x-content-security-policy:
@@ -52,7 +52,7 @@ interactions:
       x-mbx-used-weight-1m:
       - '1'
       x-mbx-uuid:
-      - e3e64f8d-34a3-4a7c-81f7-00d41782d3ba
+      - 09e79689-3935-44f0-9364-c3e1e5e55c53
       x-webkit-csp:
       - default-src 'self'
       x-xss-protection:

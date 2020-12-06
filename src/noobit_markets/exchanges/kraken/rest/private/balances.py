@@ -64,9 +64,9 @@ async def get_balances_kraken(
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.balances
     ) -> Result[NoobitResponseBalances, Exception]:
 
+
     asset_from_exchange = lambda x: {v: k for k, v in symbols_resp.assets.items()}[x]
 
-    
     req_url = urljoin(base_url, endpoint)
     # Kraken Doc : Private methods must use POST
     method = "POST"

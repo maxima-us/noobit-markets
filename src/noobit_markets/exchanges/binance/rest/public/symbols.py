@@ -126,7 +126,7 @@ def parse_to_assetpairs(
     ) -> typing.Dict[ntypes.PSymbol, T_SymbolParsedPair]:
 
     parsed = {
-        ntypes.PSymbol(f"{data.baseAsset}-{data.quoteAsset}"): _single_assetpair(data)
+        ntypes.PSymbol(f"{data.baseAsset.replace('BTC', 'XBT')}-{data.quoteAsset.replace('BTC', 'XBT')}"): _single_assetpair(data)
         #? filter out pairs that are not trading ?
         for data in result_data if data.status == "TRADING" and data.baseAsset != "KP3R"
     }

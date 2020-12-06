@@ -16,7 +16,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result, Err
-from noobit_markets.base.models.rest.response import NoobitResponseTrades, T_PublicTradesParsedRes, T_PublicTradesParsedItem
+from noobit_markets.base.models.rest.response import NoobitResponseSymbols, NoobitResponseTrades, T_PublicTradesParsedRes, T_PublicTradesParsedItem
 from noobit_markets.base.models.rest.request import NoobitRequestTrades
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -137,17 +137,20 @@ def _single_trade(
 async def get_trades_binance(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbols_resp: NoobitResponseSymbols,
         since: typing.Optional[ntypes.TIMESTAMP] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.trades,
     ) -> Result[NoobitResponseTrades, ValidationError]:
 
+
+    symbol_to_exchange = lambda x : {k: v.exchange_pair for k, v in symbols_resp.asset_pairs.items()}[x]
+    
     req_url = urljoin(base_url, endpoint)
     method = "GET"
     headers: typing.Dict = {}
 
-    valid_noobit_req = validate_nreq_trades(symbol, symbol_to_exchange, since)
+    valid_noobit_req = _validate_data(NoobitRequestTrades,  pmap({"symbol": symbol, "symbols_resp": symbols_resp, "since": since}))
     if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
 

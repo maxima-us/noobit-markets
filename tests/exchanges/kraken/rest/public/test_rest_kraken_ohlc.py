@@ -23,7 +23,7 @@ async def fetch(client, symbols_resp):
         ohlc = await get_ohlc_kraken(
             client=client,
             symbol="XBT-USD",
-            symbols_resp=symbols.value,
+            symbols_resp=symbols_resp.value,
             timeframe="1H",
             since=None
         )

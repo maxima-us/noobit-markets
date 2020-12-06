@@ -16,7 +16,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Err, Result
-from noobit_markets.base.models.rest.response import NoobitResponseInstrument, T_InstrumentParsedRes
+from noobit_markets.base.models.rest.response import NoobitResponseInstrument, NoobitResponseSymbols, T_InstrumentParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestInstrument
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -146,17 +146,20 @@ def parse_result(
 async def get_instrument_binance(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbols_resp: NoobitResponseSymbols,
+        # symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.instrument,
     ) -> Result[NoobitResponseInstrument, ValidationError]:
 
+
+    symbol_to_exchange = lambda x : {k: v.exchange_pair for k, v in symbols_resp.asset_pairs.items()}[x]
+    
     req_url = urljoin(base_url, endpoint)
     method = "GET"
     headers: typing.Dict = {}
 
-
-    valid_noobit_req = validate_nreq_instrument(symbol, symbol_to_exchange)
+    valid_noobit_req = _validate_data(NoobitRequestInstrument, pmap({"symbol": symbol, "symbols_resp": symbols_resp}))
     if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
 

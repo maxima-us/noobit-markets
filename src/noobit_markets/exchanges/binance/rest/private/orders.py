@@ -116,20 +116,24 @@ class BinanceResponseOrders(FrozenBaseModel):
 
 def parse_result(
         result_data: BinanceResponseOrders,
-        symbol: ntypes.SYMBOL
+        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE
     ) -> T_OrderParsedRes:
 
-    parsed = [_single_order(item, symbol) for item in result_data.orders]
+    parsed = [_single_order(item, symbol_from_exchange) for item in result_data.orders]
 
     return tuple(parsed)
 
 
-def _single_order(item: BinanceResponseItemOrders, symbol: ntypes.SYMBOL) -> T_OrderParsedItem:
+def _single_order(
+    item: BinanceResponseItemOrders,
+    symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE
+    ) -> T_OrderParsedItem:
 
     parsed: T_OrderParsedItem = {
         "orderID": item.orderId,
-        "symbol": symbol,
-        "currency": symbol.split("-")[1],
+        # TODO return error if symbols dont match
+        "symbol": symbol_from_exchange(item.symbol),
+        "currency": symbol_from_exchange(item.symbol).split("-"),
         "side": item.side.lower(),
         "ordType": item.type.replace("_", "-").lower(),
         "execInst": None,
@@ -183,13 +187,17 @@ def _single_order(item: BinanceResponseItemOrders, symbol: ntypes.SYMBOL) -> T_O
 async def get_closedorders_binance(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbols_resp: NoobitResponseSymbols,
         auth=BinanceAuth(),
         # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.private.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.private.endpoints.closed_orders
     ) -> Result[NoobitResponseClosedOrders, ValidationError]:
 
+
+    symbol_to_exchange = lambda x: {k: v.exchange_pair for k, v in symbols_resp.asset_pairs.items()}[x]
+    symbol_from_exchange = lambda x: {f"{v.noobit_base}{v.noobit_quote}": k for k, v in symbols_resp.asset_pairs.items()}[x]
+    
     req_url = urljoin(base_url, endpoint)
     method = "GET"
     headers: typing.Dict = auth.headers()
@@ -215,7 +223,7 @@ async def get_closedorders_binance(
     if valid_result_content.is_err():
         return valid_result_content
 
-    parsed_result = parse_result(valid_result_content.value, symbol)
+    parsed_result = parse_result(valid_result_content.value, symbol_from_exchange)
 
     closed_orders = [item for item in parsed_result if item["ordStatus"] in ["closed", "canceled"]]
 

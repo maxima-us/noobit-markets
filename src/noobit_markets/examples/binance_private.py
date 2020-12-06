@@ -31,7 +31,8 @@ bals = asyncio.run(
     get_balances_binance(
         client=httpx.AsyncClient(),
         # FIXME Does note fail explicitely if we pass in a non callable
-        asset_from_exchange=lambda x: {k: v for v, k in sym.value.assets.items()}[x]
+        # asset_from_exchange=lambda x: {k: v for v, k in sym.value.assets.items()}[x]
+        symbols_resp=sym.value
     )
 )
 
@@ -49,8 +50,9 @@ exp = asyncio.run(
     get_exposure_binance(
         client=httpx.AsyncClient(),
         # FIXME Does note fail explicitely if we pass in a non callable
-        asset_from_exchange=lambda x: {k: v for v, k in sym.value.assets.items()}[x],
-        symbol_to_exchange=lambda x: {k: v.exchange_pair for k, v in sym.value.asset_pairs.items()}[x]
+        # asset_from_exchange=lambda x: {k: v for v, k in sym.value.assets.items()}[x],
+        # symbol_to_exchange=lambda x: {k: v.exchange_pair for k, v in sym.value.asset_pairs.items()}[x]
+        symbols_resp=sym.value
     )
 )
 
@@ -67,8 +69,9 @@ else:
 res = asyncio.run(
     get_closedorders_binance(
         client=httpx.AsyncClient(),
-        symbol="XBT-USD",
-        symbol_to_exchange=lambda x: {"XBT-USD": "BTCUSDT"}[x]
+        symbol="XBT-USDT",
+        # symbol_to_exchange=lambda x: {"XBT-USD": "BTCUSDT"}[x]
+        symbols_resp=sym.value
     )
 )
 
@@ -86,8 +89,9 @@ else:
 res = asyncio.run(
     get_trades_binance(
         client=httpx.AsyncClient(),
-        symbol="XBT-USD",
-        symbol_to_exchange= lambda x: {"XBT-USD": "BTCUSDT"}[x]
+        symbol="XBT-USDT",
+        # symbol_to_exchange= lambda x: {"XBT-USD": "BTCUSDT"}[x]
+        symbols_resp=sym.value
     )
 )
 
@@ -106,9 +110,10 @@ else:
 trd = asyncio.run(
     post_neworder_binance(
         client=httpx.AsyncClient(),
-        symbol="BTC-USDT",
+        symbol="XBT-USDT",
         # symbol_to_exchange=lambda x: {k: v.exchange_pair for k, v in sym.value.asset_pairs.items()}[x],
-        symbol_to_exchange=lambda x: {"BTC-USDT": "BTCUSDT"}[x],
+        # symbol_to_exchange=lambda x: {"BTC-USDT": "BTCUSDT"}[x],
+        symbols_resp=sym.value,
         side="sell",
         ordType="take-profit-limit",
         clOrdID="10101",

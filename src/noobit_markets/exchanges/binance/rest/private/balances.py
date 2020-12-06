@@ -16,7 +16,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseBalances
+from noobit_markets.base.models.rest.response import NoobitResponseBalances, NoobitResponseSymbols
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 
@@ -117,13 +117,16 @@ def parse_result(
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_balances_binance(
         client: ntypes.CLIENT,
-        asset_from_exchange: ntypes.ASSET_FROM_EXCHANGE,
+        symbols_resp: NoobitResponseSymbols,
         auth=BinanceAuth(),
         # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.private.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.private.endpoints.balances
     ) -> Result[NoobitResponseBalances, ValidationError]:
 
+    
+    asset_from_exchange = lambda x: {v: k for k, v in symbols_resp.assets.items()}[x]
+    
     # FIXME we need to check that user passes in correct types
     # FIXME generally speaking, we forgot to test this in endpoints that dont require user input
     # assert callable(asset_from_exchange)

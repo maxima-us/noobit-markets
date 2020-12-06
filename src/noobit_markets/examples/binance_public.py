@@ -1,5 +1,6 @@
 import asyncio
 import httpx
+from noobit_markets.base.models.rest.response import NSymbol
 
 from noobit_markets.exchanges.binance.rest.public.ohlc import get_ohlc_binance
 from noobit_markets.exchanges.binance.rest.public.orderbook import get_orderbook_binance
@@ -7,6 +8,28 @@ from noobit_markets.exchanges.binance.rest.public.trades import get_trades_binan
 from noobit_markets.exchanges.binance.rest.public.instrument import get_instrument_binance
 from noobit_markets.exchanges.binance.rest.public.symbols import get_symbols_binance
 from noobit_markets.exchanges.binance.rest.public.spread import get_spread_binance
+
+
+
+
+#============================================================
+# SYMBOLS
+#============================================================
+
+
+symbols = asyncio.run(
+    get_symbols_binance(
+        client=httpx.AsyncClient(),
+    )
+)
+
+_sym = NSymbol(symbols)
+
+if _sym.is_err():
+    print(_sym.result)
+else:
+    print(_sym.table)
+    print("Symbols ok")
 
 
 #============================================================
@@ -17,8 +40,8 @@ from noobit_markets.exchanges.binance.rest.public.spread import get_spread_binan
 res = asyncio.run(
     get_ohlc_binance(
         client=httpx.AsyncClient(),
-        symbol="XBT-USD",
-        symbol_to_exchange=lambda x: {"XBT-USD": "BTCUSDT"}.get(x),
+        symbol="XBT-USDT",
+        symbols_resp=symbols.value,
         timeframe="15M",
         since=None
     )
@@ -36,8 +59,8 @@ else:
 res = asyncio.run(
     get_orderbook_binance(
         client=httpx.AsyncClient(),
-        symbol="XBT-USD",
-        symbol_to_exchange=lambda x: {"XBT-USD": "BTCUSDT"}.get(x),
+        symbol="XBT-USDT",
+        symbols_resp=symbols.value,
         depth=10
     )
 )
@@ -56,8 +79,8 @@ else:
 res = asyncio.run(
     get_trades_binance(
         client=httpx.AsyncClient(),
-        symbol="XBT-USD",
-        symbol_to_exchange=lambda x : {"XBT-USD": "BTCUSDT"}.get(x),
+        symbol="XBT-USDT",
+        symbols_resp=symbols.value,
     )
 )
 
@@ -75,8 +98,8 @@ else:
 res = asyncio.run(
     get_instrument_binance(
         client=httpx.AsyncClient(),
-        symbol="XBT-USD",
-        symbol_to_exchange=lambda x: {"XBT-USD": "BTCUSDT"}.get(x),
+        symbol="XBT-USDT",
+        symbols_resp=symbols.value,
     )
 )
 
@@ -86,21 +109,6 @@ else:
     print("Instrument ok")
 
 
-#============================================================
-# SYMBOLS
-#============================================================
-
-
-res = asyncio.run(
-    get_symbols_binance(
-        client=httpx.AsyncClient(),
-    )
-)
-
-if res.is_err():
-    print(res)
-else:
-    print("Symbols ok")
 
 
 #============================================================
@@ -111,8 +119,8 @@ else:
 res = asyncio.run(
     get_spread_binance(
         client=httpx.AsyncClient(),
-        symbol="XBT-USD",
-        symbol_to_exchange=lambda x: {"XBT-USD": "BTCUSDT"}.get(x),
+        symbol="XBT-USDT",
+        symbols_resp=symbols.value,
     )
 )
 
