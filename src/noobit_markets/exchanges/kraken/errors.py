@@ -3,7 +3,9 @@ import typing
 from noobit_markets.base.errors import *
 
 
-# undocumented errors we encountered: 'EGeneral:Invalid arguments:volume'
+# undocumented errors we encountered: 
+#       'EGeneral:Invalid arguments:volume'
+#       KeyError: 'EOrder:Invalid price:DOTUSD price can only be specified up to 4 decimals.' 
 
 # see: https://support.kraken.com/hc/en-us/articles/360001491786-API-Error-Codes
 # typing.Type makes mypy accept subclasses of Exception as well

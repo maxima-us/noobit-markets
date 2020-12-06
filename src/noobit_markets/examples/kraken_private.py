@@ -54,11 +54,11 @@ else:
             # symbol_to_exchange=lambda x: {k: v.exchange_pair for k, v in symbols.asset_pairs.items()}[x],
             symbols_resp=sym.value,
             side="buy",
-            ordType="market",
+            ordType="limit",
             clOrdID="1234567",
-            orderQty=0.1,
-            price=None,
-            timeInForce=None,
+            orderQty=1.2315993434343526262626264343434,
+            price=1.2323,
+            timeInForce="GTC",
             quoteOrderQty=None,
             stopPrice=None
         )
@@ -90,7 +90,7 @@ else:
     else:
         # print("Asks :", _ob.result.value.asks)
         # print("Bids :", _ob.result.value.bids)
-        print(_bals.table)
+        # print(_bals.table)
         print("Balances ok")
     
     # if bal.is_err():
@@ -118,7 +118,7 @@ else:
     else:
         # print("Asks :", _ob.result.value.asks)
         # print("Bids :", _ob.result.value.bids)
-        print(_exp.table)
+        # print(_exp.table)
         print("Exposure ok")
     
     # if expo.is_err():
@@ -215,7 +215,7 @@ else:
     else:
         # print("Asks :", _ob.result.value.asks)
         # print("Bids :", _ob.result.value.bids)
-        print(_trd.table)
+        # print(_trd.table)
         print("Trades ok")
 
     # if utr.is_err():

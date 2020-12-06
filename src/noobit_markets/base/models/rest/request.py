@@ -89,7 +89,7 @@ class NoobitRequestSpread(FrozenBaseModel):
 class NoobitRequestClosedOrders(FrozenBaseModel):
 
     symbol: ntypes.SYMBOL
-    symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
+    symbol_resp: NoobitResponseSymbols
 
 
 
@@ -104,6 +104,7 @@ class NoobitRequestAddOrder(FrozenBaseModel):
     exchange: ntypes.EXCHANGE
 
     symbol: ntypes.SYMBOL
+    symbols_resp: NoobitResponseSymbols
 
     # this is irrelevant if symbol_mapping is a callable
     # symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
@@ -137,7 +138,7 @@ class NoobitRequestAddOrder(FrozenBaseModel):
 
     # validation: bool = False
 
-    #! param at the end for validaiton purposes (validated in the order htat they are declared)
+    #! params at the end for validaiton purposes (validated in the order htat they are declared)
     ordType: ntypes.ORDERTYPE
 
 
@@ -176,8 +177,43 @@ class NoobitRequestAddOrder(FrozenBaseModel):
     #         return None
 
 
+    @validator("orderQty")
+    def _check_volume(cls, v, values):
+
+        if not v:
+            raise ValueError("Missing value for field: orderQty")
+
+        symbol = values["symbol"]
+        symbol_specs = values["symbols_resp"].asset_pairs[symbol]
+        if v < symbol_specs.order_min:
+            raise ValueError(f"Order Quantity must exceed {symbol_specs.order_min}, got {v}")
+        
+        
+        given_decs = -1*v.as_tuple().exponent
+        if given_decs > symbol_specs.volume_decimals:
+            raise ValueError(f"Volume Decimals must be less than {symbol_specs.volume_decimals}, got {given_decs}")
+
+        return v
+
+
+    @validator("price")
+    def _check_decimals(cls, v, values):
+        if not v:
+            return v
+
+        given_decs = -1*v.as_tuple().exponent
+        symbol = values["symbol"]
+        symbol_specs = values["symbols_resp"].asset_pairs[symbol]
+        if given_decs > symbol_specs.price_decimals:
+            raise ValueError(f"Price Decimals must be less than {symbol_specs.price_decimals}, got {given_decs}")
+
+        return v
+
+
     @validator("ordType")
     def _check_mandatory_args(cls, v, values):
+        missing_fields = []
+        unexpected_fields = []
 
         if v == "market":
             # one of orderQty or quoteOrderQty
@@ -197,19 +233,19 @@ class NoobitRequestAddOrder(FrozenBaseModel):
         if v == "limit":
             # check mandatory params
             if not values.get("timeInForce", None):
-                raise ValueError("Missing value for timeInForce")
+                missing_fields.append("timeInForce")
             if not values.get("price", None):
-                raise ValueError("Missing value for price")
+                missing_fields.append("price")
             if not values.get("orderQty", None):
-                raise ValueError("Missing value for orderQty")
+                missing_fields.append("orderQty")
 
             #no additional params
             if values.get("execInst", None):
-                raise ValueError("Unexpected field: execInst")
+                unexpected_fields.append("execInst")
             if values.get("stopPrice", None):
-                raise ValueError("Unexpected field: stopPrice")
+                unexpected_fields.append("stopPrice")
             if values.get("quoteOrderQty", None):
-                raise ValueError("Unexpected field: quoteOrderQty")
+                unexpected_fields.append("quoteOrderQty")
 
         if v in ["stop-loss", "take-profit"]:
             # mandatory params
@@ -245,4 +281,10 @@ class NoobitRequestAddOrder(FrozenBaseModel):
             if values.get("quoteOrderQty", None):
                 raise ValueError("Unexpected field quoteOrderQty")
 
+        if missing_fields:
+            raise ValueError("Missing value for fields :", *missing_fields)
+
+        if unexpected_fields:
+            raise ValueError("Unexpected fields :", *unexpected_fields)
+        
         return v
