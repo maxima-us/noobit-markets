@@ -15,7 +15,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result, Err
-from noobit_markets.base.models.rest.response import NoobitResponseOrderBook, T_OrderBookParsedRes
+from noobit_markets.base.models.rest.response import NoobitResponseOrderBook, NoobitResponseSymbols, T_OrderBookParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestOrderBook
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -49,11 +49,10 @@ class _ParsedReq(TypedDict):
 
 def parse_request(
         valid_request: NoobitRequestOrderBook,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
     ) -> _ParsedReq:
 
     payload: _ParsedReq = {
-        "market_name": symbol_to_exchange(valid_request.symbol),
+        "market_name": valid_request.symbols_resp.asset_pairs.get(valid_request.symbol).exchange_pair,
         "depth": valid_request.depth
     }
 
@@ -119,12 +118,15 @@ def parse_result(
 async def get_orderbook_ftx(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbols_resp: NoobitResponseSymbols,
         depth: ntypes.DEPTH,
         base_url: pydantic.AnyHttpUrl = endpoints.FTX_ENDPOINTS.public.url,
         endpoint: str = endpoints.FTX_ENDPOINTS.public.endpoints.orderbook,
     ) -> Result[NoobitResponseOrderBook, pydantic.ValidationError]:
 
+    
+    symbol_to_exchange = lambda x : {k: v.exchange_pair for k, v in symbols_resp.asset_pairs.items()}[x]
+    
     # ftx has variable urls besides query params
     # format: https://ftx.com/api/markets/{market_name}/candles
     # FIXME use urljoin
@@ -132,11 +134,11 @@ async def get_orderbook_ftx(
     method = "GET"
     headers: typing.Dict = {}
 
-    valid_noobit_req = validate_nreq_orderbook(symbol, symbol_to_exchange, depth)
+    valid_noobit_req = _validate_data(NoobitRequestOrderBook, pmap({"symbol": symbol, "symbols_resp": symbols_resp, "depth": depth}))
     if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
 
-    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
+    parsed_req = parse_request(valid_noobit_req.value)
 
     valid_ftx_req = _validate_data(FtxRequestOrderBook, pmap(parsed_req))
     if valid_ftx_req.is_err():

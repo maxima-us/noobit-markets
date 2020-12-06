@@ -16,7 +16,7 @@ from noobit_markets.base.request import (
 from noobit_markets.base import mappings
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result, Err
-from noobit_markets.base.models.rest.response import NoobitResponseOhlc, T_OhlcParsedRes
+from noobit_markets.base.models.rest.response import NoobitResponseOhlc, NoobitResponseSymbols, T_OhlcParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestOhlc
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -59,12 +59,11 @@ class _ParsedReq(TypedDict):
 
 def parse_request(
         valid_request: NoobitRequestOhlc,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE
     ) -> _ParsedReq:
 
 
     payload: _ParsedReq = {
-        "market_name": symbol_to_exchange(valid_request.symbol),
+        "market_name": valid_request.symbols_resp.asset_pairs.get(valid_request.symbol).exchange_pair,
         "resolution": mappings.TIMEFRAME[valid_request.timeframe],
         "limit": 4000,
         # noobit ts are in ms vs ohlc kraken ts in s
@@ -157,24 +156,27 @@ def _parse_candle(
 async def get_ohlc_ftx(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbols_resp: NoobitResponseSymbols,
         timeframe: ntypes.TIMEFRAME,
         since: ntypes.TIMESTAMP,
         base_url: pydantic.AnyHttpUrl = endpoints.FTX_ENDPOINTS.public.url,
         endpoint: str = endpoints.FTX_ENDPOINTS.public.endpoints.ohlc,
     ) -> Result[NoobitResponseOhlc, pydantic.ValidationError]:
 
+
+    symbol_to_exchange = lambda x : {k: v.exchange_pair for k, v in symbols_resp.asset_pairs.items()}[x]
+    
     # ftx has variable urls besides query params
     # format: https://ftx.com/api/markets/{market_name}/candles
     req_url = "/".join([base_url, "markets", symbol_to_exchange(symbol), endpoint])
     method = "GET"
     headers: typing.Dict = {}
 
-    valid_noobit_req = validate_nreq_ohlc(symbol, symbol_to_exchange, timeframe, since)
+    valid_noobit_req = _validate_data(NoobitRequestOhlc, pmap({"symbol": symbol, "symbols_resp": symbols_resp, "timeframe": timeframe, "since": since}))
     if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
 
-    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
+    parsed_req = parse_request(valid_noobit_req.value)
 
     valid_ftx_req = _validate_data(FtxRequestOhlc, pmap(parsed_req))
     if valid_ftx_req.is_err():

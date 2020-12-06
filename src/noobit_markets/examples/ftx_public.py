@@ -2,11 +2,31 @@ import asyncio
 
 import httpx
 import aiohttp
+from noobit_markets.base.models.rest.response import NTrades
 
 from noobit_markets.exchanges.ftx.rest.public.ohlc import get_ohlc_ftx
 from noobit_markets.exchanges.ftx.rest.public.orderbook import get_orderbook_ftx
 from noobit_markets.exchanges.ftx.rest.public.trades import get_trades_ftx
 from noobit_markets.exchanges.ftx.rest.public.symbols import get_symbols_ftx
+
+
+
+
+# ========================================
+# SYMBOLS
+
+
+symbols = asyncio.run(
+    get_symbols_ftx(
+        client=httpx.AsyncClient(),
+    )
+)
+
+if symbols.is_err():
+    print(symbols)
+else:
+    print("Symbols ok")
+
 
 
 # ========================================
@@ -16,7 +36,7 @@ res = asyncio.run(
     get_ohlc_ftx(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
-        symbol_to_exchange=lambda x: {"XBT-USD": "BTC/USD"}[x],
+        symbols_resp=symbols.value,
         timeframe="1H",
         since=None
     )
@@ -32,17 +52,17 @@ else:
 # ORDERBOOK
 
 
-res = asyncio.run(
+book = asyncio.run(
     get_orderbook_ftx(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
-        symbol_to_exchange=lambda x: {"XBT-USD": "BTC/USD"}[x],
+        symbols_resp=symbols.value,
         depth=10
     )
 )
 
-if res.is_err():
-    print(res)
+if book.is_err():
+    print(book)
 else:
     print("Orderbook ok")
 
@@ -57,16 +77,20 @@ async def trades():
         return await get_trades_ftx(
             client=client,
             symbol="XBT-USD",
-            symbol_to_exchange=lambda x: {"XBT-USD": "BTC/USD"}[x],
+            symbols_resp=symbols.value,
             since=None
         )
 
 res = asyncio.run(trades())
 
-if res.is_err():
-    print(res)
+trd = NTrades(res)
+
+if trd.is_ok():
+    # print(trd.table)
+    print("Trades Ok")
 else:
-    print("Trades ok")
+    print(trd.result)
+
 
 
 # # res = asyncio.run(
@@ -82,20 +106,6 @@ else:
 
 
 
-# ========================================
-# SYMBOLS
-
-
-res = asyncio.run(
-    get_symbols_ftx(
-        client=httpx.AsyncClient(),
-    )
-)
-
-if res.is_err():
-    print(res)
-else:
-    print("Symbols ok")
 
 
 # # res = asyncio.run(

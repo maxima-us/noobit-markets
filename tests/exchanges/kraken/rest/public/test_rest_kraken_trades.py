@@ -23,7 +23,7 @@ async def fetch(client, symbols_resp):
         trades = await get_trades_kraken(
             client,
             "XBT-USD",
-            symbols.value,
+            symbols_resp.value,
             None,
         )
 

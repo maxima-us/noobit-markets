@@ -134,7 +134,7 @@ def parse_to_assetpairs(
     ) -> typing.Dict[ntypes.SYMBOL, T_SymbolParsedPair]:
 
     list_assetpairs = [_single_assetpair(item) for item in result_data.symbols if item.type == "spot"]
-    indexed_assetpairs = {item["exchange_pair"].replace("/", "-"): item for item in list_assetpairs}
+    indexed_assetpairs = {item["exchange_pair"].replace("/", "-").replace("BTC", "XBT"): item for item in list_assetpairs}
 
     return indexed_assetpairs
 
