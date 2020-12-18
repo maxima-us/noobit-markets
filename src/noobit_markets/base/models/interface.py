@@ -238,7 +238,7 @@ class RestInterface(FrozenBaseModel):
 class WsInterface(FrozenBaseModel):
     # TODO common base class for all ws apis
     public: typing.Callable
-    private: typing.Callable
+    private: typing.Optional[typing.Callable]
 
 class ExchangeInterface(FrozenBaseModel):
 

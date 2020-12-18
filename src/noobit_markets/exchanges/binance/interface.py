@@ -4,10 +4,22 @@ from noobit_markets.base.models.interface import ExchangeInterface
 
 
 # public endpoints
-from noobit_markets.exchanges.binance.rest.public.ohlc.get import get_ohlc_binance
-from noobit_markets.exchanges.binance.rest.public.orderbook.get import get_orderbook_binance
-from noobit_markets.exchanges.binance.rest.public.trades.get import get_trades_binance
-from noobit_markets.exchanges.binance.rest.public.instrument.get import get_instrument_binance
+from noobit_markets.exchanges.binance.rest.public.ohlc import get_ohlc_binance
+from noobit_markets.exchanges.binance.rest.public.orderbook import get_orderbook_binance
+from noobit_markets.exchanges.binance.rest.public.trades import get_trades_binance
+from noobit_markets.exchanges.binance.rest.public.instrument import get_instrument_binance
+from noobit_markets.exchanges.binance.rest.public.symbols import get_symbols_binance
+
+# private endpoints
+from noobit_markets.exchanges.binance.rest.private.balances import get_balances_binance
+from noobit_markets.exchanges.binance.rest.private.exposure import get_exposure_binance
+from noobit_markets.exchanges.binance.rest.private.trades import get_trades_binance
+from noobit_markets.exchanges.binance.rest.private.orders import get_closedorders_binance
+from noobit_markets.exchanges.binance.rest.private.trading import post_neworder_binance
+
+# ws
+from noobit_markets.exchanges.binance.websockets.public.api import BinanceWsPublic
+
 
 
 BINANCE = ExchangeInterface(**{
@@ -15,19 +27,23 @@ BINANCE = ExchangeInterface(**{
         "public": {
             "ohlc": get_ohlc_binance,
             "orderbook": get_orderbook_binance, 
-            "symbols": None, 
+            "symbols": get_symbols_binance, 
             "trades": get_trades_binance, 
             "instrument": get_instrument_binance, 
-            "spread": None, 
+            "spread": get_instrument_binance, 
         },
         "private": {
-            "balances": None, 
-            "exposure": None, 
-            "trades": None, 
-            "open_positions": None, 
-            "open_orders": None, 
-            "closed_orders": None, 
-            "new_order": None, 
-        }
+            "balances": get_balances_binance, 
+            "exposure": get_exposure_binance, 
+            "trades": get_trades_binance, 
+            "open_positions": get_closedorders_binance, 
+            "open_orders": get_closedorders_binance, 
+            "closed_orders": get_closedorders_binance, 
+            "new_order": post_neworder_binance, 
+        },
+    },
+    "ws":{
+        "public": BinanceWsPublic,
+        "private": None 
     }
 })
