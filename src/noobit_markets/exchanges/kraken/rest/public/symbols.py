@@ -175,6 +175,12 @@ def parse_result_data_assets(
 # ============================================================
 
 
+def hasnums(s):
+    """check if string s contains any numeric characters
+    """
+    return any(i.isdigit() for i in s)
+
+
 async def get_symbols_kraken(
         client: ntypes.CLIENT,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
@@ -192,7 +198,8 @@ async def get_symbols_kraken(
         return result_content
     else:
         # filter out darkpools and pairs with numerical chars
-        filtered_result = {k: v for k, v in result_content.value.items() if ".d" not in k and "REPV2" not in k}
+        # filter out any alphanumeric pair
+        filtered_result = {k: v for k, v in result_content.value.items() if ".d" not in k and not hasnums(k)}
 
     valid_result_content = _validate_data(KrakenResponseSymbols, pmap({"symbols": filtered_result}))
     if valid_result_content.is_err():
