@@ -13,8 +13,6 @@ from noobit_markets.exchanges.kraken.rest.private.trades import get_usertrades_k
 from noobit_markets.exchanges.kraken.rest.private.ws_auth import get_wstoken_kraken
 from noobit_markets.exchanges.kraken.rest.private.trading import post_neworder_kraken
 
-
-from noobit_markets.base._tabulate import pylist_table, pymap_table
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.rest.response import NBalances, NExposure, NTrades
 
@@ -213,9 +211,7 @@ else:
     if _trd.is_err():
         print(_trd.result)
     else:
-        # print("Asks :", _ob.result.value.asks)
-        # print("Bids :", _ob.result.value.bids)
-        # print(_trd.table)
+        print(_trd.table)
         print("Trades ok")
 
     # if utr.is_err():

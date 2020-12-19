@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from decimal import Decimal
 import datetime
+import functools
+import typing
 from noobit_markets.exchanges import kraken
 import psutil
 import asyncio
@@ -269,26 +271,40 @@ class HummingbotCLI:
             await asyncio.sleep(1)
 
 
+
+    # ========================================
+    # PUBLIC ENDPOINTS
+
+
     async def fetch_symbols(self):
         kraken_symbols = await KRAKEN.rest.public.symbols(self.client)
         binance_symbols = await BINANCE.rest.public.symbols(self.client)
 
         # self.log_field.log(kraken_symbols)
         self.kraken_symbols = kraken_symbols
+        self.binance_symbols = binance_symbols
 
-        return {"KRAKEN": kraken_symbols}
 
 
-    def show_symbols(self):
+    def show_symbols(self, exchange: ntypes.EXCHANGE):
         from noobit_markets.base.models.rest.response import NSymbol
 
-        _sym = NSymbol(self.kraken_symbols)
-        if _sym.is_err():
-            self.log(_sym.vser)
-        else:
-            self.log(_sym.table)
+        if exchange.upper() == "KRAKEN":
+            _sym = NSymbol(self.kraken_symbols)
+            if _sym.is_err():
+                self.log(_sym.vser)
+            else:
+                self.log(_sym.table)
+        
+        if exchange.upper() == "BINANCE":
+            _sym = NSymbol(self.binance_symbols)
+            if _sym.is_err():
+                self.log(_sym.vser)
+            else:
+                self.log(_sym.table)
 
-    
+
+
     async def fetch_ohlc(self, exchange: ntypes.EXCHANGE, symbol: ntypes.SYMBOL, timeframe: ntypes.TIMEFRAME, since=None):
         from noobit_markets.base.models.rest.response import NOhlc
 
@@ -355,7 +371,156 @@ class HummingbotCLI:
                 self.log(_trd.table)
 
 
+    # ========================================
+    # PRIVATE ENDPOINTS
 
+
+    async def fetch_balances(self, exchange: ntypes.EXCHANGE):
+        from noobit_markets.base.models.rest.response import NBalances
+        
+        self.log_field.log("CALLED fetch_balances")
+        
+        if not exchange: exchange = settings.EXCHANGE
+
+        if exchange.upper() == "KRAKEN":
+            _res = await KRAKEN.rest.private.balances(self.client, self.kraken_symbols.value)
+        elif exchange.upper() == "BINANCE":
+            _res = await BINANCE.rest.private.balances(self.client, self.binance_symbols.value)
+        else:
+            self.log("Unknown Exchange requested")
+            return
+
+        _bal = NBalances(_res)
+        if _bal.is_err():
+            self.log_field.log("ERROR")
+            self.log(_bal.vser)
+
+        else:
+            self.log_field.log("SUCCESS")
+            self.log(_bal.table)
+
+
+    async def fetch_exposure(self, exchange: ntypes.EXCHANGE):
+        from noobit_markets.base.models.rest.response import NExposure
+
+        self.log_field.log("CALLED fetch_exposure")
+
+        if not exchange: exchange = settings.EXCHANGE
+
+        self.log_field.log(f"Requested Exchange : {exchange.upper()}")
+
+        if exchange.upper() == "KRAKEN":
+            _res = await KRAKEN.rest.private.exposure(self.client)
+        elif exchange.upper() == "BINANCE":
+            _res = await BINANCE.rest.private.exposure(self.client, self.binance_symbols.value)
+        else:
+            self.log("Unknown Exchange requested")
+            return
+
+        _exp = NExposure(_res)
+        if _exp.is_err():
+            self.log_field.log("ERROR")
+            self.log(_exp.vser)
+
+        else:
+            self.log_field.log("SUCCESS")
+            self.log(_exp.table)
+
+
+    async def fetch_usertrades(self, exchange: ntypes.EXCHANGE, symbol: ntypes.SYMBOL):
+        from noobit_markets.base.models.rest.response import NTrades
+
+        self.log_field.log("CALLED fetch_usertrades")
+
+        if not exchange: exchange = settings.EXCHANGE
+        if not symbol: symbol = settings.SYMBOL
+
+        self.log_field.log(f"Requested Symbol : {symbol}")
+        self.log_field.log(f"Requested Exchange : {exchange}")
+
+
+        if exchange.upper() == "KRAKEN":
+            _res = await KRAKEN.rest.private.trades(self.client, ntypes.PSymbol(symbol.upper()), self.kraken_symbols.value)
+        elif exchange.upper() == "BINANCE":
+            _res = await BINANCE.rest.private.trades(self.client, symbol, self.binance_symbols.value)
+        else:
+            self.log("Unknown Exchange Requested")
+            return
+
+        _utr = NTrades(_res)
+        if _utr.is_err():
+            self.log_field.log("ERROR")
+            self.log(_utr.vser)
+
+        else:
+            self.log_field.log("SUCCESS")
+            self.log(_utr.table)
+
+
+
+    async def create_neworder(
+        self,
+        side: ntypes.ORDERSIDE,
+        exchange: ntypes.EXCHANGE,
+        symbol: ntypes.SYMBOL,
+        ordType: ntypes.ORDERTYPE,
+        clOrdID,
+        ordQty: Decimal,
+        price: Decimal,
+        timeInForce: ntypes.TIMEINFORCE,
+        stopPrice: Decimal
+    ):
+
+        self.log_field.log("CALLED create_neworder") 
+
+        if not exchange: exchange = settings.EXCHANGE
+        if not symbol: symbol = settings.SYMBOL
+        if not ordType: ordType = settings.ORDTYPE
+        if not ordQty: ordQty = settings.ORDQTY
+
+        if exchange.upper() == "KRAKEN":
+            _res = await KRAKEN.rest.private.new_order(self.client, symbol, self.kraken_symbols.value, side.lower(), ordType.lower(), clOrdID, ordQty, price, timeInForce, stopPrice)
+            self.log(_res)
+
+        elif exchange.upper() == "BINANCE":
+            _res = await BINANCE.rest.private.new_order(self.client, symbol, self.binance_symbols.value, side.lower(), ordType.lower(), clOrdID, ordQty, price, timeInForce, stopPrice)
+            self.log(_res)
+
+        else:
+            self.log("Unknown Exchange requested")
+
+    # side argument isnt registered for some reason
+    # create_buyorder: typing.Coroutine = functools.partialmethod(create_neworder, "BUY")
+    # create_sellorder: typing.Coroutine = functools.partialmethod(create_neworder, "SELL")
+
+    async def create_buyorder(
+        self,
+        exchange: ntypes.EXCHANGE,
+        symbol: ntypes.SYMBOL,
+        ordType: ntypes.ORDERTYPE,
+        clOrdID,
+        ordQty: Decimal,
+        price: Decimal,
+        timeInForce: ntypes.TIMEINFORCE,
+        stopPrice: Decimal
+    ):
+
+        await self.create_neworder("buy", exchange, symbol, ordType, clOrdID, ordQty, price, timeInForce, stopPrice)
+
+
+    async def create_sellorder(
+        self,
+        exchange: ntypes.EXCHANGE,
+        symbol: ntypes.SYMBOL,
+        ordType: ntypes.ORDERTYPE,
+        clOrdID,
+        ordQty: Decimal,
+        price: Decimal,
+        timeInForce: ntypes.TIMEINFORCE,
+        stopPrice: Decimal
+    ):
+
+        await self.create_neworder("sell", exchange, symbol, ordType, clOrdID, ordQty, price, timeInForce, stopPrice)
 
 
 

@@ -1,6 +1,7 @@
 import argparse
 from typing import List
 import inspect
+import functools
 
 from noobit_markets.ui import settings
 from noobit_markets.ui.keybinds import safe_ensure_future
@@ -113,9 +114,45 @@ def load_parser(hb):
     trades_parser.add_argument("-s", "--symbol", type=str)
     trades_parser.set_defaults(func=hb.fetch_trades)
 
+    balances_parser = subparsers.add_parser("balances")
+    balances_parser.add_argument("-e", "--exchange", type=str)
+    balances_parser.set_defaults(func=hb.fetch_balances)
+
+    exposure_parser = subparsers.add_parser("exposure")
+    exposure_parser.add_argument("-e", "--exchange", type=str)
+    exposure_parser.set_defaults(func=hb.fetch_exposure)
+
+    usertrades_parser = subparsers.add_parser("usertrades")
+    usertrades_parser.add_argument("-e", "--exchange", type=str)
+    usertrades_parser.add_argument("-s", "--symbol", type=str)
+    usertrades_parser.set_defaults(func=hb.fetch_usertrades)
+
+    buy_parser = subparsers.add_parser("buy")
+    buy_parser.add_argument("-e", "--exchange", type=str)
+    buy_parser.add_argument("-s", "--symbol", type=str)
+    buy_parser.add_argument("-t", "--ordType", type=str)
+    buy_parser.add_argument("-q", "--ordQty", type=float)
+    buy_parser.add_argument("-id", "--clOrdID", type=str)
+    buy_parser.add_argument("-p", "--price", type=float)
+    buy_parser.add_argument("-tif", "--timeInForce", type=str)
+    buy_parser.add_argument("-sp", "--stopPrice", type=float)
+    buy_parser.set_defaults(func=hb.create_buyorder)
+
+    sell_parser = subparsers.add_parser("sell")
+    sell_parser.add_argument("-e", "--exchange", type=str)
+    sell_parser.add_argument("-s", "--symbol", type=str)
+    sell_parser.add_argument("-t", "--ordType", type=str)
+    sell_parser.add_argument("-q", "--ordQty", type=float)
+    sell_parser.add_argument("-id", "--clOrdID", type=str)
+    sell_parser.add_argument("-p", "--price", type=float)
+    sell_parser.add_argument("-tif", "--timeInForce", type=str)
+    sell_parser.add_argument("-sp", "--stopPrice", type=float)
+    sell_parser.set_defaults(func=hb.create_sellorder)
+
     #========================================
 
     showsymbols_parser = subparsers.add_parser("show-symbols")
+    showsymbols_parser.add_argument("-e", "--exchange", type=str)
     showsymbols_parser.set_defaults(func=hb.show_symbols)
 
 
@@ -129,6 +166,10 @@ def _handle_commands(hb, raw_command):
         return
     f = args.func
     del kwargs["func"]
+
+    if isinstance(f, functools.partial):
+        # see: https://stackoverflow.com/a/52422903
+        f = f.func
 
     if inspect.iscoroutinefunction(f):
         hb.log(f"Picked up coroutine : {f.__name__}")
