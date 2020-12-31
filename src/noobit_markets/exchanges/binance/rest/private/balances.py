@@ -96,13 +96,14 @@ class BinanceResponseBalances(FrozenBaseModel):
 
 def parse_result(
         result_data: BinanceResponseBalances,
-        asset_mapping: ntypes.ASSET_FROM_EXCHANGE
+        asset_mapping: ntypes.ASSET_FROM_EXCHANGE,
+        exclude: typing.List[str]
     ) -> typing.Mapping[ntypes.ASSET, Decimal]:
 
     # Asset mapping should replace BTC with XBT
     parsed = {
         asset_mapping(item.asset): (item.free + item.locked)
-        for item in result_data.balances if (item.free + item.locked) > 0
+        for item in result_data.balances if ((item.free + item.locked) > 0 and item.asset not in exclude)
     }
     return parsed
 
@@ -149,7 +150,7 @@ async def get_balances_binance(
     if valid_result_content.is_err():
         return valid_result_content
 
-    parsed_result = parse_result(valid_result_content.value, asset_from_exchange)
+    parsed_result = parse_result(valid_result_content.value, asset_from_exchange, exclude=["TWT"])
 
     valid_parsed_response_data = _validate_data(NoobitResponseBalances, pmap({"balances": parsed_result, "rawJson": result_content.value, "exchange": "BINANCE"}))
     return valid_parsed_response_data

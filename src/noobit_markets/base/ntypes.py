@@ -109,12 +109,12 @@ TIMEFRAME = Literal[
 
 # pydantic symbol
 class PSymbol(Nstr):
-    regex=re.compile(r'[A-Z]+-[A-Z]+')
+    regex=re.compile(r'[A-Z0-9]+-[A-Z]+')
     strict=True
 
 # pydantic asset
 class PAsset(Nstr):
-    regex=re.compile(r'[A-Z]{2,5}')
+    regex=re.compile(r'[A-Z0-9]{2,10}')
     strict=True
 
 # ? should be keep this ??

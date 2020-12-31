@@ -176,8 +176,9 @@ def parse_to_assets(
 @retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_symbols_binance(
         client: ntypes.CLIENT,
+        logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
-        endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.symbols,
+        endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.symbols
     ) -> Result[NoobitResponseSymbols, Exception]:
 
     req_url = urljoin(base_url, endpoint)
@@ -186,10 +187,17 @@ async def get_symbols_binance(
 
     # no query params but needs to wrapped in a result that contains an instance of FrozenBaseModel
     valid_binance_req = Ok(FrozenBaseModel())
-
+    
     result_content = await get_result_content_from_req(client, method, req_url, valid_binance_req.value, headers)
     if result_content.is_err():
         return result_content
+
+    # if logger:
+    #     logger(f"Binance > Symbols > Result Content : {result_content.value}")
+    if logger:
+        for symbol in result_content.value["symbols"]:
+            if not symbol["symbol"].isalpha() or len(symbol["baseAsset"])>4:
+                logger(f"Invalid symbol : {symbol['symbol']}")
 
     valid_result_content = _validate_data(BinanceResponseSymbols, result_content.value)
     if valid_result_content.is_err():

@@ -37,7 +37,7 @@ async def get_exposure_binance(
 
     else:
         for asset, amount in bals.value.balances.items():
-            if not asset in ["USDT", "USD"]:
+            if not asset in ["USDT", "USD", "TWT"]:
                 symbol = str(f"{asset}-USDT")
                 price = await get_instrument_binance(
                     client=client,
