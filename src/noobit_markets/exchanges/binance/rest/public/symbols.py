@@ -192,12 +192,8 @@ async def get_symbols_binance(
     if result_content.is_err():
         return result_content
 
-    # if logger:
-    #     logger(f"Binance > Symbols > Result Content : {result_content.value}")
     if logger:
-        for symbol in result_content.value["symbols"]:
-            if not symbol["symbol"].isalpha() or len(symbol["baseAsset"])>4:
-                logger(f"Invalid symbol : {symbol['symbol']}")
+        logger(f"Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(BinanceResponseSymbols, result_content.value)
     if valid_result_content.is_err():

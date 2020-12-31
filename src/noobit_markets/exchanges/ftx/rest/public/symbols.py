@@ -167,6 +167,7 @@ def _single_assetpair(
 @retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_symbols_ftx(
         client: ntypes.CLIENT,
+        logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.FTX_ENDPOINTS.public.url,
         endpoint: str = endpoints.FTX_ENDPOINTS.public.endpoints.symbols,
     ) -> Result[NoobitResponseSymbols, pydantic.ValidationError]:
@@ -183,6 +184,9 @@ async def get_symbols_ftx(
     result_content = await get_result_content_from_req(client, method, req_url, valid_ftx_req.value, headers)
     if isinstance(result_content, Err):
         return result_content
+    
+    if logger:
+        logger(f"Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(FtxResponseSymbols, pmap({"symbols": result_content.value}))
     if valid_result_content.is_err():

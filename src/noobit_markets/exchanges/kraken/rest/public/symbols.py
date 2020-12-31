@@ -183,6 +183,7 @@ def hasnums(s):
 
 async def get_symbols_kraken(
         client: ntypes.CLIENT,
+        logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.symbols
     ) -> Result[NoobitResponseSymbols, ValidationError]:
@@ -200,6 +201,9 @@ async def get_symbols_kraken(
         # filter out darkpools and pairs with numerical chars
         # filter out any alphanumeric pair
         filtered_result = {k: v for k, v in result_content.value.items() if ".d" not in k and not hasnums(k)}
+    
+    if logger:
+        logger(f"Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(KrakenResponseSymbols, pmap({"symbols": filtered_result}))
     if valid_result_content.is_err():
