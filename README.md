@@ -27,9 +27,9 @@ The Result object's `.value()` method gives access to the value it holds, which 
 We aim to be fully MyPy compliant.
 <br/>
 
-###Usage
+### Usage
 
-####Api 
+#### Api 
 
 You can access the coroutines and ws apis via the exchange's interface , for ex : `get_ohlc = interface.KRAKEN.rest.public.ohlc`
 
@@ -37,6 +37,6 @@ Every coroutine requires a `symbols` argument to be passed, which should be the 
 
 You can check out code examples for each exchange in the examples folder.
 
-####Cli
+#### Cli
 
 From the ui folder, run `python cli.py` to start the CLI app. As a prerequisite for subsequent commands, run the `symbols` command on each startup.
