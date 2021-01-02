@@ -1,7 +1,12 @@
 import asyncio
 import httpx
 from noobit_markets.base.models.rest.response import NOrderBook, NoobitResponseSymbols
-from noobit_markets.base.models.rest.response import NOhlc, NSymbol, NTrades, NInstrument
+from noobit_markets.base.models.rest.response import (
+    NOhlc,
+    NSymbol,
+    NTrades,
+    NInstrument,
+)
 
 from noobit_markets.exchanges.kraken.rest.public.ohlc import get_ohlc_kraken
 from noobit_markets.exchanges.kraken.rest.public.orderbook import get_orderbook_kraken
@@ -11,9 +16,7 @@ from noobit_markets.exchanges.kraken.rest.public.symbols import get_symbols_krak
 from noobit_markets.exchanges.kraken.rest.public.spread import get_spread_kraken
 
 
-
-
-#============================================================
+# ============================================================
 # SYMBOLS
 
 
@@ -37,8 +40,7 @@ else:
 #     print("Symbols Ok")
 
 
-
-#============================================================
+# ============================================================
 # OHLC
 
 
@@ -51,7 +53,7 @@ ohlc = asyncio.run(
         # symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
         symbols_resp=symbols.value,
         timeframe="15M",
-        since=None
+        since=None,
     )
 )
 
@@ -62,8 +64,8 @@ _n = NOhlc(ohlc)
 if _n.is_err():
     print(_n.result)
 else:
-    #FIXME still in development
-    # print(_n.table) 
+    # FIXME still in development
+    # print(_n.table)
     print("Ohlc ok")
 
 
@@ -72,7 +74,7 @@ else:
 # else:
 #     print('Ohlc ok')
 
-#============================================================
+# ============================================================
 # ORDERBOOK
 
 
@@ -82,7 +84,7 @@ book = asyncio.run(
         symbol="XBT-USD",
         # symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
         symbols_resp=symbols.value,
-        depth=10
+        depth=10,
     )
 )
 
@@ -102,7 +104,7 @@ else:
 #     print("OrderBook ok")
 
 
-#============================================================
+# ============================================================
 # TRADES
 
 
@@ -111,7 +113,7 @@ trades = asyncio.run(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
         # symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
-        symbols_resp=symbols.value
+        symbols_resp=symbols.value,
     )
 )
 _trd = NTrades(trades)
@@ -130,7 +132,7 @@ else:
 #     print("Trades ok")
 
 
-#============================================================
+# ============================================================
 # INSTRUMENT
 
 
@@ -139,7 +141,7 @@ instrument = asyncio.run(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
         # symbols_resp= lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
-        symbols_resp=symbols.value
+        symbols_resp=symbols.value,
     )
 )
 
@@ -157,9 +159,7 @@ else:
 #     print("Instrument ok")
 
 
-
-
-#============================================================
+# ============================================================
 # SPREAD
 
 
@@ -168,7 +168,7 @@ spread = asyncio.run(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
         # symbol_to_exchange=lambda x: {"XBT-USD": "XXBTZUSD"}.get(x),
-        symbols_resp=symbols.value
+        symbols_resp=symbols.value,
     )
 )
 

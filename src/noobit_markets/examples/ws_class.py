@@ -11,6 +11,7 @@ from noobit_markets.exchanges.kraken.websockets.public.spread import validate_su
 import stackprinter
 from typing_extensions import Literal
 from websockets.uri import parse_uri
+
 stackprinter.set_excepthook(style="darkbg2")
 
 import websockets
@@ -22,10 +23,12 @@ from noobit_markets.exchanges.kraken.websockets.public import trades, spread, or
 
 from noobit_markets.exchanges.kraken.websockets.private import trades as user_trades
 from noobit_markets.exchanges.kraken.websockets.private import orders as user_orders
-from noobit_markets.exchanges.kraken.websockets.private.routing import msg_handler as private_handler
+from noobit_markets.exchanges.kraken.websockets.private.routing import (
+    msg_handler as private_handler,
+)
 
 # TODO change file name since we already have a package called websockets
-from noobit_markets.base.websockets import subscribe 
+from noobit_markets.base.websockets import subscribe
 
 from noobit_markets.base.models.result import Result, Ok, Err
 
@@ -38,7 +41,7 @@ class KrakenWsApi:
     _data_queues = {
         "trade": asyncio.Queue(),
         "spread": asyncio.Queue(),
-        #? test out, maybe better to just make a copy on each messag ? idk
+        # ? test out, maybe better to just make a copy on each messag ? idk
         "spread_copy": asyncio.Queue(),
         "orderbook": asyncio.Queue(),
     }
@@ -46,14 +49,10 @@ class KrakenWsApi:
     _status_queues = {
         "connection": asyncio.Queue(),
         "subscription": asyncio.Queue(),
-        "heartbeat": asyncio.Queue(maxsize=10)
+        "heartbeat": asyncio.Queue(maxsize=10),
     }
 
-    _subd_feeds = {
-        "trade": set(),
-        "spread": set(),
-        "orderbook": set()
-    }
+    _subd_feeds = {"trade": set(), "spread": set(), "orderbook": set()}
 
     _pending_tasks = deque()
     _running_tasks = dict()
@@ -66,13 +65,12 @@ class KrakenWsApi:
 
     _full_books: dict = dict()
 
-
     def __init__(
-            self, 
-            client: websockets.WebSocketClientProtocol, 
-            msg_handler: asyncio.coroutine ,
-            loop: asyncio.BaseEventLoop,
-        ):
+        self,
+        client: websockets.WebSocketClientProtocol,
+        msg_handler: asyncio.coroutine,
+        loop: asyncio.BaseEventLoop,
+    ):
 
         self.loop = loop
 
@@ -86,17 +84,25 @@ class KrakenWsApi:
         # self.install_signal_handlers()
 
         # self._pending_tasks.add(self.dispatch)
-        self._running_tasks["connection"] = asyncio.ensure_future(self.connection(), loop=self.loop)
-        self._running_tasks["subscription"] = asyncio.ensure_future(self.subscription(), loop=self.loop)
-        self._running_tasks["dispatch"] = asyncio.ensure_future(self._dispatch(), loop=self.loop)
-        self._running_tasks["watcher"] = asyncio.ensure_future(self._watcher(), loop=self.loop)
-
+        self._running_tasks["connection"] = asyncio.ensure_future(
+            self.connection(), loop=self.loop
+        )
+        self._running_tasks["subscription"] = asyncio.ensure_future(
+            self.subscription(), loop=self.loop
+        )
+        self._running_tasks["dispatch"] = asyncio.ensure_future(
+            self._dispatch(), loop=self.loop
+        )
+        self._running_tasks["watcher"] = asyncio.ensure_future(
+            self._watcher(), loop=self.loop
+        )
 
     async def _watcher(self):
         while True:
             try:
                 # print("Running :", self._running_tasks)
-                if self._terminate: break
+                if self._terminate:
+                    break
 
                 elem = self._pending_tasks.popleft()
                 if inspect.iscoroutine(elem):
@@ -109,16 +115,16 @@ class KrakenWsApi:
             except IndexError:
                 await asyncio.sleep(0.5)
 
-
     async def _dispatch(self):
         _retries = 0
         _delay = 1
 
         while _retries < 10:
-            try: 
+            try:
 
                 async for msg in self.client:
-                    if self._terminate: break
+                    if self._terminate:
+                        break
                     await self.msg_handler(msg, self._data_queues, self._status_queues)
                     await asyncio.sleep(0)
 
@@ -127,38 +133,36 @@ class KrakenWsApi:
             except Exception as e:
                 raise e
 
-
     async def iterq_data(self, feed):
         while True:
-            if self._terminate: break
+            if self._terminate:
+                break
             try:
                 yield await self._data_queues[feed].get()
             except Exception as e:
                 raise e
 
-
     async def iterq_status(self, feed):
         while True:
-            if self._terminate: break
+            if self._terminate:
+                break
             try:
                 yield await self._status_queues[feed].get()
             except Exception as e:
                 raise e
 
-    
     def schedule(self, coro):
         self._pending_tasks.append(coro)
-
 
     async def connection(self):
         while True:
 
             async for msg in self.iterq_status("connection"):
-                if self._terminate: break
+                if self._terminate:
+                    break
                 if msg["status"] == "online":
                     self._connection = True
                     print("We are now online")
-        
 
     async def subscription(self):
 
@@ -166,14 +170,15 @@ class KrakenWsApi:
             "trade": "trade",
             "ticker": "instrument",
             "book": "orderbook",
-            "spread": "spread"
+            "spread": "spread",
         }
 
         while True:
 
             async for msg in self.iterq_status("subscription"):
-                
-                if self._terminate: break
+
+                if self._terminate:
+                    break
 
                 feed = msg["subscription"]["name"]
                 pair = msg["pair"]
@@ -186,7 +191,6 @@ class KrakenWsApi:
 
                 if msg["status"] == "unsubscribed":
                     self._subd_feeds[feed_map[feed]].remove(pair)
-
 
     async def spread(self, symbol_mapping, symbol) -> Result:
 
@@ -205,9 +209,9 @@ class KrakenWsApi:
 
         # async for msg in self._queues["spread"]:
         async for msg in self.iterq_data("spread"):
-            if self._terminate: break
+            if self._terminate:
+                break
             yield msg
-
 
     async def trade(self, symbol_mapping, symbol):
 
@@ -223,14 +227,14 @@ class KrakenWsApi:
             yield sub_result
 
         self._subd_feeds["trade"].add(symbol_mapping[symbol])
-        
+
         # async for msg in self._queues["spread"]:
         async for msg in self.iterq_data("trade"):
-            if self._terminate: break
+            if self._terminate:
+                break
             yield msg
 
-
-    async def orderbook(self, symbol_mapping, symbol, depth, aggregate: bool=False):
+    async def orderbook(self, symbol_mapping, symbol, depth, aggregate: bool = False):
 
         if not self._running_tasks.get("dispatch", None):
             self._running_tasks["dispatch"] = asyncio.ensure_future(self._dispatch())
@@ -245,19 +249,20 @@ class KrakenWsApi:
 
         self._subd_feeds["orderbook"].add(symbol_mapping[symbol])
 
-        #? should we stream full orderbook ?
+        # ? should we stream full orderbook ?
         if not aggregate:
             # stream udpates
             async for msg in self.iterq_data("orderbook"):
-                if self._terminate: break
+                if self._terminate:
+                    break
                 yield msg
-        
+
         else:
             # reconstruct orderbook
             _count = 0
             async for msg in self.iterq_data("orderbook"):
                 spreads = await self._data_queues["spread_copy"].get()
-                
+
                 pair = msg.value.symbol
                 if _count == 0:
                     # snapshot
@@ -273,24 +278,22 @@ class KrakenWsApi:
 
                     # filter out 0 values and bids/asks outside of spread
                     self._full_books[pair]["asks"] = {
-                        k: v for k, v in self._full_books[pair]["asks"].items()
+                        k: v
+                        for k, v in self._full_books[pair]["asks"].items()
                         if v > 0 and k >= spreads.value.spread[0].bestAskPrice
                     }
                     self._full_books[pair]["bids"] = {
-                        k: v for k, v in self._full_books[pair]["bids"].items()
+                        k: v
+                        for k, v in self._full_books[pair]["bids"].items()
                         if v > 0 and k <= spreads.value.spread[0].bestBidPrice
                     }
-                
+
                 _count += 1
                 yield self._full_books[pair]
 
-            
-
-
-
     def shutdown(self, sig, frame):
         self._terminate = True
-        
+
         # print(self._running_tasks)
 
         for name, task in self._running_tasks.items():
@@ -303,11 +306,10 @@ class KrakenWsApi:
                 raise e
 
         # asyncio.ensure_future((self.loop.shutdown_asyncgens()))
-        
+
         # tasks = asyncio.all_tasks(self.loop)
         # print(tasks)
 
-    
     def install_signal_handlers(self):
 
         HANDLED_SIGNALS = (
@@ -317,8 +319,6 @@ class KrakenWsApi:
 
         for sig in HANDLED_SIGNALS:
             self.loop.add_signal_handler(sig, self.shutdown, sig, None)
-
-
 
 
 # ============================================================
@@ -334,16 +334,16 @@ class KrakenWsPrivate:
     }
 
     _status_queues = {
-        "connection": asyncio.Queue(), 
+        "connection": asyncio.Queue(),
         "subscription": asyncio.Queue(),
-        "heartbeat": asyncio.Queue()
+        "heartbeat": asyncio.Queue(),
     }
 
     _subd_feeds = {
         "user_trades": False,
         "user_orders": False,
         "user_new": False,
-        "user_cancel": False
+        "user_cancel": False,
     }
 
     _pending_tasks = deque()
@@ -354,15 +354,14 @@ class KrakenWsPrivate:
     _connection: bool = False
 
     _terminate: bool = False
-    
-    
+
     def __init__(
-            self, 
-            client: websockets.WebSocketClientProtocol, 
-            msg_handler: asyncio.coroutine ,
-            loop: asyncio.BaseEventLoop,
-            auth_token: str
-        ):
+        self,
+        client: websockets.WebSocketClientProtocol,
+        msg_handler: asyncio.coroutine,
+        loop: asyncio.BaseEventLoop,
+        auth_token: str,
+    ):
 
         self.auth_token = auth_token
         self.msg_handler = msg_handler
@@ -373,8 +372,6 @@ class KrakenWsPrivate:
         if not self.client.open:
             raise ConnectionClosed
 
-        
-
         # self.install_signal_handlers()
 
         # self._pending_tasks.add(self.dispatch)
@@ -383,12 +380,12 @@ class KrakenWsPrivate:
         self._running_tasks["dispatch"] = asyncio.ensure_future(self._dispatch())
         self._running_tasks["watcher"] = asyncio.ensure_future(self._watcher())
 
-
     async def _watcher(self):
         while True:
             try:
                 # print("Running :", self._running_tasks)
-                if self._terminate: break
+                if self._terminate:
+                    break
 
                 elem = self._pending_tasks.popleft()
                 if inspect.iscoroutine(elem):
@@ -401,16 +398,16 @@ class KrakenWsPrivate:
             except IndexError:
                 await asyncio.sleep(0.5)
 
-
     async def _dispatch(self):
         _retries = 0
         _delay = 1
 
         while _retries < 10:
-            try: 
+            try:
 
                 async for msg in self.client:
-                    if self._terminate: break
+                    if self._terminate:
+                        break
                     await self.msg_handler(msg, self._data_queues, self._status_queues)
                     await asyncio.sleep(0)
 
@@ -419,54 +416,53 @@ class KrakenWsPrivate:
             except Exception as e:
                 raise e
 
-
     async def iterq_data(self, feed):
         while True:
-            if self._terminate: break
+            if self._terminate:
+                break
             try:
                 yield await self._data_queues[feed].get()
             except Exception as e:
                 raise e
 
-
     async def iterq_status(self, feed):
         while True:
-            if self._terminate: break
+            if self._terminate:
+                break
             try:
                 yield await self._status_queues[feed].get()
             except Exception as e:
                 raise e
 
-    
     def schedule(self, coro):
         self._pending_tasks.append(coro)
-
 
     async def connection(self):
         while True:
 
             async for msg in self.iterq_status("connection"):
-                if self._terminate: break
+                if self._terminate:
+                    break
                 if msg["status"] == "online":
                     self._connection = True
                     print("We are now online")
-    
-    
+
     async def subscription(self):
 
         feed_map = {
             "user_trades": "ownTrades",
             "user_orders": "openOrders",
             "user_new": "addOrder",
-            "user_cancel": "cancelOrder"
+            "user_cancel": "cancelOrder",
         }
 
         while True:
 
             async for msg in self.iterq_status("subscription"):
                 print(msg)
-                
-                if self._terminate: break
+
+                if self._terminate:
+                    break
 
                 feed = msg["subscription"]["name"]
                 pair = msg["pair"]
@@ -486,10 +482,9 @@ class KrakenWsPrivate:
                 else:
                     print(msg)
 
-
     async def trade(self):
         if not self._running_tasks.get("dispatch", None):
-           self._running_tasks["dispatch"] = asyncio.ensure_future(self.dispatch())
+            self._running_tasks["dispatch"] = asyncio.ensure_future(self.dispatch())
 
         valid_sub_model = user_trades.validate_sub(self.auth_token)
         if valid_sub_model.is_err():
@@ -501,15 +496,14 @@ class KrakenWsPrivate:
             yield sub_result
 
         self._subd_feeds["user_trades"] = True
-        
+
         # async for msg in self._queues["spread"]:
         async for msg in self.iterq_data("user_trades"):
             yield msg
 
-        
     async def order(self):
         if not self._running_tasks.get("dispatch", None):
-           self._running_tasks["dispatch"] = asyncio.ensure_future(self.dispatch())
+            self._running_tasks["dispatch"] = asyncio.ensure_future(self.dispatch())
 
         valid_sub_model = user_orders.validate_sub(self.auth_token)
         if valid_sub_model.is_err():
@@ -521,15 +515,10 @@ class KrakenWsPrivate:
             yield sub_result
 
         self._subd_feeds["user_orders"] = True
-        
+
         # async for msg in self._queues["spread"]:
         async for msg in self.iterq_data("user_orders"):
             yield msg
-
-
-
-
-
 
 
 if __name__ == "__main__":
@@ -575,7 +564,6 @@ if __name__ == "__main__":
             results = await asyncio.gather(coro1(), coro2(), coro3(), coro4())
             return results
 
-
     async def p_main(loop):
         import httpx
 
@@ -598,14 +586,9 @@ if __name__ == "__main__":
                 print("launching user orders coro")
                 async for msg in kwp.order():
                     pass
-            
+
             results = await asyncio.gather(coro2(), coro1())
             return results
-
-
-
-
-
 
     loop = asyncio.get_event_loop()
 
@@ -614,5 +597,3 @@ if __name__ == "__main__":
 
     # run private coros
     loop.run_until_complete(p_main(loop))
-
-    

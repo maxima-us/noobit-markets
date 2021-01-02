@@ -11,8 +11,9 @@ feed_map = {
     "trade": "trade",
     "ticker": "instrument",
     "book": "orderbook",
-    "spread": "spread"
+    "spread": "spread",
 }
+
 
 async def main(loop):
     async with websockets.connect("wss://ws.kraken.com") as client:
@@ -34,7 +35,14 @@ async def main(loop):
                 # print("received new trade")
                 # FIXME should iterator return a Result or should we filter "en amont"
                 for trade in msg.value.trades:
-                    print("new trade @ :", trade.avgPx, trade.side, trade.ordType, trade.cumQty, trade.symbol)
+                    print(
+                        "new trade @ :",
+                        trade.avgPx,
+                        trade.side,
+                        trade.ordType,
+                        trade.cumQty,
+                        trade.symbol,
+                    )
 
         async def coro3():
             #! valid option are 10, 25, 100, 500, 1000

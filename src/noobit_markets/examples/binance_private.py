@@ -2,18 +2,20 @@ import asyncio
 import httpx
 
 import stackprinter
+
 stackprinter.set_excepthook(style="darkbg2")
 
 
 from noobit_markets.exchanges.binance.rest.public.symbols import get_symbols_binance
 from noobit_markets.exchanges.binance.rest.private.balances import get_balances_binance
-from noobit_markets.exchanges.binance.rest.private.orders import get_closedorders_binance
+from noobit_markets.exchanges.binance.rest.private.orders import (
+    get_closedorders_binance,
+)
 from noobit_markets.exchanges.binance.rest.private.trades import get_trades_binance
 from noobit_markets.exchanges.binance.rest.private.trading import post_neworder_binance
 
 from noobit_markets.exchanges.binance.rest.private.exposure import get_exposure_binance
 from noobit_markets.exchanges.binance.rest.private.ws_auth import get_wstoken_binance
-
 
 
 sym = asyncio.run(
@@ -32,7 +34,7 @@ bals = asyncio.run(
         client=httpx.AsyncClient(),
         # FIXME Does note fail explicitely if we pass in a non callable
         # asset_from_exchange=lambda x: {k: v for v, k in sym.value.assets.items()}[x]
-        symbols_resp=sym.value
+        symbols_resp=sym.value,
     )
 )
 
@@ -52,7 +54,7 @@ exp = asyncio.run(
         # FIXME Does note fail explicitely if we pass in a non callable
         # asset_from_exchange=lambda x: {k: v for v, k in sym.value.assets.items()}[x],
         # symbol_to_exchange=lambda x: {k: v.exchange_pair for k, v in sym.value.asset_pairs.items()}[x]
-        symbols_resp=sym.value
+        symbols_resp=sym.value,
     )
 )
 
@@ -71,7 +73,7 @@ res = asyncio.run(
         client=httpx.AsyncClient(),
         symbol="XBT-USDT",
         # symbol_to_exchange=lambda x: {"XBT-USD": "BTCUSDT"}[x]
-        symbols_resp=sym.value
+        symbols_resp=sym.value,
     )
 )
 
@@ -79,7 +81,6 @@ if res.is_err():
     print(res)
 else:
     print("Closed orders successfully fetched")
-
 
 
 # ============================================================
@@ -91,7 +92,7 @@ res = asyncio.run(
         client=httpx.AsyncClient(),
         symbol="XBT-USDT",
         # symbol_to_exchange= lambda x: {"XBT-USD": "BTCUSDT"}[x]
-        symbols_resp=sym.value
+        symbols_resp=sym.value,
     )
 )
 
@@ -121,7 +122,7 @@ trd = asyncio.run(
         price=22000,
         timeInForce="GTC",
         quoteOrderQty=None,
-        stopPrice=20000
+        stopPrice=20000,
     )
 )
 if trd.is_err():
@@ -129,7 +130,6 @@ if trd.is_err():
 else:
     # print(trd)
     print("Trading New Order ok")
-
 
 
 # ============================================================

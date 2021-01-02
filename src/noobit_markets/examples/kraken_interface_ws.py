@@ -1,12 +1,11 @@
 import asyncio
 import httpx
 import stackprinter
-stackprinter.set_excepthook(style='darkbg2')
+
+stackprinter.set_excepthook(style="darkbg2")
 
 
 from noobit_markets.exchanges.kraken import interface
-
-
 
 
 # # ============================================================
@@ -38,8 +37,6 @@ from noobit_markets.exchanges.kraken import interface
 # # print("MAPPING : ", symbol_mapping)
 
 
-
-
 # # ============================================================
 # # OHLC
 # # ============================================================
@@ -64,8 +61,6 @@ from noobit_markets.exchanges.kraken import interface
 #     print("Successfuly fetched OHLC")
 
 
-
-
 # # ============================================================
 # # TRADES
 # # ============================================================
@@ -88,8 +83,6 @@ from noobit_markets.exchanges.kraken import interface
 #     print("Successfuly fetched Trades")
 
 
-
-
 # # ============================================================
 # # INSTRUMENT
 # # ============================================================
@@ -109,8 +102,6 @@ from noobit_markets.exchanges.kraken import interface
 #     print(instrument, "\n")
 # else:
 #     print("Successfuly fetched Instrument")
-
-
 
 
 # # ============================================================
@@ -142,8 +133,8 @@ import websockets
 from noobit_markets.exchanges.kraken.websockets.public.routing import msg_handler
 
 
-
 krakenws = interface.KRAKEN.ws.public
+
 
 async def main(loop):
     async with websockets.connect("wss://ws.kraken.com") as client:
@@ -162,9 +153,10 @@ async def main(loop):
                 # print("received new trade")
                 for trade in msg.value.trades:
                     print("new trade @ :", trade.avgPx)
-        
+
         results = await asyncio.gather(coro1(), coro2())
         return results
+
 
 loop = asyncio.get_event_loop()
 

@@ -1,12 +1,11 @@
 import asyncio
 import httpx
 import stackprinter
-stackprinter.set_excepthook(style='darkbg2')
+
+stackprinter.set_excepthook(style="darkbg2")
 
 
 from noobit_markets.exchanges.kraken import interface
-
-
 
 
 # ============================================================
@@ -33,10 +32,10 @@ except Exception as e:
 # !!!! this returns an dict of Models ==> get_ohlc(symbol_mappping) is expecting a plain dict(str, str)
 # !!!!  ==> works but we need to pass in return_value.dict()
 # print(symbol_to_exch.value.dict())
-symbol_mapping = {k: v.exchange_name for k, v in symbol_to_exch.value.asset_pairs.items()}
+symbol_mapping = {
+    k: v.exchange_name for k, v in symbol_to_exch.value.asset_pairs.items()
+}
 # print("MAPPING : ", symbol_mapping)
-
-
 
 
 # ============================================================
@@ -53,7 +52,7 @@ ohlc = asyncio.run(
         symbol="XBT-USD",
         symbol_to_exchange={"XBT-USD": "XXBTZUSD"},
         timeframe="1H",
-        since=None
+        since=None,
     )
 )
 if ohlc.is_err():
@@ -61,8 +60,6 @@ if ohlc.is_err():
 
 else:
     print("Successfuly fetched OHLC")
-
-
 
 
 # ============================================================
@@ -86,8 +83,6 @@ else:
     print("Successfuly fetched Trades")
 
 
-
-
 # ============================================================
 # INSTRUMENT
 # ============================================================
@@ -106,8 +101,6 @@ if instrument.is_err():
     print(instrument, "\n")
 else:
     print("Successfuly fetched Instrument")
-
-
 
 
 # ============================================================
@@ -129,4 +122,3 @@ if spread.is_err():
     print(spread, "\n")
 else:
     print("Successfuly fetched Spread")
-

@@ -10,8 +10,6 @@ from noobit_markets.exchanges.ftx.rest.public.trades import get_trades_ftx
 from noobit_markets.exchanges.ftx.rest.public.symbols import get_symbols_ftx
 
 
-
-
 # ========================================
 # SYMBOLS
 
@@ -28,7 +26,6 @@ else:
     print("Symbols ok")
 
 
-
 # ========================================
 # OHLC
 
@@ -38,14 +35,13 @@ res = asyncio.run(
         symbol="XBT-USD",
         symbols_resp=symbols.value,
         timeframe="1H",
-        since=None
+        since=None,
     )
 )
 if res.is_err():
     print(res)
 else:
     print("OHLC ok")
-
 
 
 # ========================================
@@ -57,7 +53,7 @@ book = asyncio.run(
         client=httpx.AsyncClient(),
         symbol="XBT-USD",
         symbols_resp=symbols.value,
-        depth=10
+        depth=10,
     )
 )
 
@@ -67,7 +63,6 @@ else:
     print("Orderbook ok")
 
 
-
 # ========================================
 # TRADES
 
@@ -75,11 +70,9 @@ else:
 async def trades():
     async with aiohttp.ClientSession() as client:
         return await get_trades_ftx(
-            client=client,
-            symbol="XBT-USD",
-            symbols_resp=symbols.value,
-            since=None
+            client=client, symbol="XBT-USD", symbols_resp=symbols.value, since=None
         )
+
 
 res = asyncio.run(trades())
 
@@ -92,7 +85,6 @@ else:
     print(trd.result)
 
 
-
 # # res = asyncio.run(
 # #     get_instrument_binance(
 # #         client=httpx.AsyncClient(),
@@ -103,9 +95,6 @@ else:
 
 # # if res.is_err():
 # #     print(res)
-
-
-
 
 
 # # res = asyncio.run(

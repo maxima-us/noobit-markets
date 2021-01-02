@@ -13,8 +13,9 @@ feed_map = {
     "user_trades": "ownTrades",
     "user_orders": "openOrders",
     "user_new": "addOrder",
-    "user_cancel": "cancelOrder"
+    "user_cancel": "cancelOrder",
 }
+
 
 async def main(loop):
 
@@ -40,10 +41,6 @@ async def main(loop):
 
         results = await asyncio.gather(coro2(), coro1())
         return results
-
-
-
-
 
 
 loop = asyncio.get_event_loop()
