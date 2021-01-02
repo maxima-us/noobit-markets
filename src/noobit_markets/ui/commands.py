@@ -60,9 +60,12 @@ def count(hb, start: int, finish: int, step: int):
 
 
 
-def load_parser(hb):
+def load_parser(hb):    #hb refers to hummingbot app
     parser = ThrowingArgumentParser(prog="", add_help=False)
     subparsers = parser.add_subparsers()
+
+    #========================================
+    # SET VARIABLES
 
     setvars_parser = subparsers.add_parser("set", help="Set variables")
     setvars_parser.add_argument("-e", "--exchange", type=str, choices=("kraken", "binance"), help="Name of the exchange that you want to connect")
@@ -70,6 +73,10 @@ def load_parser(hb):
     setvars_parser.add_argument("-t", "--ordType", type=str, help="Type of the order that you want to connect")
     setvars_parser.add_argument("-q", "--ordQty", type=float, help="Quantity of the order that you want to connect")
     setvars_parser.set_defaults(func=hb.set_vars)
+
+
+    #========================================
+    # EXIT
 
     exit_parser = subparsers.add_parser("exit", help="Exit and cancel all outstanding orders")
     # exit_parser.add_argument("-f", "--force", action="store_true", help="Force exit without cancelling outstanding orders",
@@ -90,6 +97,14 @@ def load_parser(hb):
 
     clear_parser = subparsers.add_parser("clear")
     clear_parser.set_defaults(func=hb.clear)
+
+
+    #========================================
+    # HELP
+
+    help_parser = subparsers.add_parser("help")
+    help_parser.add_argument("-c", "--command", type=str)
+    help_parser.set_defaults(func=hb.help)
 
     #========================================
     # FETCH COMMANDS
@@ -126,6 +141,15 @@ def load_parser(hb):
     usertrades_parser.add_argument("-e", "--exchange", type=str)
     usertrades_parser.add_argument("-s", "--symbol", type=str)
     usertrades_parser.set_defaults(func=hb.fetch_usertrades)
+    
+    openorders_parser = subparsers.add_parser("open-orders")
+    openorders_parser.add_argument("-e", "--exchange", type=str)
+    openorders_parser.add_argument("-s", "--symbol", type=str)
+    openorders_parser.set_defaults(func=hb.fetch_openorders)
+
+
+    #=========================================
+    # TRADING
 
     buy_parser = subparsers.add_parser("buy")
     buy_parser.add_argument("-e", "--exchange", type=str)
@@ -149,7 +173,22 @@ def load_parser(hb):
     sell_parser.add_argument("-sp", "--stopPrice", type=float)
     sell_parser.set_defaults(func=hb.create_sellorder)
 
+
+
     #========================================
+    # WS COMMANDS
+
+    connect_parser = subparsers.add_parser("connect")
+    connect_parser.set_defaults(func=hb.connect)
+
+    streambook_parser = subparsers.add_parser("stream-book")
+    streambook_parser.add_argument("-e", "--exchange", type=str)
+    streambook_parser.add_argument("-s", "--symbol", type=str)
+    streambook_parser.add_argument("-d", "--depth", type=int)
+    streambook_parser.set_defaults(func=hb.stream_orderbook)
+
+    #========================================
+    # SHOW TASK RESULTS
 
     showsymbols_parser = subparsers.add_parser("show-symbols")
     showsymbols_parser.add_argument("-e", "--exchange", type=str)
@@ -172,7 +211,8 @@ def _handle_commands(hb, raw_command):
         f = f.func
 
     if inspect.iscoroutinefunction(f):
-        hb.log(f"Picked up coroutine : {f.__name__}")
-        safe_ensure_future(f(**kwargs))
+        hb.log_field.log(f"Task created : {f.__name__}")
+        task = safe_ensure_future(f(**kwargs))
+        task.add_done_callback(lambda t: hb.log_field.log(f"Task finished : {f.__name__}\n"))
     else:
         f(**kwargs)

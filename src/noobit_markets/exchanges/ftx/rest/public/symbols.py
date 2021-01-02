@@ -180,7 +180,6 @@ async def get_symbols_ftx(
 
     # no query params but needs to wrapped in a result that contains an instance of FrozenBaseModel
     valid_ftx_req = Ok(FrozenBaseModel())
-
     result_content = await get_result_content_from_req(client, method, req_url, valid_ftx_req.value, headers)
     if isinstance(result_content, Err):
         return result_content

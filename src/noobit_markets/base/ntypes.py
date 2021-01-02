@@ -1,3 +1,4 @@
+from enum import Enum, auto
 import typing
 from typing import Union, TypeVar, Type
 from decimal import Decimal
@@ -43,6 +44,9 @@ class Nstr(pydantic.ConstrainedStr):
         return f"<{self.__class__.__name__}>:{self._value}"
 
 
+class AutoName(Enum):
+    def _generate_next_value_(name, start, count, last_values):
+        return name
 
 
 # ============================================================
@@ -58,11 +62,16 @@ CLIENT = typing.Union[
 
 
 # exchanges
-EXCHANGE = Literal[
-    "KRAKEN",
-    "BINANCE",
-    "FTX"
-]
+# EXCHANGE = Literal[
+#     "KRAKEN",
+#     "BINANCE",
+#     "FTX"
+# ]
+
+class EXCHANGE(AutoName):
+    KRAKEN = auto()
+    BINANCE = auto()
+    FTX = auto()
 
 
 class PPercent(NInt):

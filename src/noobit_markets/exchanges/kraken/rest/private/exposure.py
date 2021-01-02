@@ -14,7 +14,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseExposure, T_ExposureParsedRes
+from noobit_markets.base.models.rest.response import NoobitResponseExposure, T_ExposureParsedRes, NoobitResponseSymbols
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 
@@ -79,6 +79,7 @@ def parse_result(result_data: KrakenResponseExposure) -> T_ExposureParsedRes:
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_exposure_kraken(
         client: ntypes.CLIENT,
+        symbols_resp: typing.Optional[NoobitResponseSymbols] = None,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.exposure

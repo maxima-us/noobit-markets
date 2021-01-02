@@ -23,10 +23,11 @@ async def safe_wrapper(c):
     except asyncio.CancelledError:
         raise
     except Exception as e:
+        # TODO tie this to hummingbot to avoid printing outside of console
         logging.getLogger(__name__).error(f"Unhandled error in background task: {str(e)}", exc_info=True)
 
 
-def safe_ensure_future(coro, *args, **kwargs):
+def safe_ensure_future(coro, *args, **kwargs) -> asyncio.Task:
     return asyncio.ensure_future(safe_wrapper(coro), *args, **kwargs)
 
 

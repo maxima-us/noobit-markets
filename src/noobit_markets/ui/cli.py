@@ -3,9 +3,10 @@ from decimal import Decimal
 import datetime
 import functools
 import typing
-from noobit_markets.exchanges import kraken
+from noobit_markets.base.models.rest.response import NOrderBook
 import psutil
 import asyncio
+import argparse
 
 from typing import Callable
 from prompt_toolkit.key_binding import KeyBindings
@@ -84,8 +85,9 @@ async def start_process_monitor(process_monitor):
 # Monkey patching here as _handle_exception gets the UI hanged into Press ENTER screen mode
 def _handle_exception_patch(self, loop, context):
     if "exception" in context:
-        logging.getLogger(__name__).error(f"Unhandled error in prompt_toolkit: {context.get('exception')}",
-                                          exc_info=True)
+        # logging.getLogger(__name__).error(f"Unhandled error in prompt_toolkit: {context.get('exception')}",
+        #                                   exc_info=True)
+        self.log(f"Unhandled error in prompt_toolkit: {context.get('exception')}", exc_info=True)
 
 
 Application._handle_exception = _handle_exception_patch
@@ -135,7 +137,10 @@ class HummingbotCLI:
         #! maximaus added
         self.argparser = load_parser(self)
         self.client = httpx.AsyncClient()
+        self.ws = {}
+        self.symbols = {}
 
+        # doesnt seem to work
         safe_ensure_future(self.fetch_symbols())
 
 
@@ -245,6 +250,9 @@ class HummingbotCLI:
     #     self.exit()
 
 
+    # ========================================
+    # == TESTING THAT COUNTING WORKS
+
     def count(self, start: int, finish: int, step: int):
 
         async def enum(start, finish, step):
@@ -271,191 +279,267 @@ class HummingbotCLI:
             await asyncio.sleep(1)
 
 
+    # ========================================
+    # == UTIL
+
+    def check_symbols(self):
+        _ok = True
+        for exchange in ntypes.EXCHANGE:
+            self.log_field.log(f"Checking symbols for {exchange}")
+            if not self.symbols[exchange]:
+                self.log_field.log(f"Please initialize symbols for {exchange}")
+                _ok = False
+        
+        return _ok
+
+    def ensure_symbols(f):
+        @functools.wraps(f)
+        async def wrapper(self, exchange, *args, **kwargs):
+
+            if not exchange: exchange = settings.EXCHANGE 
+            else: exchange = exchange.upper()
+
+            if exchange in ntypes.EXCHANGE.__members__.keys():
+                if exchange in self.symbols.keys():
+
+                    wrapped_res = await f(self, exchange, *args, **kwargs)
+
+                    if wrapped_res.is_err():
+                        self.log("ERROR")
+                        for err in wrapped_res.vser.value:
+                            self.log(str(err))
+                    else:
+                        self.log("SUCCESS")
+                        self.log(wrapped_res.table)
+
+                else:
+                    self.log("Please initialize symbols for this exchange")
+            else:
+                self.log("Unknow Exchange requested")
+
+        return wrapper
+
 
     # ========================================
-    # PUBLIC ENDPOINTS
+    # == HELP
+
+    async def help(
+            self,  #type: HummingbotCLI
+            command: str
+            ):
+        if command == 'all':
+            self.log(self.argparser.format_help())
+        else:
+            subparsers_actions = [
+                action for action in self.argparser._actions if isinstance(action, argparse._SubParsersAction)]
+
+            for subparsers_action in subparsers_actions:
+                subparser = subparsers_action.choices.get(command)
+                self.log(subparser.format_help())
+
+
+    # ========================================
+    # PUBLIC ENDPOINTS COMMANDS
 
 
     async def fetch_symbols(self):
         kraken_symbols = await KRAKEN.rest.public.symbols(self.client)
         binance_symbols = await BINANCE.rest.public.symbols(self.client)
 
-        # self.log_field.log(kraken_symbols)
-        self.kraken_symbols = kraken_symbols
-        self.binance_symbols = binance_symbols
+        if kraken_symbols.is_ok():
+            self.symbols["KRAKEN"] = kraken_symbols
+        else:
+            self.log_field.log("Error fetching kraken symbols")
+            self.log("Error fetching kraken symbols")
+            self.log(kraken_symbols.value)
+        
+        if binance_symbols.is_ok():
+            self.symbols["BINANCE"] = binance_symbols
+        else:
+            self.log_field.log("Error fetching binance symbols")
+            self.log("Error fetching binance symbols")
+            self.log(binance_symbols.value)
 
 
 
     def show_symbols(self, exchange: ntypes.EXCHANGE):
         from noobit_markets.base.models.rest.response import NSymbol
 
-        if exchange.upper() == "KRAKEN":
-            _sym = NSymbol(self.kraken_symbols)
-            if _sym.is_err():
-                self.log(_sym.vser)
-            else:
-                self.log(_sym.table)
+        # if not self.ensure_symbols():
+        #     self.log("Error")
+        #     return
+
+        # missing_init = []
+        # for exch in ["BINANCE", "KRAKEN", "FTX"]:
+        #     if not self.symbols[exch.upper()]:
+        #        missing_init.append(exch) 
+
+        # self.log(f"Missing init for")
         
-        if exchange.upper() == "BINANCE":
-            _sym = NSymbol(self.binance_symbols)
-            if _sym.is_err():
-                self.log(_sym.vser)
+        # if not self.symbols[exchange.upper()]:
+        #     self.log("No symbols for this exchange")
+        #     return
+
+        # if exchange.upper() == "KRAKEN":
+        #     _sym = NSymbol(self.symbols["KRAKEN"])
+        #     if _sym.is_err():
+        #         self.log(_sym.vser)
+        #     else:
+        #         self.log(_sym.table)
+        
+        # elif exchange.upper() == "BINANCE":
+        #     _sym = NSymbol(self.symbols["BINANCE"])
+        #     if _sym.is_err():
+        #         self.log(_sym.vser)
+        #     else:
+        #         self.log(_sym.table)
+
+        cap_exch = exchange.upper()
+        
+        if cap_exch in ntypes.EXCHANGE.__members__.keys():
+            if cap_exch in self.symbols.keys():
+
+                self.log_field.log(f"Exchange is accepted: {cap_exch}")
+                _sym = NSymbol(self.symbols[cap_exch])
+                if _sym.is_err():
+                    self.log("Err")
+                    self.log(_sym.vser)
+                else:
+                    self.log("OK")
+                    self.log(_sym.table)
+
             else:
-                self.log(_sym.table)
+                self.log("Please initialize symbols for this exchange")
+
+        else:
+            self.log("Unknown Exchange requested")
 
 
-
+    @ensure_symbols
     async def fetch_ohlc(self, exchange: ntypes.EXCHANGE, symbol: ntypes.SYMBOL, timeframe: ntypes.TIMEFRAME, since=None):
         from noobit_markets.base.models.rest.response import NOhlc
 
         self.log_field.log("CALLED fetch_ohlc")
 
-        if not exchange: exchange = settings.EXCHANGE
         if not symbol: symbol = settings.SYMBOL
+        else: symbol=symbol.upper()
 
-        if exchange.upper() == "KRAKEN":
-            _res = await KRAKEN.rest.public.ohlc(self.client, symbol.upper(), self.kraken_symbols.value, timeframe, since)
-            
-            _ohlc = NOhlc(_res)
-            if _ohlc.is_err():
-                self.log("ERROR")
-                self.log(_ohlc.vser)
+        interface = globals()[exchange]
+        _res = await interface.rest.public.ohlc(self.client, symbol.upper(), self.symbols[exchange].value, timeframe.upper(), since)
+        _ohlc = NOhlc(_res)
+        return _ohlc
 
-            else:
-                self.log("SUCCESS")
-                self.log(_ohlc.table)
         
-        if exchange.upper() == "BINANCE":
-            _res = await BINANCE.rest.public.symbols(self.client, symbol, self.binance_symbols, timeframe, since)
 
-
+    @ensure_symbols
     async def fetch_orderbook(self, exchange: ntypes.EXCHANGE, symbol: ntypes.SYMBOL, depth: ntypes.DEPTH):
         from noobit_markets.base.models.rest.response import NOrderBook
 
         self.log_field.log("CALLED fetch_orderbook")
 
-        if not exchange: exchange = settings.EXCHANGE
         if not symbol: symbol = settings.SYMBOL
-
-        if exchange.upper() == "KRAKEN":
-            _res = await KRAKEN.rest.public.orderbook(self.client, symbol.upper(), self.kraken_symbols.value, depth)
-            
-            _ob = NOrderBook(_res)
-            if _ob.is_err():
-                self.log("ERROR")
-                self.log(_ob.vser)
-
-            else:
-                self.log("SUCCESS")
-                self.log(_ob.table)
+        else: symbol=symbol.upper()
+        
+        interface = globals()[exchange]
+        _res = await interface.rest.public.orderbook(self.client, symbol.upper(), self.symbols[exchange].value, depth)
+        _book = NOrderBook(_res)
+        return _book
 
 
+    @ensure_symbols
     async def fetch_trades(self, exchange: ntypes.EXCHANGE, symbol: ntypes.SYMBOL, since=None):
         from noobit_markets.base.models.rest.response import NTrades
 
         self.log_field.log("CALLED fetch_trades")
         
-        if not exchange: exchange = settings.EXCHANGE
         if not symbol: symbol = settings.SYMBOL
-
-        if exchange.upper() == "KRAKEN":
-            _res = await KRAKEN.rest.public.trades(self.client, symbol.upper(), self.kraken_symbols.value, since)
-            
-            _trd = NTrades(_res)
-            if _trd.is_err():
-                self.log("ERROR")
-                self.log(_trd.vser)
-
-            else:
-                self.log("SUCCESS")
-                self.log(_trd.table)
+        else: symbol=symbol.upper()
+        
+        interface = globals()[exchange]
+        _res = await interface.rest.public.trades(self.client, symbol, self.symbols[exchange].value, since)
+        _trd = NTrades(_res)
+        return _trd
+        
 
 
     # ========================================
-    # PRIVATE ENDPOINTS
+    # PRIVATE ENDPOINTS COMMANDS
 
-
+    @ensure_symbols
     async def fetch_balances(self, exchange: ntypes.EXCHANGE):
         from noobit_markets.base.models.rest.response import NBalances
         
         self.log_field.log("CALLED fetch_balances")
         
-        if not exchange: exchange = settings.EXCHANGE
-
-        if exchange.upper() == "KRAKEN":
-            _res = await KRAKEN.rest.private.balances(self.client, self.kraken_symbols.value)
-        elif exchange.upper() == "BINANCE":
-            _res = await BINANCE.rest.private.balances(self.client, self.binance_symbols.value)
-        else:
-            self.log("Unknown Exchange requested")
-            return
-
+        
+        interface = globals()[exchange]
+        _res = await interface.rest.private.balances(self.client, self.symbols[exchange].value)
         _bal = NBalances(_res)
-        if _bal.is_err():
-            self.log_field.log("ERROR")
-            self.log(_bal.vser)
-
-        else:
-            self.log_field.log("SUCCESS")
-            self.log(_bal.table)
+        return _bal
 
 
+    @ensure_symbols
     async def fetch_exposure(self, exchange: ntypes.EXCHANGE):
         from noobit_markets.base.models.rest.response import NExposure
 
         self.log_field.log("CALLED fetch_exposure")
-
-        if not exchange: exchange = settings.EXCHANGE
-
         self.log_field.log(f"Requested Exchange : {exchange.upper()}")
 
-        if exchange.upper() == "KRAKEN":
-            _res = await KRAKEN.rest.private.exposure(self.client)
-        elif exchange.upper() == "BINANCE":
-            _res = await BINANCE.rest.private.exposure(self.client, self.binance_symbols.value)
-        else:
-            self.log("Unknown Exchange requested")
-            return
+        interface = globals()[exchange]
 
+        # FIXME kraken doesnt take symbols as args but binance does
+        _res = await interface.rest.private.exposure(self.client, self.symbols[exchange].value)
         _exp = NExposure(_res)
-        if _exp.is_err():
-            self.log_field.log("ERROR")
-            self.log(_exp.vser)
-
-        else:
-            self.log_field.log("SUCCESS")
-            self.log(_exp.table)
+        return _exp
 
 
+    @ensure_symbols
     async def fetch_usertrades(self, exchange: ntypes.EXCHANGE, symbol: ntypes.SYMBOL):
         from noobit_markets.base.models.rest.response import NTrades
 
         self.log_field.log("CALLED fetch_usertrades")
 
-        if not exchange: exchange = settings.EXCHANGE
         if not symbol: symbol = settings.SYMBOL
+        else: symbol=symbol.upper()
 
         self.log_field.log(f"Requested Symbol : {symbol}")
         self.log_field.log(f"Requested Exchange : {exchange}")
-
-
-        if exchange.upper() == "KRAKEN":
-            _res = await KRAKEN.rest.private.trades(self.client, ntypes.PSymbol(symbol.upper()), self.kraken_symbols.value)
-        elif exchange.upper() == "BINANCE":
-            _res = await BINANCE.rest.private.trades(self.client, symbol, self.binance_symbols.value)
-        else:
-            self.log("Unknown Exchange Requested")
-            return
-
+        
+        interface = globals()[exchange]
+        _res = await interface.rest.private.trades(self.client, symbol, self.symbols[exchange].value)
         _utr = NTrades(_res)
-        if _utr.is_err():
-            self.log_field.log("ERROR")
-            self.log(_utr.vser)
+        return _utr
 
-        else:
-            self.log_field.log("SUCCESS")
-            self.log(_utr.table)
 
+    @ensure_symbols
+    async def fetch_openorders(self, exchange: ntypes.EXCHANGE, symbol: ntypes.SYMBOL):
+        from noobit_markets.base.models.rest.response import NOrders
+    
+        self.log_field.log("CALLED create_neworder") 
+        
+        if not symbol: symbol = settings.SYMBOL
+        else: symbol=symbol.upper()
+
+        self.log_field.log(f"Requested Symbol : {symbol}")
+        self.log_field.log(f"Requested Exchange : {exchange}")
+        
+        interface = globals()[exchange]
+        _res = await interface.rest.private.open_orders(self.client, symbol, self.symbols[exchange].value)
+        _opo = NOrders(_res)
+        return _opo
+        
+        # if exchange.upper() == "KRAKEN":
+        #     _res = await KRAKEN.rest.private.open_orders(self.client, symbol, self.symbols["KRAKEN"].value)
+        #     # TODO no order table wrapper yet
+        #     self.log(_res)
+
+        # elif exchange.upper() == "BINANCE":
+        #     _res = await BINANCE.rest.private.open_orders(self.client, symbol, self.symbols["BINANCE"].value)
+        #     # TODO no order table wrapper yet
+        #     self.log(_res)
+
+        # else:
+        #     self.log("Unknown Exchange requested")
 
 
     async def create_neworder(
@@ -468,7 +552,8 @@ class HummingbotCLI:
         ordQty: Decimal,
         price: Decimal,
         timeInForce: ntypes.TIMEINFORCE,
-        stopPrice: Decimal
+        quoteOrderQty: typing.Optional[Decimal] = None,
+        stopPrice: typing.Optional[Decimal] = None
     ):
 
         self.log_field.log("CALLED create_neworder") 
@@ -479,17 +564,23 @@ class HummingbotCLI:
         if not ordQty: ordQty = settings.ORDQTY
 
         if exchange.upper() == "KRAKEN":
-            _res = await KRAKEN.rest.private.new_order(self.client, symbol, self.kraken_symbols.value, side.lower(), ordType.lower(), clOrdID, ordQty, price, timeInForce, stopPrice)
-            self.log(_res)
+            _res = await KRAKEN.rest.private.new_order(self.client, symbol, self.symbols["KRAKEN"].value, side.lower(), ordType.lower(), clOrdID, ordQty, price, timeInForce, quoteOrderQty, stopPrice)
+            # TODO no order table wrapper yet
+            if _res.is_err():
+                for err in _res.value:
+                    self.log(str(err))
+            else:
+                self.log(_res)
 
         elif exchange.upper() == "BINANCE":
-            _res = await BINANCE.rest.private.new_order(self.client, symbol, self.binance_symbols.value, side.lower(), ordType.lower(), clOrdID, ordQty, price, timeInForce, stopPrice)
+            _res = await BINANCE.rest.private.new_order(self.client, symbol, self.symbols["BINANCE"].value, side.lower(), ordType.lower(), clOrdID, ordQty, price, timeInForce, quoteOrderQty, stopPrice)
+            # TODO no order table wrapper yet
             self.log(_res)
 
         else:
             self.log("Unknown Exchange requested")
 
-    # side argument isnt registered for some reason
+    # side argument isnt registered for some reason (in following partials)
     # create_buyorder: typing.Coroutine = functools.partialmethod(create_neworder, "BUY")
     # create_sellorder: typing.Coroutine = functools.partialmethod(create_neworder, "SELL")
 
@@ -522,6 +613,38 @@ class HummingbotCLI:
 
         await self.create_neworder("sell", exchange, symbol, ordType, clOrdID, ordQty, price, timeInForce, stopPrice)
 
+
+
+    # ========================================
+    # START WEBSOCKET PUBLIC STREAMS
+
+    async def connect(self):
+        import websockets
+        from noobit_markets.exchanges.kraken.websockets.public.routing import msg_handler
+
+        
+        feed_map = {
+            "trade": "trade",
+            "ticker": "instrument",
+            "book": "orderbook",
+            "spread": "spread"
+        }
+
+        ws = await websockets.connect("wss://ws.kraken.com")
+        self.ws["KRAKEN"] = KRAKEN.ws.public(ws, msg_handler, self.loop, feed_map)
+
+
+    async def stream_orderbook(self, exchange: ntypes.EXCHANGE, symbol: ntypes.SYMBOL, depth: ntypes.DEPTH):
+        
+        if not exchange: exchange = settings.EXCHANGE
+        if not symbol: symbol = settings.SYMBOL
+        
+        async for msg in self.ws[exchange].orderbook(self.kraken_symbols.value, symbol, depth, True):
+            _ob = NOrderBook(msg)
+            if _ob.is_ok():
+                self.log(_ob.table)
+            else:
+                self.log(_ob.result)
 
 
     # ========================================

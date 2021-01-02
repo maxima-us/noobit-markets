@@ -7,9 +7,11 @@ A class whose name is prefixed by `T_` is only there for mypy
 from abc import ABC, abstractproperty
 import typing
 from decimal import Decimal
+import regex
 
+import pydantic
 from typing_extensions import Literal, TypedDict
-from pydantic import PositiveInt, Field, ValidationError
+from pydantic import PositiveInt, Field, ValidationError, validator
 
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.result import Result, Err
@@ -361,6 +363,26 @@ class NoobitResponseSymbols(NoobitBaseResponse):
 
     asset_pairs: typing.Mapping[ntypes.SYMBOL, NoobitResponseItemSymbols]
     assets: typing.Mapping[ntypes.PAsset, str]
+
+    # FIXME why does this not work
+    # @validator("assets")
+    # def validity(cls, v, values):
+    #     print("VALIDATING")
+    #     errors = ["TEST"]
+    #     for key, val in v.items():
+    #         if not isinstance(key, ntypes.SYMBOL):
+    #             # raise ValueError(f"Invalid Symbol {key}")
+    #             errors.append(key)
+    #         if not isinstance(val, NoobitResponseItemSymbols):
+    #             # raise ValueError(f"Invalid Symbol {key}")
+    #             errors.append(key)
+        
+    #     if errors:
+    #         raise ValueError("Invalid symbols :", *errors)
+        
+    #     return v
+
+
 
 
 # ====================
@@ -1015,6 +1037,7 @@ class NoobitResponseClosedOrders(NoobitBaseResponse):
     orders: typing.Tuple[NoobitResponseItemOrder, ...]
 
 
+# only used for mypy type hints 
 class T_OrderParsedItem(TypedDict):
     orderID: typing.Any
     symbol: typing.Any
@@ -1055,6 +1078,32 @@ class T_OrderParsedItem(TypedDict):
 
 T_OrderParsedRes = typing.Tuple[T_OrderParsedItem, ...]
 
+class NOrders(NResultWrapper):
+
+
+    @property
+    def table(self):
+        self.vser: Result[typing.Union[NoobitResponseOpenOrders, NoobitResponseClosedOrders], ValidationError]
+        if self.is_ok():
+            _orders = self.vser.value.orders
+            table = tabulate(
+                {
+                    "Status": [k.ordStatus for k in _orders],
+                    "Symbol": [k.symbol for k in _orders],
+                    "Price": [k.price for k in _orders],
+                    "Stop Price": [k.stopPx for k in _orders],
+                    "Qty": [k.orderQty for k in _orders],
+                    "Filled Qty": [k.cumQty for k in _orders],
+                    "Side": [k.side for k in _orders],
+                    "Type": [k.ordType for k in _orders],
+                    "Order ID": [k.orderID for k in _orders],
+                    "Client Order ID": [k.clOrdID for k in _orders] 
+                },
+                headers="keys"
+            )
+            return table
+        else:
+            return "Returned an invalid result"
 
 #! ============================================================
 #! NEW ORDER (Trading)

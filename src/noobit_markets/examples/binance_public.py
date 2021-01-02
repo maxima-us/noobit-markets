@@ -1,5 +1,7 @@
 import asyncio
 import httpx
+import json
+
 from noobit_markets.base.models.rest.response import NSymbol
 
 from noobit_markets.exchanges.binance.rest.public.ohlc import get_ohlc_binance
@@ -20,6 +22,7 @@ from noobit_markets.exchanges.binance.rest.public.spread import get_spread_binan
 symbols = asyncio.run(
     get_symbols_binance(
         client=httpx.AsyncClient(),
+        logger=lambda x: print(x)
     )
 )
 
@@ -28,7 +31,7 @@ _sym = NSymbol(symbols)
 if _sym.is_err():
     print(_sym.result)
 else:
-    print(_sym.table)
+    print(_sym.result)
     print("Symbols ok")
 
 
