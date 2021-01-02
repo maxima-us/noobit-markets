@@ -8,13 +8,10 @@ import psutil
 import asyncio
 import argparse
 
-from typing import Callable
-from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.application import Application
 from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 from prompt_toolkit.document import Document
 from prompt_toolkit.layout.processors import BeforeInput, PasswordProcessor
-from prompt_toolkit.completion import Completer
 
 from noobit_markets.ui.layout import (
     create_input_field,
@@ -42,7 +39,6 @@ from noobit_markets.base import ntypes
 # endpoints
 from noobit_markets.exchanges.kraken.interface import KRAKEN
 from noobit_markets.exchanges.binance.interface import BINANCE
-from pydantic.types import PositiveInt
 
 
 

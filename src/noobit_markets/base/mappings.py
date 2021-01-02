@@ -3,6 +3,7 @@ from pyrsistent import pmap
 
 # frozendict is hashable, whereas MappingProxyType is not
 # TODO this is specific to kraken
+# ? should we define a custom class similar to enum that holds these ?
 TIMEFRAME = pmap({
     "1M": 1,
     "5M": 5,

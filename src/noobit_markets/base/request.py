@@ -1,13 +1,8 @@
-from types import CoroutineType
 import typing
-import types
-from urllib.parse import urljoin
 import asyncio
 from functools import wraps
 
-from pyrsistent import pmap
-import httpx
-from pydantic import AnyHttpUrl, PositiveInt, ValidationError, BaseModel
+from pydantic import PositiveInt, ValidationError, BaseModel
 
 from noobit_markets.base import ntypes
 from noobit_markets.base.errors import BaseError
@@ -133,23 +128,6 @@ def validate_data_against(data: dict, model: FrozenBaseModel):
         return Ok(validated)
     except ValidationError as e:
         return Err(e)
-    except Exception as e:
-        raise e
-
-
-#TODO delete, redundant since we already have _validate_data
-def _validate_parsed_req(
-        exchange_req_model: FrozenBaseModel,
-        parsed_request: pyrsistent.PMap
-    ):
-
-    try:
-        validated = exchange_req_model(**parsed_request)    #type: ignore
-        return Ok(validated)
-
-    except ValidationError as e:
-        return Err(e)
-
     except Exception as e:
         raise e
 

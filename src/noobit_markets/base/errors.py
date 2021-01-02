@@ -1,6 +1,3 @@
-from pydantic import BaseModel, ValidationError
-from typing import Any, Union, Optional
-
 from httpx import codes as status
 
 """Lets just copy the file defining base errors from CCXT for now"""
@@ -99,10 +96,8 @@ class BadRequest(ExchangeError):
     status_code = status.BAD_REQUEST
 
 
-#!!!!!!! TEST
-# FIXME change back to accept = True
 class BadSymbol(BadRequest):
-    accept = False
+    accept = True
     sleep = 5
 
 

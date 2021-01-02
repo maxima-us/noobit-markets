@@ -12,7 +12,6 @@ from typing_extensions import Literal
 from noobit_markets.base.request import (
     retry_request,
     _validate_data,
-    validate_nreq_ohlc,
 )
 
 # Base

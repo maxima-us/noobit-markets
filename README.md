@@ -11,7 +11,7 @@ Building Blocks for connecting and trading with cryptocurrency exchanges under a
 
 #### Domains and Models
 
-Particular emphasis has been put on very clearning defining domains, as such we rely very heavily on (pydantic) models.
+Particular emphasis has been put on clearly defining domains, as such we rely very heavily on (pydantic) models.
 `noobit models` for both requests and responses ensure that across different exchanges, the user experience and data are exactly the same (e.g wether a user makes a GET request for orderbook data on Binance or streams it over WebSocket on Kraken, the data will be of the same format). 
 Exchange responses get parsed into `noobit responses` and validated against the corresponding model.
 

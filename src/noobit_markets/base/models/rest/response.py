@@ -7,14 +7,12 @@ A class whose name is prefixed by `T_` is only there for mypy
 from abc import ABC, abstractproperty
 import typing
 from decimal import Decimal
-import regex
 
-import pydantic
 from typing_extensions import Literal, TypedDict
-from pydantic import PositiveInt, Field, ValidationError, validator
+from pydantic import PositiveInt, Field, ValidationError
 
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
-from noobit_markets.base.models.result import Result, Err
+from noobit_markets.base.models.result import Result
 from noobit_markets.base import ntypes
 
 from tabulate import tabulate
