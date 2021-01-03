@@ -8,7 +8,7 @@ from noobit_markets.base.models.result import Result, Ok, Err
 from noobit_markets.base.models.rest.response import NoobitResponseOrderBook
 
 
-def validate_sub(symbol_to_exchange: SYMBOL_TO_EXCHANGE, symbol: SYMBOL, depth: DEPTH) -> Result[KrakenSubModel, Exception]:
+def validate_sub(symbol_to_exchange: SYMBOL_TO_EXCHANGE, symbol: SYMBOL, depth: DEPTH) -> Result[KrakenSubModel, ValidationError]:
 
     msg = {
         "event": "subscribe",

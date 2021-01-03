@@ -303,23 +303,23 @@ class BaseWsPublic(BaseWsApi):
 
 
     # mostly needed for mypy (so it knows the type of `msg`)
-    async def aiter_book(self) -> typing.AsyncIterable[Result[NoobitResponseOrderBook, Exception]]:
+    async def aiter_book(self) -> typing.AsyncIterable[Result[NoobitResponseOrderBook, pydantic.ValidationError]]:
         async for msg in self.iterq(self._data_queues, "orderbook"):
             yield msg
 
     # mostly needed for mypy (so it knows the type of `msg`)
-    async def aiter_trade(self) -> typing.AsyncIterable[Result[NoobitResponseTrades, Exception]]:
+    async def aiter_trade(self) -> typing.AsyncIterable[Result[NoobitResponseTrades, pydantic.ValidationError]]:
         async for msg in self.iterq(self._data_queues, "trade"):
             yield msg
 
     #! no instrument key in data queues yet
     # mostly needed for mypy (so it knows the type of `msg`)
-    async def aiter_ticker(self) -> typing.AsyncIterable[Result[NoobitResponseInstrument, Exception]]:
+    async def aiter_ticker(self) -> typing.AsyncIterable[Result[NoobitResponseInstrument, pydantic.ValidationError]]:
         async for msg in self.iterq(self._data_queues, "instrument"):
             yield msg
 
     # mostly needed for mypy (so it knows the type of `msg`)
-    async def aiter_spread(self) -> typing.AsyncIterable[Result[NoobitResponseSpread, Exception]]:
+    async def aiter_spread(self) -> typing.AsyncIterable[Result[NoobitResponseSpread, pydantic.ValidationError]]:
         async for msg in self.iterq(self._data_queues, "spread"):
             yield msg
 

@@ -53,7 +53,8 @@ class BinanceWsPublic(BaseWsPublic):
     
 
     # mostly for mypy hinting
-    async def aiter_trade(self, symbol_to_exchange, symbol) -> typing.AsyncIterable[Result[NoobitResponseTrades, ValidationError]]:
+    # prefix with b_ to not mess with method of superclass (mypy will complaib)
+    async def b_aiter_trade(self, symbol_to_exchange, symbol) -> typing.AsyncIterable[Result[NoobitResponseTrades, ValidationError]]:
         async for msg in self.aiter_ws(symbol_to_exchange, symbol, "aggTrade"):
             parsed_msg = trades.parse_msg(msg, symbol)
             valid_parsed = trades.validate_parsed(msg, parsed_msg)
@@ -61,14 +62,15 @@ class BinanceWsPublic(BaseWsPublic):
 
 
     # mostly for mypy hinting
+    # prefix with b_ to not mess with method of superclass (mypy will complaib)
     # for info on how to manage book correctly
     # https://github.com/binance-exchange/binance-official-api-docs/blob/master/web-socket-streams.md#how-to-manage-a-local-order-book-correctly
-    async def aiter_book(
+    async def b_aiter_book(
             self, 
             symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
             symbol: ntypes.SYMBOL,
             # snapshot: NoobitResponseOrderBook
-        ) -> typing.AsyncIterable[Result[NoobitResponseOrderBook, Exception]]:
+        ) -> typing.AsyncIterable[Result[NoobitResponseOrderBook, ValidationError]]:
         
         async for msg in self.aiter_ws(symbol_to_exchange, symbol, "depth20"):
             parsed_msg = orderbook.parse_msg(msg, symbol)
@@ -89,16 +91,15 @@ class BinanceWsPublic(BaseWsPublic):
         super()._ensure_dispatch()
 
         valid_sub_model = trades.validate_sub(symbol_to_exchange, symbol)
-        if valid_sub_model.is_err():
+        
+        if isinstance(valid_sub_model, Err):
             print(valid_sub_model)
-
-        sub_result = await subscribe(self.client, valid_sub_model.value)
-        if sub_result.is_err():
-            print(sub_result)
+        else:
+            await subscribe(self.client, valid_sub_model.value)
 
         self._subd_feeds["trade"].add(symbol_to_exchange(symbol))
 
-        async for msg in self.aiter_trade(symbol_to_exchange, symbol):
+        async for msg in self.b_aiter_trade(symbol_to_exchange, symbol):
             yield msg
 
 
@@ -106,16 +107,14 @@ class BinanceWsPublic(BaseWsPublic):
     async def orderbook(self, symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE, symbol: ntypes.PSymbol) -> typing.AsyncIterable[Result[NoobitResponseOrderBook, ValidationError]]:
         
         valid_sub_model = orderbook.validate_sub(symbol_to_exchange, symbol)
-        if valid_sub_model.is_err():
+        if isinstance(valid_sub_model, Err):
             print(valid_sub_model)
-
-        sub_result = await subscribe(self.client, valid_sub_model.value)
-        if sub_result.is_err():
-            print(sub_result)
+        else:
+            await subscribe(self.client, valid_sub_model.value)
 
         self._subd_feeds["orderbook"].add(symbol_to_exchange(symbol))
 
-        async for msg in self.aiter_book(symbol_to_exchange, symbol):
+        async for msg in self.b_aiter_book(symbol_to_exchange, symbol):
             yield msg
             
             

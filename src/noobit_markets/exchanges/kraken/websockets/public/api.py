@@ -2,6 +2,7 @@ import typing
 import asyncio
 
 from pyrsistent import pmap
+from pydantic.error_wrappers import ValidationError
 
 # noobit base
 from noobit_markets.base import ntypes
@@ -36,16 +37,16 @@ class KrakenWsPublic(BaseWsPublic):
     # ENDPOINTS
 
 
-    async def spread(self, symbols_resp: NoobitResponseSymbols, symbol: ntypes.PSymbol) -> typing.AsyncIterable[Result[NoobitResponseSpread, Exception]]:
+    async def spread(self, symbols_resp: NoobitResponseSymbols, symbol: ntypes.PSymbol) -> typing.AsyncIterable[Result[NoobitResponseSpread, ValidationError]]:
         super()._ensure_dispatch()
 
         symbol_to_exchange = lambda x : {k: f"{v.noobit_base}/{v.noobit_quote}" for k, v in symbols_resp.asset_pairs.items()}[x]
         valid_sub_model = spread.validate_sub(symbol_to_exchange, symbol)
-        if valid_sub_model.is_err():
+        if isinstance(valid_sub_model, Err):
+           yield valid_sub_model
             # validation error upon subscription
             #? should we yield this in here or push it to a "sub error" queue
             #? or simply log the error
-            print(valid_sub_model)
 
         sub_result = await subscribe(self.client, valid_sub_model.value)        #type: ignore
         # subscription status is checked by a watcher coro
@@ -60,12 +61,12 @@ class KrakenWsPublic(BaseWsPublic):
 
 
     #? should we return msg wrapped in result ?
-    async def trade(self, symbols_resp: NoobitResponseSymbols, symbol: ntypes.PSymbol) -> typing.AsyncIterable[Result[NoobitResponseTrades, Exception]]:
+    async def trade(self, symbols_resp: NoobitResponseSymbols, symbol: ntypes.PSymbol) -> typing.AsyncIterable[Result[NoobitResponseTrades, ValidationError]]:
         super()._ensure_dispatch()
 
         symbol_to_exchange = lambda x : {k: f"{v.noobit_base}/{v.noobit_quote}" for k, v in symbols_resp.asset_pairs.items()}[x]
         valid_sub_model = trades.validate_sub(symbol_to_exchange, symbol)
-        if valid_sub_model.is_err():
+        if isinstance(valid_sub_model, Err):
            yield valid_sub_model
 
         sub_result = await subscribe(self.client, valid_sub_model.value)        #type: ignore
@@ -86,7 +87,7 @@ class KrakenWsPublic(BaseWsPublic):
         symbol: ntypes.PSymbol,
         depth: ntypes.DEPTH,
         aggregate: bool=False
-        ) -> typing.AsyncIterable[Result[NoobitResponseOrderBook, Exception]]:
+        ) -> typing.AsyncIterable[Result[NoobitResponseOrderBook, ValidationError]]:
 
         super()._ensure_dispatch()
 
