@@ -335,6 +335,34 @@ class HummingbotCLI:
 
 
     # ========================================
+    # ADD API KEYS
+
+    async def add_keys(self, exchange: ntypes.EXCHANGE, key: str, secret: str):
+
+        if not exchange: exchange = settings.EXCHANGE 
+        else: exchange = exchange.upper()
+
+        from noobit_markets.path import APP_PATH
+        import time
+        import os
+
+        self.log(APP_PATH)
+
+        path = os.path.join(APP_PATH, "exchanges", exchange.lower(), "rest", ".env")
+        self.log(path)
+
+        with open(path, "a") as file:
+            timeid = int(time.time())
+            file.write("\n")
+            file.write(f"\n{exchange}_API_KEY_{timeid} = {key}")
+            file.write(f"\n{exchange}_API_SECRET_{timeid} = {secret}")
+
+            # TODO we should probably make a bogus private rest call to check if it works
+
+            self.log_field.log("API Credentials added\n")
+
+
+    # ========================================
     # PUBLIC ENDPOINTS COMMANDS
 
 
@@ -460,6 +488,7 @@ class HummingbotCLI:
 
     # ========================================
     # PRIVATE ENDPOINTS COMMANDS
+
 
     @ensure_symbols
     async def fetch_balances(self, exchange: ntypes.EXCHANGE):

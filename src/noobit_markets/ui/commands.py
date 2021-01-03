@@ -106,6 +106,17 @@ def load_parser(hb):    #hb refers to hummingbot app
     help_parser.add_argument("-c", "--command", type=str)
     help_parser.set_defaults(func=hb.help)
 
+
+    #========================================
+    # API KEYS
+
+    addkeys_parser = subparsers.add_parser("add-keys")
+    addkeys_parser.add_argument("-e", "--exchange", type=str)
+    addkeys_parser.add_argument("-k", "--key", type=str)
+    addkeys_parser.add_argument("-s", "--secret", type=str)
+    addkeys_parser.set_defaults(func=hb.add_keys)
+
+
     #========================================
     # FETCH COMMANDS
 
