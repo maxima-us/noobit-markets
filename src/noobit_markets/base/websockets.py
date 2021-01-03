@@ -9,16 +9,14 @@ import re
 
 from typing_extensions import Literal, TypedDict
 import pydantic
-from pydantic import BaseModel
 
 import websockets
 from websockets import WebSocketClientProtocol
-from websockets.exceptions import ConnectionClosed
 
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result, Ok, Err
+from noobit_markets.base.models.result import Result, Ok
 
-from noobit_markets.base.models.rest.response import NoobitResponseInstrument, NoobitResponseItemSpread, NoobitResponseOpenOrders, NoobitResponseOrderBook, NoobitResponseSpread, NoobitResponseTrades
+from noobit_markets.base.models.rest.response import NoobitResponseInstrument, NoobitResponseOpenOrders, NoobitResponseOrderBook, NoobitResponseSpread, NoobitResponseTrades
 
 
 
@@ -70,26 +68,10 @@ class BinanceSubModel(SubModel):
 # ========================================
 
 
-async def subscribe(client: WebSocketClientProtocol, sub_model: SubModel, q_maxsize = 0) -> Result:
+async def subscribe(client: WebSocketClientProtocol, sub_model: SubModel, q_maxsize = 0) -> None:
 
   payload = (sub_model.msg).dict(exclude_none=True)
-
-  # TODO sub_msg = parse_sub(subscription)
   await client.send(json.dumps(payload))
-  return Ok()
-  # msg = await client.recv()
-  # if "subscription" in msg:
-  #   print("subscription status : ", msg)
-  #   print("subscribed to : ", sub_model.feed)
-  #   return Ok(sub_model.feed)
-
-  # else:
-  #   return Err(sub_model.feed)
-
-  # TODO poll client right after subscription, check message to see if Ok or Err, and return Result
-
-  # return {subscription.feed: asyncio.Queue(q_maxsize)}
-
 
 
 
@@ -204,7 +186,7 @@ class BaseWsApi(WsApiProto):
                 if self._terminate: break
                 if msg["status"] == "online":
                     self._connection = True
-                    print("We are now online")
+                    # print("We are now online")
 
 
     async def _watch_sub(self, queues, feed_map):
@@ -218,14 +200,17 @@ class BaseWsApi(WsApiProto):
                 feed = msg["subscription"]["name"]
                 pair = msg["pair"]
 
-                # TODO parse subscription message
+                # TODO parse subscription message (this is specific to kraken)
                 if msg["status"] == "subscribed":
                     # TODO will also need to add parameters (for ex depth for book)
                     self._subd_feeds[feed_map[feed]].add(pair)
-                    print("We are now succesfully subscribed to :", feed, pair)
+                    print("We are now successfully subscribed to :", feed, pair)
 
-                if msg["status"] == "unsubscribed":
+                elif msg["status"] == "unsubscribed":
                     self._subd_feeds[feed_map[feed]].remove(pair)
+                
+                elif msg["status"] == "error":
+                    print(f"Suscription failed for feed <{feed}>\n", f"Error message : {msg['errorMessage']}")
 
 
 # ? ============================================================
@@ -257,7 +242,9 @@ class BaseWsPublic(BaseWsApi):
     _subd_feeds: typing.Dict[str, set] = {
         "trade": set(),
         "spread": set(),
-        "orderbook": set()
+        "orderbook": set(),
+        # TODO not sure if we need the error key
+        "error": set()
     }
 
     _pending_tasks: typing.Deque = deque()

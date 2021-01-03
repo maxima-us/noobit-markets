@@ -1,13 +1,17 @@
+import asyncio
 import json
 import time
+import typing
 
 from . import trades, spread, orderbook
 
+# just for type hints
+_t_qdict = typing.Dict[str, asyncio.Queue]
 
 # TODO separate data_queues and status_queues ????
-async def msg_handler(msg, data_queues, status_queues):
+async def msg_handler(msg, data_queues: _t_qdict, status_queues: _t_qdict):
     """
-    forward to appropriate parser ==> redis channel
+    forward to appropriate asyncio queue
     """
 
     if "systemStatus" in msg:

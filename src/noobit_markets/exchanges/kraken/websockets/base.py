@@ -137,7 +137,7 @@ class BaseWsApi(WsApiProto):
                 if msg["status"] == "subscribed":
                     # TODO will also need to add parameters (for ex depth for book)
                     self._subd_feeds[feed_map[feed]].add(pair)
-                    print("We are now succesfully subscribed to :", feed, pair)
+                    print("We are now successfully subscribed to :", feed, pair)
 
                 if msg["status"] == "unsubscribed":
                     self._subd_feeds[feed_map[feed]].remove(pair)

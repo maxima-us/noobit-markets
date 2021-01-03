@@ -1,10 +1,14 @@
-import websockets
 import asyncio
+
+import websockets
+import httpx
 
 from noobit_markets.base import ntypes
 
 from noobit_markets.exchanges.kraken.websockets.public.api import KrakenWsPublic
 from noobit_markets.exchanges.kraken.websockets.public.routing import msg_handler
+
+from noobit_markets.exchanges.kraken.rest.public.symbols import get_symbols_kraken
 
 
 feed_map = {
@@ -16,22 +20,26 @@ feed_map = {
 
 
 async def main(loop):
+
+    async with httpx.AsyncClient() as http_client:
+        symbols_resp = await get_symbols_kraken(http_client)
+
+
     async with websockets.connect("wss://ws.kraken.com") as client:
 
         # TODO put this in our interface
         #       ==> then call with : ksw = interface.KRAKEN.ws.public
         kws = KrakenWsPublic(client, msg_handler, loop, feed_map)
-        symbol_mapping = lambda x: {"XBT-USD": "XBT/USD"}[x]
         symbol = ntypes.PSymbol("XBT-USD")
 
         async def coro1():
-            async for msg in kws.spread(symbol_mapping, symbol):
+            async for msg in kws.spread(symbols_resp.value, symbol):
                 for spread in msg.value.spread:
                     # print(spread)
                     print("new top bid : ", spread.bestBidPrice)
 
         async def coro2():
-            async for msg in kws.trade(symbol_mapping, symbol):
+            async for msg in kws.trade(symbols_resp.value, symbol):
                 # print("received new trade")
                 # FIXME should iterator return a Result or should we filter "en amont"
                 for trade in msg.value.trades:
@@ -47,7 +55,7 @@ async def main(loop):
         async def coro3():
             #! valid option are 10, 25, 100, 500, 1000
             # TODO should be in model / checked
-            async for msg in kws.orderbook(symbol_mapping, symbol, 10, True):
+            async for msg in kws.orderbook(symbols_resp.value, symbol, 10, True):
                 # pass
                 # for full book
                 print("orderbook asks update :", msg.value.asks)

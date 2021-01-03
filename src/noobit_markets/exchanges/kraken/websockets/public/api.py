@@ -1,4 +1,5 @@
 import typing
+import asyncio
 
 from pyrsistent import pmap
 
@@ -7,7 +8,7 @@ from noobit_markets.base import ntypes
 from noobit_markets.base.request import _validate_data
 from noobit_markets.base.websockets import subscribe, BaseWsPublic
 from noobit_markets.base.models.result import Result, Ok, Err
-from noobit_markets.base.models.rest.response import NoobitResponseOrderBook, NoobitResponseSpread, NoobitResponseTrades
+from noobit_markets.base.models.rest.response import NoobitResponseOrderBook, NoobitResponseSpread, NoobitResponseSymbols, NoobitResponseTrades
 
 
 # noobit kraken ws
@@ -20,13 +21,25 @@ from noobit_markets.exchanges.kraken.websockets.public import trades, spread, or
 class KrakenWsPublic(BaseWsPublic):
 
 
+    async def confirm_subscription(self):
+
+        msg = await self.client.recv()
+
+        if not 'subscription' in msg:
+            return Err()
+
+
+
+
+
     #========================================
     # ENDPOINTS
 
 
-    async def spread(self, symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE, symbol: ntypes.PSymbol) -> typing.AsyncIterable[Ok[NoobitResponseSpread]]:
+    async def spread(self, symbols_resp: NoobitResponseSymbols, symbol: ntypes.PSymbol) -> typing.AsyncIterable[Result[NoobitResponseSpread, Exception]]:
         super()._ensure_dispatch()
 
+        symbol_to_exchange = lambda x : {k: f"{v.noobit_base}/{v.noobit_quote}" for k, v in symbols_resp.asset_pairs.items()}[x]
         valid_sub_model = spread.validate_sub(symbol_to_exchange, symbol)
         if valid_sub_model.is_err():
             # validation error upon subscription
@@ -35,35 +48,33 @@ class KrakenWsPublic(BaseWsPublic):
             print(valid_sub_model)
 
         sub_result = await subscribe(self.client, valid_sub_model.value)        #type: ignore
-        if sub_result.is_err():
-            print(sub_result)
+        # subscription status is checked by a watcher coro
 
-        self._subd_feeds["spread"].add(symbol_to_exchange(symbol))
+        await asyncio.sleep(1)
+        if not symbol_to_exchange(symbol) in self._subd_feeds["spread"]:
+            return
 
-        # async for msg in self.iterq(self._data_queues, "spread"):
         async for msg in self.aiter_spread():
             if self._terminate: break
             yield msg
 
 
     #? should we return msg wrapped in result ?
-    async def trade(self, symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE, symbol: ntypes.PSymbol) -> typing.AsyncIterable[Ok[NoobitResponseTrades]]:
+    async def trade(self, symbols_resp: NoobitResponseSymbols, symbol: ntypes.PSymbol) -> typing.AsyncIterable[Result[NoobitResponseTrades, Exception]]:
         super()._ensure_dispatch()
 
+        symbol_to_exchange = lambda x : {k: f"{v.noobit_base}/{v.noobit_quote}" for k, v in symbols_resp.asset_pairs.items()}[x]
         valid_sub_model = trades.validate_sub(symbol_to_exchange, symbol)
         if valid_sub_model.is_err():
-            # TODO log error (means user will need to pass logger to class init)
-            print(valid_sub_model)
+           yield valid_sub_model
 
         sub_result = await subscribe(self.client, valid_sub_model.value)        #type: ignore
-        if sub_result.is_err():
-            # TODO log error
-            print(sub_result)
+        # subscription status is checked by a watcher coro
 
-        self._subd_feeds["trade"].add(symbol_to_exchange(symbol))
+        await asyncio.sleep(1)
+        if not symbol_to_exchange(symbol) in self._subd_feeds["trade"]:
+            return
 
-        # async for msg in self._queues["spread"]:
-        # async for msg in self.iterq(self._data_queues, "trade"):
         async for msg in self.aiter_trade():
             if self._terminate: break
             yield msg
@@ -71,7 +82,7 @@ class KrakenWsPublic(BaseWsPublic):
 
     async def orderbook(
         self,
-        symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        symbols_resp: NoobitResponseSymbols,
         symbol: ntypes.PSymbol,
         depth: ntypes.DEPTH,
         aggregate: bool=False
@@ -79,20 +90,19 @@ class KrakenWsPublic(BaseWsPublic):
 
         super()._ensure_dispatch()
 
+        symbol_to_exchange = lambda x : {k: f"{v.noobit_base}/{v.noobit_quote}" for k, v in symbols_resp.asset_pairs.items()}[x]
         valid_sub_model = orderbook.validate_sub(symbol_to_exchange, symbol, depth)
-        # if valid_sub_model.is_err():
-        #     yield valid_sub_model       #type: ignore
 
         if isinstance(valid_sub_model, Err):
             yield valid_sub_model
         #! replace with: below
 
-
-
         sub_result = await subscribe(self.client, valid_sub_model.value)        #type: ignore
-        if sub_result.is_err():
-            # TODO log error
-            print(sub_result)
+        # subscription status is checked by a watcher coro
+        
+        await asyncio.sleep(1)
+        if not symbol_to_exchange(symbol) in self._subd_feeds["orderbook"]:
+            return
 
         self._subd_feeds["orderbook"].add(symbol_to_exchange(symbol))
 
