@@ -1103,6 +1103,33 @@ class NOrders(NResultWrapper):
         else:
             return "Returned an invalid result"
 
+
+class NSingleOrder(NResultWrapper):
+
+    @property
+    def table(self):
+        self.vser: Result[NoobitResponseItemOrder, ValidationError]
+        if self.is_ok():
+            _order = self.vser.value
+            table = tabulate(
+                {
+                    "Status": [_order.ordStatus],
+                    "Symbol": [_order.symbol],
+                    "Price": [_order.price],
+                    "Stop Price": [_order.stopPx],
+                    "Qty": [_order.orderQty],
+                    "Filled Qty": [_order.cumQty],
+                    "Side": [_order.side],
+                    "Type": [_order.ordType],
+                    "Order ID": [_order.orderID],
+                    "Client Order ID": [_order.clOrdID] 
+                },
+                headers="keys"
+            )
+            return table
+        else:
+            return "Returned an invalid result"
+
 #! ============================================================
 #! NEW ORDER (Trading)
 

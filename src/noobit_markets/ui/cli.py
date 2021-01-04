@@ -39,6 +39,7 @@ from noobit_markets.base import ntypes
 # endpoints
 from noobit_markets.exchanges.kraken.interface import KRAKEN
 from noobit_markets.exchanges.binance.interface import BINANCE
+from pydantic.error_wrappers import ValidationError
 
 
 
@@ -234,16 +235,12 @@ class HummingbotCLI:
     # == COMMANDS
 
 
-    def set_vars(self, exchange: str, symbol: str, ordType: str, ordQty: float):
+    def set_vars(self, exchange: str, symbol: str, ordType: str, orderQty: float):
         if exchange: settings.EXCHANGE = exchange.upper()
         if symbol: settings.SYMBOL = symbol.upper()
         if ordType: settings.ORDTYPE = ordType.upper()
-        if ordQty: settings.ORDQTY = ordQty
+        if orderQty: settings.ORDQTY = orderQty
 
-
-    # ==> function already exists
-    # def exit(self, force):
-    #     self.exit()
 
 
     # ========================================
@@ -295,15 +292,22 @@ class HummingbotCLI:
             if not exchange: exchange = settings.EXCHANGE 
             else: exchange = exchange.upper()
 
+            self.log_field.log(f"Request Exchange : {exchange}")
+
             if exchange in ntypes.EXCHANGE.__members__.keys():
                 if exchange in self.symbols.keys():
 
                     wrapped_res = await f(self, exchange, *args, **kwargs)
 
                     if wrapped_res.is_err():
-                        self.log("ERROR")
-                        for err in wrapped_res.vser.value:
-                            self.log(str(err))
+                        # model validation error
+                        if isinstance(wrapped_res.result, ValidationError):
+                            self.log(wrapped_res.result)
+                        else:
+                        # parsed exchange error (exception)
+                            self.log("ERROR")
+                            for err in wrapped_res.result:
+                                self.log(str(err))
                     else:
                         self.log("SUCCESS")
                         self.log(wrapped_res.table)
@@ -388,35 +392,6 @@ class HummingbotCLI:
 
     def show_symbols(self, exchange: ntypes.EXCHANGE):
         from noobit_markets.base.models.rest.response import NSymbol
-
-        # if not self.ensure_symbols():
-        #     self.log("Error")
-        #     return
-
-        # missing_init = []
-        # for exch in ["BINANCE", "KRAKEN", "FTX"]:
-        #     if not self.symbols[exch.upper()]:
-        #        missing_init.append(exch) 
-
-        # self.log(f"Missing init for")
-        
-        # if not self.symbols[exchange.upper()]:
-        #     self.log("No symbols for this exchange")
-        #     return
-
-        # if exchange.upper() == "KRAKEN":
-        #     _sym = NSymbol(self.symbols["KRAKEN"])
-        #     if _sym.is_err():
-        #         self.log(_sym.vser)
-        #     else:
-        #         self.log(_sym.table)
-        
-        # elif exchange.upper() == "BINANCE":
-        #     _sym = NSymbol(self.symbols["BINANCE"])
-        #     if _sym.is_err():
-        #         self.log(_sym.vser)
-        #     else:
-        #         self.log(_sym.table)
 
         cap_exch = exchange.upper()
         
@@ -512,7 +487,6 @@ class HummingbotCLI:
 
         interface = globals()[exchange]
 
-        # FIXME kraken doesnt take symbols as args but binance does
         _res = await interface.rest.private.exposure(self.client, self.symbols[exchange].value)
         _exp = NExposure(_res)
         return _exp
@@ -553,75 +527,69 @@ class HummingbotCLI:
         _opo = NOrders(_res)
         return _opo
         
-        # if exchange.upper() == "KRAKEN":
-        #     _res = await KRAKEN.rest.private.open_orders(self.client, symbol, self.symbols["KRAKEN"].value)
-        #     # TODO no order table wrapper yet
-        #     self.log(_res)
 
-        # elif exchange.upper() == "BINANCE":
-        #     _res = await BINANCE.rest.private.open_orders(self.client, symbol, self.symbols["BINANCE"].value)
-        #     # TODO no order table wrapper yet
-        #     self.log(_res)
-
-        # else:
-        #     self.log("Unknown Exchange requested")
-
-
+    @ensure_symbols
     async def create_neworder(
         self,
-        side: ntypes.ORDERSIDE,
         exchange: ntypes.EXCHANGE,
         symbol: ntypes.SYMBOL,
         ordType: ntypes.ORDERTYPE,
         clOrdID,
-        ordQty: Decimal,
+        orderQty: Decimal,
         price: Decimal,
         timeInForce: ntypes.TIMEINFORCE,
         quoteOrderQty: typing.Optional[Decimal] = None,
-        stopPrice: typing.Optional[Decimal] = None
+        stopPrice: typing.Optional[Decimal] = None,
+        *,
+        side: ntypes.ORDERSIDE,
     ):
+        from noobit_markets.base.models.rest.response import NSingleOrder
 
         self.log_field.log("CALLED create_neworder") 
 
-        if not exchange: exchange = settings.EXCHANGE
         if not symbol: symbol = settings.SYMBOL
+        else: symbol=symbol.upper()
         if not ordType: ordType = settings.ORDTYPE
-        if not ordQty: ordQty = settings.ORDQTY
+        # TODO be consistent: either all noobit types in capital or in lowercase
+        else: ordType = ordType.lower()
+        if not orderQty: orderQty = settings.ORDQTY
+        
+        interface = globals()[exchange]
+        _res = await interface.rest.private.new_order(
+            client=self.client,
+            symbol=symbol, 
+            symbols_resp=self.symbols[exchange].value, 
+            side=side.lower(), 
+            ordType=ordType.lower(), 
+            clOrdID=clOrdID, 
+            orderQty=orderQty, 
+            price=price, 
+            timeInForce=timeInForce, 
+            quoteOrderQty=quoteOrderQty, 
+            stopPrice=stopPrice
+            )
+        _nord = NSingleOrder(_res)
+        return _nord
 
-        if exchange.upper() == "KRAKEN":
-            _res = await KRAKEN.rest.private.new_order(self.client, symbol, self.symbols["KRAKEN"].value, side.lower(), ordType.lower(), clOrdID, ordQty, price, timeInForce, quoteOrderQty, stopPrice)
-            # TODO no order table wrapper yet
-            if _res.is_err():
-                for err in _res.value:
-                    self.log(str(err))
-            else:
-                self.log(_res)
-
-        elif exchange.upper() == "BINANCE":
-            _res = await BINANCE.rest.private.new_order(self.client, symbol, self.symbols["BINANCE"].value, side.lower(), ordType.lower(), clOrdID, ordQty, price, timeInForce, quoteOrderQty, stopPrice)
-            # TODO no order table wrapper yet
-            self.log(_res)
-
-        else:
-            self.log("Unknown Exchange requested")
 
     # side argument isnt registered for some reason (in following partials)
     # create_buyorder: typing.Coroutine = functools.partialmethod(create_neworder, "BUY")
     # create_sellorder: typing.Coroutine = functools.partialmethod(create_neworder, "SELL")
 
+    
     async def create_buyorder(
         self,
         exchange: ntypes.EXCHANGE,
         symbol: ntypes.SYMBOL,
         ordType: ntypes.ORDERTYPE,
         clOrdID,
-        ordQty: Decimal,
+        orderQty: Decimal,
         price: Decimal,
         timeInForce: ntypes.TIMEINFORCE,
         stopPrice: Decimal
     ):
 
-        await self.create_neworder("buy", exchange, symbol, ordType, clOrdID, ordQty, price, timeInForce, stopPrice)
+        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, side="buy")
 
 
     async def create_sellorder(
@@ -630,13 +598,13 @@ class HummingbotCLI:
         symbol: ntypes.SYMBOL,
         ordType: ntypes.ORDERTYPE,
         clOrdID,
-        ordQty: Decimal,
+        orderQty: Decimal,
         price: Decimal,
         timeInForce: ntypes.TIMEINFORCE,
         stopPrice: Decimal
     ):
 
-        await self.create_neworder("sell", exchange, symbol, ordType, clOrdID, ordQty, price, timeInForce, stopPrice)
+        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, side="sell")
 
 
 

@@ -41,25 +41,6 @@ class ThrowingArgumentParser(argparse.ArgumentParser):
 
 
 
-
-#! this is created as a class in HumminhBot, from which HbCLI then inherits (so inherits methods)
-#! we find this a bit confusing so we will just add the method directly
-def set_vars(hb, exchange: str, symbol: str):
-    settings.EXCHANGE = exchange.upper()
-    settings.SYMBOL = symbol.upper()
-
-
-def exit(hb, force):
-    hb.exit()
-
-
-def count(hb, start: int, finish: int, step: int):
-    pass
-
-
-
-
-
 def load_parser(hb):    #hb refers to hummingbot app
     parser = ThrowingArgumentParser(prog="", add_help=False)
     subparsers = parser.add_subparsers()
@@ -71,7 +52,7 @@ def load_parser(hb):    #hb refers to hummingbot app
     setvars_parser.add_argument("-e", "--exchange", type=str, choices=("kraken", "binance"), help="Name of the exchange that you want to connect")
     setvars_parser.add_argument("-s", "--symbol", type=str, help="Name of the symbol that you want to connect")
     setvars_parser.add_argument("-t", "--ordType", type=str, help="Type of the order that you want to connect")
-    setvars_parser.add_argument("-q", "--ordQty", type=float, help="Quantity of the order that you want to connect")
+    setvars_parser.add_argument("-q", "--orderQty", type=float, help="Quantity of the order that you want to connect")
     setvars_parser.set_defaults(func=hb.set_vars)
 
 
@@ -166,7 +147,7 @@ def load_parser(hb):    #hb refers to hummingbot app
     buy_parser.add_argument("-e", "--exchange", type=str)
     buy_parser.add_argument("-s", "--symbol", type=str)
     buy_parser.add_argument("-t", "--ordType", type=str)
-    buy_parser.add_argument("-q", "--ordQty", type=float)
+    buy_parser.add_argument("-q", "--orderQty", type=float)
     buy_parser.add_argument("-id", "--clOrdID", type=str)
     buy_parser.add_argument("-p", "--price", type=float)
     buy_parser.add_argument("-tif", "--timeInForce", type=str)
@@ -177,7 +158,7 @@ def load_parser(hb):    #hb refers to hummingbot app
     sell_parser.add_argument("-e", "--exchange", type=str)
     sell_parser.add_argument("-s", "--symbol", type=str)
     sell_parser.add_argument("-t", "--ordType", type=str)
-    sell_parser.add_argument("-q", "--ordQty", type=float)
+    sell_parser.add_argument("-q", "--orderQty", type=float)
     sell_parser.add_argument("-id", "--clOrdID", type=str)
     sell_parser.add_argument("-p", "--price", type=float)
     sell_parser.add_argument("-tif", "--timeInForce", type=str)
