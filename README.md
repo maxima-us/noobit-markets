@@ -39,4 +39,4 @@ You can check out code examples for each exchange in the examples folder.
 
 #### Cli
 
-From the ui folder, run `python cli.py` to start the CLI app. As a prerequisite for subsequent commands, run the `symbols` command on each startup.
+From the ui folder, run `python cli.py` to start the CLI app, or run the noobit command `noobit-cli` from anywhere. As a prerequisite for subsequent commands, run the `symbols` command on each startup.

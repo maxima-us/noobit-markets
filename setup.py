@@ -41,6 +41,7 @@ setup(
     install_requires=required,
     entry_points={  # Optional
         'console_scripts': [
+            'noobit-cli=noobit_markets.ui.cli:launch'
         ],
     },
 )

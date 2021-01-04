@@ -643,6 +643,23 @@ class HummingbotCLI:
     # ========================================
 
 
+#============================================================
+# ENTRY POINT
+
+
+import click
+
+@click.command()
+def launch():
+    app = HummingbotCLI()
+    asyncio.run(app.run())
+
+
+
+#============================================================
+# RUN FILE
+
+
 if __name__ == "__main__":
 
     app = HummingbotCLI()
