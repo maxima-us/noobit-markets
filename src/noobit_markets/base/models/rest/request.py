@@ -89,7 +89,7 @@ class NoobitRequestSpread(FrozenBaseModel):
 class NoobitRequestClosedOrders(FrozenBaseModel):
 
     symbol: ntypes.SYMBOL
-    symbol_resp: NoobitResponseSymbols
+    symbols_resp: NoobitResponseSymbols
 
 
 
@@ -179,12 +179,13 @@ class NoobitRequestAddOrder(FrozenBaseModel):
 
     @validator("orderQty")
     def _check_volume(cls, v, values):
-
+        
         if not v:
             raise ValueError("Missing value for field: orderQty")
 
         symbol = values["symbol"]
         symbol_specs = values["symbols_resp"].asset_pairs[symbol]
+
         if v < symbol_specs.order_min:
             raise ValueError(f"Order Quantity must exceed {symbol_specs.order_min}, got {v}")
         

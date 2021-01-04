@@ -68,7 +68,7 @@ else:
 # CLOSED ORDERS
 
 
-res = asyncio.run(
+clo = asyncio.run(
     get_closedorders_binance(
         client=httpx.AsyncClient(),
         symbol="XBT-USDT",
@@ -77,8 +77,8 @@ res = asyncio.run(
     )
 )
 
-if res.is_err():
-    print(res)
+if clo.is_err():
+    print(clo)
 else:
     print("Closed orders successfully fetched")
 
@@ -87,7 +87,7 @@ else:
 # Trades
 
 
-res = asyncio.run(
+trd = asyncio.run(
     get_trades_binance(
         client=httpx.AsyncClient(),
         symbol="XBT-USDT",
@@ -96,8 +96,8 @@ res = asyncio.run(
     )
 )
 
-if res.is_err():
-    print(res)
+if trd.is_err():
+    print(trd)
 else:
     # for trade in res.value.trades:
     #     print(trade, "\n")
@@ -108,25 +108,23 @@ else:
 # POST NEW ORDER
 
 
-trd = asyncio.run(
+nord = asyncio.run(
     post_neworder_binance(
         client=httpx.AsyncClient(),
-        symbol="XBT-USDT",
-        # symbol_to_exchange=lambda x: {k: v.exchange_pair for k, v in sym.value.asset_pairs.items()}[x],
-        # symbol_to_exchange=lambda x: {"BTC-USDT": "BTCUSDT"}[x],
+        symbol="DOT-USDT",
         symbols_resp=sym.value,
         side="sell",
-        ordType="take-profit-limit",
+        ordType="limit",
         clOrdID="10101",
-        orderQty=10,
-        price=22000,
+        orderQty=1,
+        price=1.0,
         timeInForce="GTC",
         quoteOrderQty=None,
-        stopPrice=20000,
+        stopPrice=None,
     )
 )
-if trd.is_err():
-    print(trd)
+if nord.is_err():
+    print(nord)
 else:
     # print(trd)
     print("Trading New Order ok")

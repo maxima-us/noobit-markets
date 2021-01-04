@@ -10,7 +10,6 @@ from typing_extensions import TypedDict
 from noobit_markets.base.request import (
     retry_request,
     _validate_data,
-    validate_nreq_instrument,
 )
 
 # Base
@@ -23,6 +22,11 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 # binance
 from noobit_markets.exchanges.binance import endpoints
 from noobit_markets.exchanges.binance.rest.base import get_result_content_from_req
+
+
+__all__ = (
+    "get_instrument_binance"
+)
 
 
 # ============================================================
@@ -147,7 +151,9 @@ async def get_instrument_binance(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbols_resp: NoobitResponseSymbols,
-        # symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.instrument,
     ) -> Result[NoobitResponseInstrument, ValidationError]:
@@ -162,23 +168,30 @@ async def get_instrument_binance(
     valid_noobit_req = _validate_data(NoobitRequestInstrument, pmap({"symbol": symbol, "symbols_resp": symbols_resp}))
     if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
+    
+    if logger:
+        logger(f"Instrument - Noobit Request : {valid_noobit_req.value}")
 
     parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
     valid_binance_req = _validate_data(BinanceRequestInstrument, pmap(parsed_req))
     if valid_binance_req.is_err():
         return valid_binance_req
+    
+    if logger:
+        logger(f"Instrument - Parsed Request : {valid_binance_req.value}")
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_binance_req.value, headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"Instrument - Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(BinanceResponseInstrument, result_content.value)
     if valid_result_content.is_err():
         return valid_result_content
 
-    # FIXME ideally we would want to map exchange symbol to noobit symbol
-    # user given symbol should be ok since there is validation in steps above this
     parsed_result = parse_result(valid_result_content.value, symbol)
 
     valid_parsed_response_data = _validate_data(NoobitResponseInstrument, pmap({**parsed_result, "rawJson": result_content.value, "exchange": "BINANCE"}))

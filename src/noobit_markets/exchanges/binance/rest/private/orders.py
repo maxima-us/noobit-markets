@@ -26,7 +26,9 @@ from noobit_markets.exchanges.binance import endpoints
 from noobit_markets.exchanges.binance.rest.base import get_result_content_from_req
 
 
-
+__all__ = (
+    "get_closedorders_binance"
+)
 
 # ============================================================
 # BINANCE REQUEST
@@ -188,8 +190,10 @@ async def get_closedorders_binance(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbols_resp: NoobitResponseSymbols,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         auth=BinanceAuth(),
-        # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.private.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.private.endpoints.closed_orders
     ) -> Result[NoobitResponseClosedOrders, ValidationError]:
@@ -202,9 +206,12 @@ async def get_closedorders_binance(
     method = "GET"
     headers: typing.Dict = auth.headers()
 
-    valid_noobit_req = _validate_data(NoobitRequestClosedOrders, pmap({"symbol": symbol, "symbol_mapping": symbol_to_exchange}))
+    valid_noobit_req = _validate_data(NoobitRequestClosedOrders, pmap({"symbol": symbol, "symbols_resp": symbols_resp}))
     if valid_noobit_req.is_err():
         return valid_noobit_req
+    
+    if logger:
+        logger(f"Closed Orders - Noobit Request : {valid_noobit_req.value}")
 
     parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
@@ -214,10 +221,16 @@ async def get_closedorders_binance(
     valid_binance_req = _validate_data(BinanceRequestClosedOrders, pmap(signed_req))
     if valid_binance_req.is_err():
         return valid_binance_req
+    
+    if logger:
+        logger(f"Closed Orders - Parsed Request : {valid_binance_req.value}")
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_binance_req.value, headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"Closed Orders - Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(BinanceResponseOrders, pmap({"orders": result_content.value}))
     if valid_result_content.is_err():

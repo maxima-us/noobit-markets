@@ -2,6 +2,7 @@
 #! there is no endpoint that will directly give the total net value of the account
 #! we will prob need to get balances and then usd equivalent for each individually
 from decimal import Decimal
+import typing
 
 from pydantic import ValidationError
 from pyrsistent import pmap
@@ -11,15 +12,23 @@ from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Err, Result
 from noobit_markets.base.models.rest.response import NoobitResponseExposure, NoobitResponseSymbols
 
-from noobit_markets.exchanges.binance.rest.auth import BinanceAuth, BinancePrivateRequest
+from noobit_markets.exchanges.binance.rest.auth import BinanceAuth
 
 from .balances import get_balances_binance
 from ..public.instrument import get_instrument_binance
 
 
+__all__ = (
+    "get_exposure_binance"
+)
+
+
 async def get_exposure_binance(
         client: ntypes.CLIENT,
         symbols_resp: NoobitResponseSymbols,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         auth=BinanceAuth()
     ) -> Result[NoobitResponseExposure, ValidationError]:
     """
@@ -27,10 +36,8 @@ async def get_exposure_binance(
     of each asset in balances individually ==> slow
     """
 
-    # asset_from_exchange = lambda x: {v: k for k, v in symbols_resp.assets.items()}[x]
-    
     totalNetValue = Decimal(0)
-    bals = await get_balances_binance(client, symbols_resp, auth)
+    bals = await get_balances_binance(client, symbols_resp, logger=logger, auth=auth)
 
     if isinstance(bals, Err):
         return bals
@@ -52,11 +59,10 @@ async def get_exposure_binance(
             else:
                 totalNetValue += amount
 
-    # FIXME return NoobitResponseExposure
     valid_response = _validate_data(NoobitResponseExposure, pmap({
         "totalNetValue": totalNetValue,
         "cashOutstanding": None,
-        "marginExcess": 0,  #FIXME check what this corresponds to
+        "marginExcess": 0,  #TODO check what this corresponds to
         "exchange": "BINANCE",
         "rawJson": bals.value.rawJson   #! isnt really corresponding json resp, but more relevant
     }

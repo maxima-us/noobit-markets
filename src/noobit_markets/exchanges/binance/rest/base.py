@@ -18,6 +18,9 @@ from noobit_markets.base.models.result import Ok, Err, Result
 from noobit_markets.exchanges.binance.errors import ERRORS_FROM_EXCHANGE
 
 
+__all__ = (
+    "get_result_content_from_req"
+)
 
 
 async def result_or_err(resp_obj: httpx.Response) -> Result:

@@ -20,6 +20,9 @@ from noobit_markets.exchanges.binance import endpoints
 from noobit_markets.exchanges.binance.rest.base import get_result_content_from_req
 
 
+__all__= (
+    "get_wstoken_binance"
+)
 
 
 # ============================================================
@@ -41,23 +44,16 @@ class BinanceResponseWsToken(FrozenBaseModel):
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_wstoken_binance(
         client: ntypes.CLIENT,
+        # prevent unintentional passing of following args
+        *,
         auth=BinanceAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.private.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.private.endpoints.ws_token
     ) -> Result[BinanceResponseWsToken, pydantic.ValidationError]:
 
     req_url = urljoin(base_url, endpoint)
-    # Kraken Doc : Private methods must use POST
     method = "POST"
     headers: typing.Dict = auth.headers()
-    # data = {"timestamp": auth.nonce}
-    # signed_req = auth._sign(data)
-
-
-
-    # valid_binance_req = _validate_data(BinancePrivateRequest, pmap(signed_req))
-    # if valid_binance_req.is_err():
-    #     return valid_binance_req
 
     result_content = await get_result_content_from_req(client, method, req_url, FrozenBaseModel(), headers)
     if result_content.is_err():

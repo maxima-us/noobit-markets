@@ -12,7 +12,10 @@ from noobit_markets.base.auth import make_base
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 
-
+__all__ = (
+    "BinancePrivateRequest",
+    "BinanceAuth"
+)
 
 #Binance Private Request Model
 #always needs timestamp and signature param to authenticate

@@ -21,6 +21,11 @@ from noobit_markets.exchanges.binance import endpoints
 from noobit_markets.exchanges.binance.rest.base import get_result_content_from_req
 
 
+__all__ = (
+    "get_symbols_binance"
+)
+
+
 #============================================================
 # BINANCE RESPONSE MODEL
 #============================================================
@@ -148,7 +153,10 @@ def _single_assetpair(
         "volume_decimals": data.baseAssetPrecision,
         "price_decimals": data.quoteAssetPrecision,
         "leverage_available": None, #can only tell if margin or not
-        "order_min": None
+        # below is inaccurate
+        # "order_min": 10 if data.quoteAsset in ["USDT", "USD"] else 0.0001 if data.quoteAsset in ["BTC", "XBT"] else 0
+        # FIXME how do we get min order size. So far we only seen it here: https://www.binance.us/en/trade-limits but no in any API doc
+        "order_min": 0
     }
 
     return parsed
@@ -176,6 +184,8 @@ def parse_to_assets(
 @retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_symbols_binance(
         client: ntypes.CLIENT,
+        # prevent unintentional passing of following args
+        *,
         logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.symbols
@@ -193,7 +203,7 @@ async def get_symbols_binance(
         return result_content
 
     if logger:
-        logger(f"Result Content : {result_content.value}")
+        logger(f"Symbols - Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(BinanceResponseSymbols, result_content.value)
     if valid_result_content.is_err():

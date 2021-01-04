@@ -1,7 +1,6 @@
 import typing
 from decimal import Decimal
 from urllib.parse import urljoin
-from pydantic.typing import is_callable_type
 
 from typing_extensions import Literal
 import pydantic
@@ -26,6 +25,9 @@ from noobit_markets.exchanges.binance import endpoints
 from noobit_markets.exchanges.binance.rest.base import get_result_content_from_req
 
 
+__all__ = (
+    "get_balances_binance"
+)
 
 
 # ============================================================
@@ -119,19 +121,17 @@ def parse_result(
 async def get_balances_binance(
         client: ntypes.CLIENT,
         symbols_resp: NoobitResponseSymbols,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         auth=BinanceAuth(),
-        # FIXME get from endpoint dict
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.private.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.private.endpoints.balances
     ) -> Result[NoobitResponseBalances, ValidationError]:
 
-    
+
     asset_from_exchange = lambda x: {v: k for k, v in symbols_resp.assets.items()}[x]
     
-    # FIXME we need to check that user passes in correct types
-    # FIXME generally speaking, we forgot to test this in endpoints that dont require user input
-    # assert callable(asset_from_exchange)
-
     req_url = urljoin(base_url, endpoint)
     method = "GET"
     headers: typing.Dict = auth.headers()
@@ -141,10 +141,16 @@ async def get_balances_binance(
     signed_params = auth._sign(data)
 
     valid_binance_req = _validate_data(BinancePrivateRequest, pmap(signed_params))
+    
+    if logger:
+        logger(f"Balances - Parsed Request : {valid_binance_req.value}")
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_binance_req.value, headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"Balances - Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(BinanceResponseBalances, result_content.value)
     if valid_result_content.is_err():

@@ -10,7 +10,6 @@ from typing_extensions import Literal, TypedDict
 from noobit_markets.base.request import (
     retry_request,
     _validate_data,
-    validate_nreq_ohlc,
 )
 
 # Base
@@ -25,6 +24,9 @@ from noobit_markets.exchanges.binance import endpoints
 from noobit_markets.exchanges.binance.rest.base import get_result_content_from_req
 
 
+__all__ = (
+    "get_ohlc_binance"
+)
 
 
 # ============================================================
@@ -160,6 +162,9 @@ async def get_ohlc_binance(
         symbols_resp: NoobitResponseSymbols,
         timeframe: ntypes.TIMEFRAME,
         since: ntypes.TIMESTAMP,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.ohlc,
     ) -> Result[NoobitResponseOhlc, ValidationError]:
@@ -174,16 +179,25 @@ async def get_ohlc_binance(
     valid_noobit_req = _validate_data(NoobitRequestOhlc, pmap({"symbol": symbol, "symbols_resp": symbols_resp, "timeframe": timeframe, "since": since}))
     if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
+    
+    if logger:
+        logger(f"Ohlc - Noobit Request : {valid_noobit_req.value}")
 
     parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
     valid_binance_req = _validate_data(BinanceRequestOhlc, pmap(parsed_req))
     if valid_binance_req.is_err():
         return valid_binance_req
+    
+    if logger:
+        logger(f"Ohlc - Parsed Request : {valid_binance_req.value}")
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_binance_req.value, headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"Ohlc - Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(BinanceResponseOhlc, pmap({"ohlc": result_content.value}))
     if valid_result_content.is_err():

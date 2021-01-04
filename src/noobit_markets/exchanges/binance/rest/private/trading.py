@@ -1,6 +1,4 @@
-import asyncio
 from decimal import Decimal
-from datetime import date
 import typing
 from typing import Any
 from urllib.parse import urljoin, urlencode
@@ -18,26 +16,21 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseItemOrder, NoobitResponseSymbols, T_NewOrderParsedRes, T_OrderParsedItem
+from noobit_markets.base.models.rest.response import NoobitResponseItemOrder, NoobitResponseSymbols, T_OrderParsedItem
 from noobit_markets.base.models.rest.request import NoobitRequestAddOrder
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
-# Kraken
+# Binance
 from noobit_markets.exchanges.binance.rest.auth import BinanceAuth, BinancePrivateRequest
 from noobit_markets.exchanges.binance import endpoints
 from noobit_markets.exchanges.binance.rest.base import get_result_content_from_req
+from noobit_markets.exchanges.binance.types import *
 
 
+__all__ = (
+    "post_neworder_binance"
+)
 
-# ============================================================
-# TYPES
-# ============================================================
-
-B_ORDERSIDE = Literal["BUY", "SELL"]
-B_ORDERTYPE = Literal["MARKET", "LIMIT", "STOP_LOSS", "STOP_LOSS_LIMIT", "TAKE_PROFIT", "TAKE_PROFIT_LIMIT", "LIMIT_MAKER"]
-# API doc is incorrect, this is actually mandatory ==> actually correct but hard to miss, TIF is required only for LImit orders
-B_TIMEINFORCE = typing.Optional[Literal["GTC", "IOC", "FOK"]]
-B_ORDERSTATUS = Literal["NEW", "PARTIALLY_FILLED", "FILLED", "CANCELED", "PENDING_CANCEL", "REJECTED", "EXPIRED"]
 
 # ============================================================
 # BINANCE REQUEST
@@ -99,7 +92,7 @@ def parse_request(
         "newOrderRespType": "FULL",
         "recvWindow": None,
 
-        # will be set later, this is just for mypy
+        # will be set later programmatically, this is just for mypy
         "timestamp": None
     }
 
@@ -178,7 +171,6 @@ class BinanceResponseNewOrder(FrozenBaseModel):
     origQty: Decimal
     executedQty: Decimal
     cummulativeQuoteQty: Decimal
-    # TODO define this in a binance/types.py file
     status: B_ORDERSTATUS
     timeInForce: B_TIMEINFORCE
     type: B_ORDERTYPE
@@ -190,8 +182,6 @@ class BinanceResponseNewOrder(FrozenBaseModel):
 def parse_result(
         result_data: BinanceResponseNewOrder,
         symbol: ntypes.SYMBOL
-        # !!!!! FIXME now we have to come up with a proper model
-        # ? can we just use the standard Order Model ??
     ) -> T_OrderParsedItem:
 
 
@@ -204,7 +194,7 @@ def parse_result(
         "execInst": None,
         "clOrdID": result_data.clientOrderId,
         "account": None,
-        "cashMargin": "cash",    #! stick to spot for now
+        "cashMargin": "cash",    #? stick to spot for now
         "marginRatio": 1,
         "marginAmt": 0,
         "ordStatus": "filled" if result_data.type == "MARKET" else "new",
@@ -254,13 +244,15 @@ async def post_neworder_binance(
         timeInForce: ntypes.TIMEINFORCE,
         quoteOrderQty: Decimal,
         stopPrice: Decimal,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         auth=BinanceAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.private.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.private.endpoints.new_order,
-        **kwargs,
     ) -> Result[NoobitResponseItemOrder, ValidationError]:
 
-
+    
     symbol_to_exchange= lambda x: {k: v.exchange_pair for k, v in symbols_resp.asset_pairs.items()}[x]
     
     req_url = urljoin(base_url, endpoint)
@@ -270,7 +262,7 @@ async def post_neworder_binance(
     valid_noobit_req = _validate_data(NoobitRequestAddOrder, pmap({
         "exchange": "BINANCE",
         "symbol":symbol,
-        # "symbol_mapping":symbol_to_exchange,
+        "symbols_resp":symbols_resp,
         "side":side,
         "ordType":ordType,
         "clOrdID":clOrdID,
@@ -279,11 +271,13 @@ async def post_neworder_binance(
         "timeInForce": timeInForce,
         "quoteOrderQty": quoteOrderQty,
         "stopPrice": stopPrice,
-        **kwargs
     }))
 
     if valid_noobit_req.is_err():
         return valid_noobit_req
+    
+    if logger:
+        logger(f"New Order - Noobit Request : {valid_noobit_req.value}")
 
     parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
     parsed_req["timestamp"] = auth.nonce
@@ -291,13 +285,16 @@ async def post_neworder_binance(
     valid_binance_req = _validate_data(BinanceRequestNewOrder, pmap({**parsed_req}))
     if valid_binance_req.is_err():
         return valid_binance_req
+    
+    if logger:
+        logger(f"New Order - Parsed Request : {valid_binance_req.value}")
 
     #! sign after validation, otherwise we aill get all the non values too
     signed_req: dict = auth._sign(valid_binance_req.value.dict(exclude_none=True))
 
     #! we should not pass in "params" to the client, but construct the whole url + query string ourself, so we can make sure its sorted properly
 
-    #! ====> experimental
+    #! ====>
     qstrings = sorted([(k, v) for k, v in signed_req.items() if not "signature" in k], reverse=True)
     qstrings_join = urlencode(qstrings)
     full_url = "?".join([req_url, qstrings_join])
@@ -307,6 +304,9 @@ async def post_neworder_binance(
     result_content = await get_result_content_from_req(client, method, full_url, FrozenBaseModel(), headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"New Order - Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(BinanceResponseNewOrder, result_content.value)
     if valid_result_content.is_err():
