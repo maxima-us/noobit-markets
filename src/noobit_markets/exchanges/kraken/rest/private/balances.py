@@ -22,6 +22,9 @@ from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
 
 
+__all__ = (
+    "get_balances_kraken"
+)
 
 
 #============================================================
@@ -59,6 +62,9 @@ def parse_result(
 async def get_balances_kraken(
         client: ntypes.CLIENT,
         symbols_resp: NoobitResponseSymbols,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.balances
@@ -75,12 +81,18 @@ async def get_balances_kraken(
     valid_kraken_req = _validate_data(KrakenPrivateRequest, pmap(data))
     if valid_kraken_req.is_err():
         return valid_kraken_req
+    
+    if logger:
+        logger(f"Balances - Parsed Request : {valid_kraken_req.value}")
 
     headers = auth.headers(endpoint, valid_kraken_req.value.dict())
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"Balances - Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(KrakenResponseBalances,  pmap({"balances": result_content.value}))
     if valid_result_content.is_err():

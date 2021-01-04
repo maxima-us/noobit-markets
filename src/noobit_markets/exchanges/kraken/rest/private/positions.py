@@ -30,6 +30,9 @@ from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
 
 
+__all__ =(
+    "get_openpositions_kraken"
+)
 
 
 # ============================================================
@@ -165,6 +168,9 @@ def _single_position(key: str, info: OpenPositionInfo, symbol_from_exchange: nty
 async def get_openpositions_kraken(
         client: ntypes.CLIENT,
         symbols_resp: NoobitResponseSymbols,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.open_positions
@@ -184,12 +190,18 @@ async def get_openpositions_kraken(
     valid_kraken_req = _validate_data(KrakenRequestOpenPositions, pmap(data))
     if valid_kraken_req.is_err():
         return valid_kraken_req
+    
+    if logger:
+        logger(f"Open Positions - Parsed Request : {valid_kraken_req.value}")
 
     headers = auth.headers(endpoint, valid_kraken_req.value.dict())
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"Open Positions - Result content : {result_content.value}")
 
     valid_result_content = _validate_data(KrakenResponseOpenPositions, pmap({"positions": result_content.value}))
     if valid_result_content.is_err():

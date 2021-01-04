@@ -19,7 +19,7 @@ from noobit_markets.exchanges.kraken.rest.private.ws_auth import get_wstoken_kra
 from noobit_markets.exchanges.kraken.rest.private.trading import post_neworder_kraken
 
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.rest.response import NBalances, NExposure, NTrades
+from noobit_markets.base.models.rest.response import NBalances, NExposure, NTrades, NSingleOrder
 
 
 sym = asyncio.run(
@@ -35,14 +35,12 @@ else:
     symbols = sym.value
     asset_from_exchange = {v: k for k, v in symbols.assets.items()}
     symbol_from_exchange = {
-        f"{v.noobit_base}{v.noobit_quote}": k for k, v in symbols.asset_pairs.items()
+        f"{v.noobit_base}{v.noobit_quote}": k 
+        for k, v in symbols.asset_pairs.items()
     }
     symbol_to_exchange = {k: v.exchange_pair for k, v in symbols.asset_pairs.items()}
 
-    # print(symbol_from_exchange["XBTUSD"])
-    print(symbols.asset_pairs["DOT-USD"])
-
-    # exchange_name='XXBTZUSD' ws_name='XBT/USD' base='XXBT' quote='ZUSD' volume_decimals=8 price_decimals=1 leverage_available=(2, 3, 4, 5) order_min=Decimal('0.001')
+    # print(symbols.asset_pairs["DOT-USD"])
 
     # ============================================================
     # POST NEW ORDER
@@ -58,19 +56,19 @@ else:
             side="buy",
             ordType="limit",
             clOrdID="1234567",
-            orderQty=1.2315993434343526262626264343434,
+            orderQty=1.231599,
             price=1.2323,
             timeInForce="GTC",
             quoteOrderQty=None,
             stopPrice=None,
         )
     )
-    print(trd)
-    # if trd.is_err():
-    #     print(trd)
-    # else:
-    #     print(trd)
-    #     print("Trading New Order ok")
+    _nord = NSingleOrder(trd)
+    if _nord.is_err():
+        print(_nord.result)
+    else:
+        print(_nord.table)
+        print("Trading New Order ok")
 
     # ============================================================
     # BALANCES
@@ -88,17 +86,9 @@ else:
     if _bals.is_err():
         print(_bals.result)
     else:
-        # print("Asks :", _ob.result.value.asks)
-        # print("Bids :", _ob.result.value.bids)
         # print(_bals.table)
         print("Balances ok")
 
-    # if bal.is_err():
-    #     print(bal)
-    # else:
-    #     table = pymap_table(bal.value.balances, headers=["Asset", "Balance"])
-    #     print(table)
-    #     print("Balances ok")
 
     # ============================================================
     # EXPOSURE
@@ -114,16 +104,9 @@ else:
     if _exp.is_err():
         print(_exp.result)
     else:
-        # print("Asks :", _ob.result.value.asks)
-        # print("Bids :", _ob.result.value.bids)
         # print(_exp.table)
         print("Exposure ok")
 
-    # if expo.is_err():
-    #     print(expo)
-    # else:
-    #     # (print(expo.value))
-    #     print("Exposure ok")
 
     # ============================================================
     # OPEN ORDERS
@@ -131,11 +114,6 @@ else:
     opo = asyncio.run(
         get_openorders_kraken(
             client=httpx.AsyncClient(),
-            #! Problem is we can now not inspect the dict anymore
-            #! so if we get an error, it will be way harder to debug
-            #! but also provides more flexbility as shown in this example
-            # symbol_to_exchange=lambda x: symbol_to_exchange[x],
-            # symbols_from_exchange=lambda x: {v.ws_name.replace("/", ""): k for k, v in symbols.asset_pairs.items()}.get(x),
             symbols_resp=sym.value,
             symbol=ntypes.PSymbol(
                 "DOT-USD"
@@ -166,10 +144,6 @@ else:
     if clo.is_err():
         print(clo)
     else:
-        #! table is tooo wide
-        # table = pylist_table(clo.value.orders)
-        # print(table)
-        # print([i for i in clo.value.orders if i.clOrdID == "12345"])
         print("Closed Orders ok")
 
     # ============================================================
@@ -178,8 +152,6 @@ else:
     opp = asyncio.run(
         get_openpositions_kraken(
             client=httpx.AsyncClient(),
-            # symbols_to_exchange={k: v.exchange_name for k, v in symbols.asset_pairs.items()},
-            # symbol_from_exchange=lambda x: {f"{v.exchange_base}{v.exchange_quote}": k for k, v in symbols.asset_pairs.items()}.get(x),
             symbols_resp=sym.value,
         )
     )
@@ -197,9 +169,6 @@ else:
             symbol=ntypes.PSymbol(
                 "DOT-USD"
             ),  #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
-            # symbol_from_exchange=lambda x: {v.exchange_name: k for k, v in symbols.asset_pairs.items()}.get(x, None),
-            # symbol_from_exchange=lambda x: {f"{v.exchange_base}{v.exchange_quote}": k for k, v in symbols.asset_pairs.items()}.get(x),
-            # symbol_to_exchange=lambda x: symbol_to_exchange[x],
             symbols_resp=sym.value,
         )
     )
@@ -209,7 +178,7 @@ else:
     if _trd.is_err():
         print(_trd.result)
     else:
-        print(_trd.table)
+        # print(_trd.table)
         print("Trades ok")
 
     # if utr.is_err():

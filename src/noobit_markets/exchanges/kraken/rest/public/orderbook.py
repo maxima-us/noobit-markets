@@ -12,7 +12,6 @@ from pyrsistent import pmap
 from noobit_markets.base.request import (
     retry_request,
     _validate_data,
-    validate_nreq_orderbook,
 )
 
 # Base
@@ -27,6 +26,9 @@ from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
 
 
+__all__ = (
+    "get_orderbook_kraken"
+)
 
 
 # ============================================================
@@ -125,8 +127,10 @@ async def get_orderbook_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbols_resp: NoobitResponseSymbols,
-        # symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         depth: ntypes.DEPTH,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.orderbook,
     ) -> Result[NoobitResponseOrderBook, pydantic.ValidationError]:
@@ -138,19 +142,28 @@ async def get_orderbook_kraken(
     method = "GET"
     headers: typing.Dict = {}
 
-    valid_req = _validate_data(NoobitRequestOrderBook, pmap({"symbol": symbol, "symbols_resp": symbols_resp, "depth": depth}))
-    if isinstance(valid_req, Err):
-        return valid_req
+    valid_noobit_req = _validate_data(NoobitRequestOrderBook, pmap({"symbol": symbol, "symbols_resp": symbols_resp, "depth": depth}))
+    if isinstance(valid_noobit_req, Err):
+        return valid_noobit_req
+    
+    if logger:
+        logger(f"Orderbook - Noobit Request : {valid_noobit_req.value}")
 
-    parsed_req = parse_request(valid_req.value, symbol_to_exchange)
+    parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
     valid_kraken_req = _validate_data(KrakenRequestOrderBook, pmap(parsed_req))
     if valid_kraken_req.is_err():
         return valid_kraken_req
+    
+    if logger:
+        logger(f"Orderbook - Parsed Request : {valid_kraken_req.value}")
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"Orderbook - Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(
         make_kraken_model_orderbook(symbol, symbol_to_exchange),

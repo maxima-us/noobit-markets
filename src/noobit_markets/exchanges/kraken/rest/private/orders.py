@@ -32,6 +32,10 @@ from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
 
 
+__all__ = (
+    "get_closedorders_kraken",
+    "get_openorders_kraken"
+)
 
 
 # ============================================================
@@ -294,6 +298,9 @@ async def get_openorders_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbols_resp: NoobitResponseSymbols,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.open_orders
@@ -311,12 +318,18 @@ async def get_openorders_kraken(
     valid_kraken_req = _validate_data(KrakenRequestOpenOrders, pmap(data))
     if valid_kraken_req.is_err():
         return valid_kraken_req
+    
+    if logger:
+        logger(f"Open Orders - Parsed Request : {valid_kraken_req.value}")
 
     headers = auth.headers(endpoint, valid_kraken_req.value.dict())
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"Open Orders - result content : {result_content.value}")
 
     valid_result_content = _validate_data(KrakenResponseOpenOrders, result_content.value)
     if valid_result_content.is_err():
@@ -344,6 +357,9 @@ async def get_closedorders_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbols_resp: NoobitResponseSymbols,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.closed_orders
@@ -361,12 +377,18 @@ async def get_closedorders_kraken(
     valid_kraken_req = _validate_data(KrakenRequestClosedOrders, pmap(data))
     if valid_kraken_req.is_err():
         return valid_kraken_req
+    
+    if logger:
+        logger(f"Closed Orders - Parsed Request : {valid_kraken_req.value}")
 
     headers = auth.headers(endpoint, valid_kraken_req.value.dict())
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"Closed Orders - Result content : {result_content.value}")
 
     valid_result_content = _validate_data(KrakenResponseClosedOrders, result_content.value)
     if valid_result_content.is_err():

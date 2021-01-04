@@ -13,7 +13,6 @@ from pyrsistent import pmap
 from noobit_markets.base.request import (
     retry_request,
     _validate_data,
-    validate_nreq_instrument,
 )
 
 # Base
@@ -29,6 +28,9 @@ from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_re
 import pyrsistent
 
 
+__all__ = (
+    "get_instrument_kraken"
+)
 
 
 # ============================================================
@@ -135,8 +137,6 @@ def parse_result(
         "prevTrdCount": result_data.t[1]
     }
 
-    # typing this is useless, we only want to check the fields
-    # maybe typeddict ?
     return parsed_instrument
 
 
@@ -153,7 +153,9 @@ async def get_instrument_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbols_resp: NoobitResponseSymbols,
-        # symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.instrument,
     ) -> Result[NoobitResponseInstrument, ValidationError]:
@@ -169,15 +171,24 @@ async def get_instrument_kraken(
     if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
 
+    if logger:
+        logger(f"Instrument - Noobit Request : {valid_noobit_req.value}")
+
     parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
     valid_kraken_req = _validate_data(KrakenRequestInstrument, parsed_req)
     if valid_kraken_req.is_err():
         return valid_kraken_req
 
+    if logger:
+        logger(f"Instrument - Parsed Request : {valid_kraken_req.value}")
+
     result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
     if result_content.is_err():
         return result_content
+
+    if logger:
+        logger(f"Instrument - Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(
         make_kraken_model_instrument(symbol, symbol_to_exchange),

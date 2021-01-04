@@ -17,13 +17,15 @@ from noobit_markets.base.models.result import Result
 from noobit_markets.base.models.rest.response import NoobitResponseExposure, T_ExposureParsedRes, NoobitResponseSymbols
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
-
 # Kraken
 from noobit_markets.exchanges.kraken.rest.auth import KrakenAuth, KrakenPrivateRequest
 from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
 
 
+__all__ = (
+    "get_exposure_kraken"
+)
 
 
 #============================================================
@@ -79,7 +81,10 @@ def parse_result(result_data: KrakenResponseExposure) -> T_ExposureParsedRes:
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_exposure_kraken(
         client: ntypes.CLIENT,
-        symbols_resp: typing.Optional[NoobitResponseSymbols] = None,
+        symbols_resp: typing.Optional[NoobitResponseSymbols] = None,    #only there to have consistent signature with binance
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.exposure
@@ -94,12 +99,18 @@ async def get_exposure_kraken(
     valid_kraken_req = _validate_data(KrakenPrivateRequest, pmap(data))
     if valid_kraken_req.is_err():
         return valid_kraken_req
+    
+    if logger:
+        logger(f"Exposure - Parsed Request : {valid_kraken_req.value}")
 
     headers = auth.headers(endpoint, valid_kraken_req.value.dict())
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"Exposure - Result content : {result_content.value}")
 
     valid_result_content = _validate_data(KrakenResponseExposure, result_content.value)
     if valid_result_content.is_err():

@@ -26,6 +26,9 @@ from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
 
 
+__all__ = (
+    "get_ohlc_kraken"
+)
 
 
 # ============================================================
@@ -177,9 +180,11 @@ async def get_ohlc_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbols_resp: NoobitResponseSymbols,
-        # symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         timeframe: ntypes.TIMEFRAME,
         since: ntypes.TIMESTAMP,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.ohlc,
     ) -> Result[NoobitResponseOhlc, ValidationError]:
@@ -194,16 +199,25 @@ async def get_ohlc_kraken(
     valid_noobit_req = _validate_data(NoobitRequestOhlc, pmap({"symbol": symbol, "symbols_resp": symbols_resp, "timeframe": timeframe, "since": since}))
     if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
+    
+    if logger:
+        logger(f"Ohlc - Noobit Request : {valid_noobit_req.value}")
 
     parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
     valid_kraken_req = _validate_data(KrakenRequestOhlc, parsed_req)
     if valid_kraken_req.is_err():
         return valid_kraken_req
+    
+    if logger:
+        logger(f"Ohlc - Parsed Request : {valid_kraken_req.value}")
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"Ohlc - Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(
         make_kraken_model_ohlc(symbol, symbol_to_exchange),

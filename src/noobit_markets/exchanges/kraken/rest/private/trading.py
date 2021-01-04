@@ -27,6 +27,12 @@ from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
 from .orders import get_openorders_kraken, get_closedorders_kraken
 
+
+__all__= (
+    "post_neworder_kraken"
+)
+
+
 # ============================================================
 # KRAKEN REQUEST
 # ============================================================
@@ -227,7 +233,6 @@ async def post_neworder_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbols_resp: NoobitResponseSymbols,
-        # symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         side: ntypes.ORDERSIDE,
         ordType: ntypes.ORDERTYPE,
         clOrdID: str,
@@ -237,6 +242,9 @@ async def post_neworder_kraken(
         stopPrice: Decimal,
         # until kraken enables use of `viqc` flag, always pass in None
         quoteOrderQty = None,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.new_order,
@@ -266,6 +274,9 @@ async def post_neworder_kraken(
 
     if valid_noobit_req.is_err():
         return valid_noobit_req
+    
+    if logger:
+        logger(f"New Order - Noobit Request : {valid_noobit_req.value}")
 
     parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
     data = {"nonce": auth.nonce, **parsed_req}
@@ -273,12 +284,18 @@ async def post_neworder_kraken(
     valid_kraken_req = _validate_data(KrakenRequestNewOrder, pmap({"nonce":data["nonce"], **parsed_req}))
     if valid_kraken_req.is_err():
         return valid_kraken_req
+    
+    if logger:
+        logger(f"New Order - Parsed Request : {valid_kraken_req.value}")
 
     headers = auth.headers(endpoint, valid_kraken_req.value.dict(exclude_none=True))
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"New Order - Result content : {result_content.value}")
 
     valid_result_content = _validate_data(KrakenResponseNewOrder, result_content.value)
     if valid_result_content.is_err():
@@ -301,7 +318,7 @@ async def post_neworder_kraken(
     if ordType == "market":
         # FIXME symbol_from_exchange lambda isnt entirely accurate
         # will be ok for most pairs but some have 4/5 letters for base
-        cl_ord = await get_closedorders_kraken(client, symbol, symbols_resp, auth)
+        cl_ord = await get_closedorders_kraken(client, symbol, symbols_resp, logger=logger, auth=auth)
         if isinstance(cl_ord, Ok):
             [order_info] = [order for order in cl_ord.value.orders if order.orderID == newOrderID]
         else:
@@ -311,7 +328,7 @@ async def post_neworder_kraken(
         await asyncio.sleep(0.1)
         # FIXME symbol_from_exchange lambda isnt entirely accurate
         # will be ok for most pairs but some have 4/5 letters for base
-        op_ord = await get_openorders_kraken(client, symbol, symbols_resp, auth)
+        op_ord = await get_openorders_kraken(client, symbol, symbols_resp, logger=logger, auth=auth)
         if isinstance(op_ord, Ok):
             [order_info] = [order for order in op_ord.value.orders if order.orderID == newOrderID]
         else:

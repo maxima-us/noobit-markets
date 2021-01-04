@@ -25,6 +25,9 @@ from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
 
 
+__all__ = (
+    "get_symbols_kraken"
+)
 
 
 #============================================================
@@ -183,6 +186,8 @@ def hasnums(s):
 
 async def get_symbols_kraken(
         client: ntypes.CLIENT,
+        # prevent unintentional passing of following args
+        *,
         logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.symbols
@@ -203,7 +208,7 @@ async def get_symbols_kraken(
         filtered_result = {k: v for k, v in result_content.value.items() if ".d" not in k and not hasnums(k)}
     
     if logger:
-        logger(f"Result Content : {result_content.value}")
+        logger(f"Symbols - Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(KrakenResponseSymbols, pmap({"symbols": filtered_result}))
     if valid_result_content.is_err():

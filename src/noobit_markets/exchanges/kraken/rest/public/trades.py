@@ -12,7 +12,6 @@ from typing_extensions import Literal, TypedDict
 from noobit_markets.base.request import (
     retry_request,
     _validate_data,
-    validate_nreq_trades,
 )
 
 # Base
@@ -27,6 +26,9 @@ from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
 
 
+__all__ = (
+    "get_trades_kraken"
+)
 
 
 # ============================================================
@@ -184,8 +186,10 @@ async def get_trades_kraken(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbols_resp: NoobitResponseSymbols,
-        # symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
         since: typing.Optional[ntypes.TIMESTAMP] = None,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
         endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.trades,
     ) -> Result[NoobitResponseTrades,ValidationError]:
@@ -200,16 +204,25 @@ async def get_trades_kraken(
     valid_noobit_req = _validate_data(NoobitRequestTrades,  pmap({"symbol": symbol, "symbols_resp": symbols_resp, "since": since}))
     if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
+    
+    if logger:
+        logger(f"Trades - Noobit Request : {valid_noobit_req.value}")
 
     parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
     valid_kraken_req = _validate_data(KrakenRequestTrades, pmap(parsed_req))
     if valid_kraken_req.is_err():
         return valid_kraken_req
+    
+    if logger:
+        logger(f"Trades - Parsed Request : {valid_kraken_req.value}")
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"Trades - Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(
         make_kraken_model_trades(symbol, symbol_to_exchange),
