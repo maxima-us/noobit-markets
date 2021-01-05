@@ -87,7 +87,6 @@ def parse_request(
 
 class BinanceResponseInstrument(FrozenBaseModel):
 
-    #TODO regex capital
     symbol: str
     priceChange: Decimal
     priceChangePercent: Decimal
@@ -108,7 +107,6 @@ class BinanceResponseInstrument(FrozenBaseModel):
     lastId: pydantic.PositiveInt
     count: pydantic.PositiveInt
 
-    #TODO validate openTime and closeTime
 
 
 def parse_result(
@@ -128,13 +126,11 @@ def parse_result(
         #FIXME no volume for best ask and best bid
         "bestAsk": {result_data.askPrice: 0},
         "bestBid": {result_data.bidPrice: 0},
-        # FIXME revise NoobitResp model so better fit binance data too
-        # FIXME below values should be None (model fields are not optional so far)
-        "prevLow": 0,
-        "prevHigh": 0,
-        "prevVwap": 0,
-        "prevVolume": 0,
-        "prevTrdCount": 0,
+        "prevLow": None,
+        "prevHigh": None,
+        "prevVwap": None,
+        "prevVolume": None,
+        "prevTrdCount": None,
     }
     return parsed_instrument
 

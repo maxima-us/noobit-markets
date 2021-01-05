@@ -56,7 +56,7 @@ class NResultWrapper(ABC):
 
     @property
     def result(self):
-        return self.vser
+        return self.vser.value
 
     @property
     def dict(self):
@@ -121,10 +121,10 @@ class NoobitResponseInstrument(NoobitBaseResponse):
     bestBid: ntypes.BID
 
     # stats for previous day
-    prevLow: Decimal
-    prevHigh: Decimal
-    prevVwap: Decimal
-    prevVolume: Decimal
+    prevLow: typing.Optional[Decimal]
+    prevHigh: typing.Optional[Decimal]
+    prevVwap: typing.Optional[Decimal]
+    prevVolume: typing.Optional[Decimal]
     prevTrdCount: typing.Optional[Decimal]
 
 
