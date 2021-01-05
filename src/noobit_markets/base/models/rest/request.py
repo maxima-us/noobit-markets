@@ -17,11 +17,17 @@ from noobit_markets.base import ntypes
 
 class NoobitRequestOhlc(FrozenBaseModel):
 
-    symbol: ntypes.SYMBOL
     symbols_resp: NoobitResponseSymbols
     timeframe: ntypes.TIMEFRAME
     since: typing.Optional[ntypes.TIMESTAMP]
+    symbol: ntypes.SYMBOL
 
+    @validator("symbol")
+    def symbol_validity(cls, v, values):
+        if not v in values["symbols_resp"].asset_pairs.keys():
+            raise ValueError("Unknown Symbol")
+
+        return v
 
 
 
@@ -32,11 +38,16 @@ class NoobitRequestOhlc(FrozenBaseModel):
 
 class NoobitRequestOrderBook(FrozenBaseModel):
 
-    symbol: ntypes.SYMBOL
     symbols_resp: NoobitResponseSymbols
     depth: ntypes.DEPTH
+    symbol: ntypes.SYMBOL
 
+    @validator("symbol")
+    def symbol_validity(cls, v, values):
+        if not v in values["symbols_resp"].asset_pairs.keys():
+            raise ValueError("Unknown Symbol")
 
+        return v
 
 
 # ============================================================
@@ -55,6 +66,9 @@ class NoobitRequestTrades(FrozenBaseModel):
         if not v in values["symbols_resp"].asset_pairs.keys():
             raise ValueError("Unknown Symbol")
 
+        return v
+
+
 # ============================================================
 # Instrument
 # ============================================================
@@ -69,6 +83,8 @@ class NoobitRequestInstrument(FrozenBaseModel):
     def symbol_validity(cls, v, values):
         if not v in values["symbols_resp"].asset_pairs.keys():
             raise ValueError("Unknown Symbol")
+
+        return v
 
 
 
@@ -89,6 +105,8 @@ class NoobitRequestSpread(FrozenBaseModel):
         if not v in values["symbols_resp"].asset_pairs.keys():
             raise ValueError("Unknown Symbol")
 
+        return v
+
 
 
 
@@ -107,6 +125,8 @@ class NoobitRequestClosedOrders(FrozenBaseModel):
     def symbol_validity(cls, v, values):
         if not v in values["symbols_resp"].asset_pairs.keys():
             raise ValueError("Unknown Symbol")
+
+        return v
 
 
 
@@ -196,6 +216,8 @@ class NoobitRequestAddOrder(FrozenBaseModel):
     def symbol_validity(cls, v, values):
         if not v in values["symbols_resp"].asset_pairs.keys():
             raise ValueError("Unknown Symbol")
+
+        return v
 
 
     @validator("orderQty")
