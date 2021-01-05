@@ -30,11 +30,11 @@ import logging
 from noobit_markets.ui.commands import _handle_commands, load_parser
 from noobit_markets.ui import settings
 
-
-
 # req for endpoints
 import httpx
 from noobit_markets.base import ntypes
+from noobit_markets.base.errors import BaseError
+from noobit_markets.base.models.result import Err
 
 # endpoints
 from noobit_markets.exchanges.kraken.interface import KRAKEN
@@ -135,7 +135,11 @@ class HummingbotCLI:
         self.argparser = load_parser(self)
         self.client = httpx.AsyncClient()
         self.ws = {}
-        self.symbols = {}
+        # TODO we dont want to hardcode this for every exchange
+        self.symbols: typing.Dict = {}
+        #     "KRAKEN": None,
+        #     "BINANCE": None
+        # }
 
         # doesnt seem to work
         safe_ensure_future(self.fetch_symbols())
@@ -289,10 +293,20 @@ class HummingbotCLI:
         @functools.wraps(f)
         async def wrapper(self, exchange, *args, **kwargs):
 
-            if not exchange: exchange = settings.EXCHANGE 
+            if not exchange: 
+                if not settings.EXCHANGE or settings.EXCHANGE.isspace(): 
+                    self.log("Please set or pass <exchange> argument")
+                    return
+                else:
+                    exchange = settings.EXCHANGE
             else: exchange = exchange.upper()
+            
+            self.log_field.log(f"Requested Exchange : {exchange}")
 
-            self.log_field.log(f"Request Exchange : {exchange}")
+            if not self.symbols.get(exchange, None):
+                self.log("Please run <symbols> command")
+                return
+
 
             if exchange in ntypes.EXCHANGE.__members__.keys():
                 if exchange in self.symbols.keys():
@@ -301,13 +315,17 @@ class HummingbotCLI:
 
                     if wrapped_res.is_err():
                         # model validation error
-                        if isinstance(wrapped_res.result, ValidationError):
+                        if isinstance(getattr(wrapped_res, "result", None), ValidationError):
                             self.log(wrapped_res.result)
-                        else:
+                        elif isinstance(getattr(wrapped_res, "result", None), BaseError):
                         # parsed exchange error (exception)
                             self.log("ERROR")
                             for err in wrapped_res.result:
                                 self.log(str(err))
+                        elif isinstance(getattr(wrapped_res, "result", None), Exception):
+                            self.log(str(wrapped_res.result))
+                        else:
+                            self.log(wrapped_res)
                     else:
                         self.log("SUCCESS")
                         self.log(wrapped_res.table)
@@ -420,7 +438,11 @@ class HummingbotCLI:
 
         self.log_field.log("CALLED fetch_ohlc")
 
-        if not symbol: symbol = settings.SYMBOL
+        if not symbol:
+            if not settings.SYMBOL or settings.SYMBOL.isspace(): 
+                return Err("Please set or pass <symbol> argument")
+            else:
+                symbol = settings.SYMBOL
         else: symbol=symbol.upper()
 
         interface = globals()[exchange]
@@ -436,7 +458,11 @@ class HummingbotCLI:
 
         self.log_field.log("CALLED fetch_orderbook")
 
-        if not symbol: symbol = settings.SYMBOL
+        if not symbol:
+            if not settings.SYMBOL or settings.SYMBOL.isspace(): 
+                return Err("Please set or pass <symbol> argument")
+            else:
+                symbol = settings.SYMBOL
         else: symbol=symbol.upper()
         
         interface = globals()[exchange]
@@ -451,7 +477,10 @@ class HummingbotCLI:
 
         self.log_field.log("CALLED fetch_trades")
         
-        if not symbol: symbol = settings.SYMBOL
+        if not symbol: 
+            if not settings.SYMBOL or settings.SYMBOL.isspace(): 
+                return Err("Please set or pass <symbol> argument")
+            else: symbol = settings.SYMBOL
         else: symbol=symbol.upper()
         
         interface = globals()[exchange]
@@ -516,7 +545,10 @@ class HummingbotCLI:
     
         self.log_field.log("CALLED create_neworder") 
         
-        if not symbol: symbol = settings.SYMBOL
+        if not symbol: 
+            if not settings.SYMBOL or settings.SYMBOL.isspace(): 
+                return Err("Please set or pass <symbol> argument")
+            else: symbol = settings.SYMBOL
         else: symbol=symbol.upper()
 
         self.log_field.log(f"Requested Symbol : {symbol}")
@@ -547,12 +579,23 @@ class HummingbotCLI:
 
         self.log_field.log("CALLED create_neworder") 
 
-        if not symbol: symbol = settings.SYMBOL
+        if not symbol: 
+            if not settings.SYMBOL or settings.SYMBOL.isspace(): 
+                return Err("Please set or pass <symbol> argument")
+            else: symbol = settings.SYMBOL
         else: symbol=symbol.upper()
-        if not ordType: ordType = settings.ORDTYPE
+
+        if not ordType:
+            if not settings.ORDTYPE or settings.ORDTYPE.isspace(): 
+                return Err("Please set or pass <ordType> argument")
+            else: ordType = settings.ORDTYPE
         # TODO be consistent: either all noobit types in capital or in lowercase
         else: ordType = ordType.lower()
-        if not orderQty: orderQty = settings.ORDQTY
+
+        if not orderQty:
+            if not settings.ORDQTY or settings.ORQTY.isspace(): 
+                return Err("Please set or pass <orderQty> argument")
+            else: orderQty = settings.ORQTY
         
         interface = globals()[exchange]
         _res = await interface.rest.private.new_order(
