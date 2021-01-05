@@ -40,7 +40,6 @@ else:
     }
     symbol_to_exchange = {k: v.exchange_pair for k, v in symbols.asset_pairs.items()}
 
-    # print(symbols.asset_pairs["DOT-USD"])
 
     # ============================================================
     # POST NEW ORDER
@@ -49,9 +48,6 @@ else:
         post_neworder_kraken(
             client=httpx.AsyncClient(),
             symbol="DOT-USD",
-            # FIXME wouldnt it be better to pass noobit objetct as symbol_to_exchange
-            # (that way we could get both `to` and `from` exchange, as well as decimal places and min orders)
-            # symbol_to_exchange=lambda x: {k: v.exchange_pair for k, v in symbols.asset_pairs.items()}[x],
             symbols_resp=sym.value,
             side="buy",
             ordType="limit",
@@ -76,8 +72,6 @@ else:
     bal = asyncio.run(
         get_balances_kraken(
             client=httpx.AsyncClient(),
-            # if we also want to see the staking assets (eg `DOT.S`)
-            # asset_from_exchange=lambda x : asset_from_exchange[x] if ".S" not in x else ntypes.PAsset(x)
             symbols_resp=sym.value,
         )
     )
@@ -131,9 +125,6 @@ else:
     clo = asyncio.run(
         get_closedorders_kraken(
             client=httpx.AsyncClient(),
-            # symbol_to_exchange=lambda x: symbol_to_exchange[x],
-            # symbol_from_exchange=lambda x: {f"{v.noobit_base}{v.noobit_quote}": k for k, v in symbols.asset_pairs.items()}[x],
-            # symbol_from_exchange=lambda x: f"{x[0:3]}-{x[-3:]}",
             symbols_resp=sym.value,
             symbol=ntypes.PSymbol(
                 "DOT-USD"
@@ -181,10 +172,6 @@ else:
         # print(_trd.table)
         print("Trades ok")
 
-    # if utr.is_err():
-    #     print(utr)
-    # else:
-    #     print("User Trades ok")
 
     # ============================================================
     # WS AUTH TOKEN

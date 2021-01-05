@@ -32,8 +32,6 @@ sym = asyncio.run(
 bals = asyncio.run(
     get_balances_binance(
         client=httpx.AsyncClient(),
-        # FIXME Does note fail explicitely if we pass in a non callable
-        # asset_from_exchange=lambda x: {k: v for v, k in sym.value.assets.items()}[x]
         symbols_resp=sym.value,
     )
 )
@@ -51,9 +49,6 @@ else:
 exp = asyncio.run(
     get_exposure_binance(
         client=httpx.AsyncClient(),
-        # FIXME Does note fail explicitely if we pass in a non callable
-        # asset_from_exchange=lambda x: {k: v for v, k in sym.value.assets.items()}[x],
-        # symbol_to_exchange=lambda x: {k: v.exchange_pair for k, v in sym.value.asset_pairs.items()}[x]
         symbols_resp=sym.value,
     )
 )
@@ -72,7 +67,6 @@ clo = asyncio.run(
     get_closedorders_binance(
         client=httpx.AsyncClient(),
         symbol="XBT-USDT",
-        # symbol_to_exchange=lambda x: {"XBT-USD": "BTCUSDT"}[x]
         symbols_resp=sym.value,
     )
 )
@@ -91,7 +85,6 @@ trd = asyncio.run(
     get_trades_binance(
         client=httpx.AsyncClient(),
         symbol="XBT-USDT",
-        # symbol_to_exchange= lambda x: {"XBT-USD": "BTCUSDT"}[x]
         symbols_resp=sym.value,
     )
 )

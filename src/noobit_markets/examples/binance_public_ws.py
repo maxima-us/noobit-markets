@@ -19,8 +19,6 @@ async def main(loop):
     async with websockets.connect("wss://stream.binance.com:9443/ws") as client:
         # async with websockets.connect("wss://stream.binance.com:9443/ws/btcusdt@aggTrade") as client:
 
-        # TODO put this in our interface
-        #       ==> then call with : ksw = interface.KRAKEN.ws.public
         kws = BinanceWsPublic(client, None, loop, feed_map)
         symbol_mapping = lambda x: {"XBT-USD": "btcusdt"}[x]
         symbol = ntypes.PSymbol("XBT-USD")
