@@ -9,7 +9,6 @@ from pyrsistent import pmap
 from noobit_markets.base.request import (
     retry_request,
     _validate_data,
-    validate_nreq_orderbook,
 )
 
 # Base
@@ -25,6 +24,9 @@ from noobit_markets.exchanges.ftx.rest.base import get_result_content_from_req
 from typing_extensions import TypedDict
 
 
+__all__ = (
+    "get_orderbook_ftx"
+)
 
 
 # ============================================================
@@ -120,6 +122,9 @@ async def get_orderbook_ftx(
         symbol: ntypes.SYMBOL,
         symbols_resp: NoobitResponseSymbols,
         depth: ntypes.DEPTH,
+        #  prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.FTX_ENDPOINTS.public.url,
         endpoint: str = endpoints.FTX_ENDPOINTS.public.endpoints.orderbook,
     ) -> Result[NoobitResponseOrderBook, pydantic.ValidationError]:
@@ -129,7 +134,6 @@ async def get_orderbook_ftx(
     
     # ftx has variable urls besides query params
     # format: https://ftx.com/api/markets/{market_name}/candles
-    # FIXME use urljoin
     req_url = "/".join([base_url, "markets", symbol_to_exchange(symbol), endpoint])
     method = "GET"
     headers: typing.Dict = {}
@@ -137,16 +141,25 @@ async def get_orderbook_ftx(
     valid_noobit_req = _validate_data(NoobitRequestOrderBook, pmap({"symbol": symbol, "symbols_resp": symbols_resp, "depth": depth}))
     if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
+    
+    if logger:
+        logger(f"Orderbook - Noobit Request : {valid_noobit_req.value}")
 
     parsed_req = parse_request(valid_noobit_req.value)
 
     valid_ftx_req = _validate_data(FtxRequestOrderBook, pmap(parsed_req))
     if valid_ftx_req.is_err():
         return valid_ftx_req
+    
+    if logger:
+        logger(f"Orderbook - Parsed Request : {valid_ftx_req.value}")
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_ftx_req.value, headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"Orderbook - Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(FtxResponseOrderBook, result_content.value)
     if valid_result_content.is_err():

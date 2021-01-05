@@ -23,6 +23,9 @@ from noobit_markets.exchanges.ftx import endpoints
 from noobit_markets.exchanges.ftx.rest.base import get_result_content_from_req
 
 
+__all__ = (
+    "get_symbols_ftx"
+)
 
 
 #============================================================
@@ -167,6 +170,8 @@ def _single_assetpair(
 @retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_symbols_ftx(
         client: ntypes.CLIENT,
+        #  prevent unintentional passing of following args
+        *,
         logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.FTX_ENDPOINTS.public.url,
         endpoint: str = endpoints.FTX_ENDPOINTS.public.endpoints.symbols,
@@ -185,7 +190,7 @@ async def get_symbols_ftx(
         return result_content
     
     if logger:
-        logger(f"Result Content : {result_content.value}")
+        logger(f"Symbols - Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(FtxResponseSymbols, pmap({"symbols": result_content.value}))
     if valid_result_content.is_err():

@@ -8,8 +8,7 @@ from typing_extensions import Literal, TypedDict
 
 from noobit_markets.base.request import (
     retry_request,
-    _validate_data,
-    validate_nreq_ohlc
+    _validate_data
 )
 
 # Base
@@ -25,6 +24,9 @@ from noobit_markets.exchanges.ftx import endpoints
 from noobit_markets.exchanges.ftx.rest.base import get_result_content_from_req
 
 
+__all__ = (
+    "get_ohlc_ftx"
+)
 
 
 # ============================================================
@@ -159,6 +161,9 @@ async def get_ohlc_ftx(
         symbols_resp: NoobitResponseSymbols,
         timeframe: ntypes.TIMEFRAME,
         since: ntypes.TIMESTAMP,
+        #  prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.FTX_ENDPOINTS.public.url,
         endpoint: str = endpoints.FTX_ENDPOINTS.public.endpoints.ohlc,
     ) -> Result[NoobitResponseOhlc, pydantic.ValidationError]:
@@ -175,16 +180,25 @@ async def get_ohlc_ftx(
     valid_noobit_req = _validate_data(NoobitRequestOhlc, pmap({"symbol": symbol, "symbols_resp": symbols_resp, "timeframe": timeframe, "since": since}))
     if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
+    
+    if logger:
+        logger(f"Ohlc - Noobit Request : {valid_noobit_req.value}")
 
     parsed_req = parse_request(valid_noobit_req.value)
 
     valid_ftx_req = _validate_data(FtxRequestOhlc, pmap(parsed_req))
     if valid_ftx_req.is_err():
         return valid_ftx_req
+    
+    if logger:
+        logger(f"Ohlc - Parsed Request : {valid_ftx_req.value}")
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_ftx_req.value, headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"Ohlc - Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(FtxResponseOhlc, pmap({"ohlc": result_content.value}))
     if valid_result_content.is_err():

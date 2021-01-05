@@ -23,6 +23,9 @@ from noobit_markets.exchanges.ftx import endpoints
 from noobit_markets.exchanges.ftx.rest.base import get_result_content_from_req
 
 
+__all__ = (
+    "get_trades_ftx"
+)
 
 
 # ============================================================
@@ -156,6 +159,9 @@ async def get_trades_ftx(
         symbol: ntypes.SYMBOL,
         symbols_resp: NoobitResponseSymbols,
         since: typing.Optional[ntypes.TIMESTAMP] = None,
+        #  prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.FTX_ENDPOINTS.public.url,
         endpoint: str = endpoints.FTX_ENDPOINTS.public.endpoints.trades,
     ) -> Result[NoobitResponseTrades, pydantic.ValidationError]:
@@ -172,16 +178,25 @@ async def get_trades_ftx(
     valid_noobit_req = _validate_data(NoobitRequestTrades, pmap({"symbol": symbol, "symbols_resp": symbols_resp, "since": since}))
     if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
+    
+    if logger:
+        logger(f"Trades - Noobit Request : {valid_noobit_req.value}")
 
     parsed_req = parse_request(valid_noobit_req.value)
 
     valid_ftx_req = _validate_data(FtxRequestTrades, pmap(parsed_req))
     if valid_ftx_req.is_err():
         return valid_ftx_req
+    
+    if logger:
+        logger(f"Trades - Parsed Request : {valid_ftx_req.value}")
 
     result_content = await get_result_content_from_req(client, "GET", req_url, valid_ftx_req.value, headers)
     if result_content.is_err():
         return result_content
+    
+    if logger:
+        logger(f"Trades - Result Content : {result_content.value}")
 
     valid_result_content = _validate_data(FtxResponseTrades, pmap({"trades": result_content.value}))
     if valid_result_content.is_err():
