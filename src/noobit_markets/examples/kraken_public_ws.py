@@ -27,8 +27,6 @@ async def main(loop):
 
     async with websockets.connect("wss://ws.kraken.com") as client:
 
-        # TODO put this in our interface
-        #       ==> then call with : ksw = interface.KRAKEN.ws.public
         kws = KrakenWsPublic(client, msg_handler, loop, feed_map)
         symbol = ntypes.PSymbol("XBT-USD")
 
@@ -40,7 +38,6 @@ async def main(loop):
 
         async def coro2():
             async for msg in kws.trade(symbols_resp.value, symbol):
-                # print("received new trade")
                 # FIXME should iterator return a Result or should we filter "en amont"
                 for trade in msg.value.trades:
                     print(
@@ -56,13 +53,8 @@ async def main(loop):
             #! valid option are 10, 25, 100, 500, 1000
             # TODO should be in model / checked
             async for msg in kws.orderbook(symbols_resp.value, symbol, 10, True):
-                # pass
-                # for full book
                 print("orderbook asks update :", msg.value.asks)
-                # print("orderbook bids update :", msg["bids"])
 
-                # just for update msg
-                # print("new orderbook update : ", msg)
 
         async def print_test():
             print("Testing scheduler")

@@ -105,7 +105,7 @@ class BinanceResponseItemSymbols(FrozenBaseModel):
 
 class BinanceResponseSymbols(FrozenBaseModel):
 
-    #TODO regex UTC+x (wait for confirmation that it is this format)
+    # we want to restrict to UTC
     timezone: Literal["UTC"]
     serverTime: pydantic.PositiveInt
     rateLimits: list
@@ -139,7 +139,6 @@ def parse_to_assetpairs(
     return parsed
 
 
-# TODO refine Symbols model
 def _single_assetpair(
     data: BinanceResponseItemSymbols,
 ) -> T_SymbolParsedPair:

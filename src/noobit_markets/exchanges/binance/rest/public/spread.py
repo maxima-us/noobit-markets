@@ -75,7 +75,6 @@ def parse_request(
 
 class BinanceResponseSpread(FrozenBaseModel):
 
-    #TODO regex capital
     symbol: str
     bidPrice: Decimal
     bidQty: Decimal
