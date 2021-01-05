@@ -46,12 +46,14 @@ class NoobitRequestOrderBook(FrozenBaseModel):
 
 class NoobitRequestTrades(FrozenBaseModel):
 
-    symbol: ntypes.SYMBOL
     symbols_resp: NoobitResponseSymbols
     since: typing.Optional[ntypes.TIMESTAMP]
+    symbol: ntypes.SYMBOL
 
-
-
+    @validator("symbol")
+    def symbol_validity(cls, v, values):
+        if not v in values["symbols_resp"].asset_pairs.keys():
+            raise ValueError("Unknown Symbol")
 
 # ============================================================
 # Instrument
@@ -60,8 +62,13 @@ class NoobitRequestTrades(FrozenBaseModel):
 
 class NoobitRequestInstrument(FrozenBaseModel):
 
-    symbol: ntypes.SYMBOL
     symbols_resp: NoobitResponseSymbols
+    symbol: ntypes.SYMBOL
+    
+    @validator("symbol")
+    def symbol_validity(cls, v, values):
+        if not v in values["symbols_resp"].asset_pairs.keys():
+            raise ValueError("Unknown Symbol")
 
 
 
@@ -73,9 +80,14 @@ class NoobitRequestInstrument(FrozenBaseModel):
 
 class NoobitRequestSpread(FrozenBaseModel):
 
-    symbol: ntypes.SYMBOL
     symbols_resp: NoobitResponseSymbols 
     since: typing.Optional[ntypes.TIMESTAMP]
+    symbol: ntypes.SYMBOL
+    
+    @validator("symbol")
+    def symbol_validity(cls, v, values):
+        if not v in values["symbols_resp"].asset_pairs.keys():
+            raise ValueError("Unknown Symbol")
 
 
 
@@ -88,8 +100,13 @@ class NoobitRequestSpread(FrozenBaseModel):
 # TODO we need Order Requests to contain a symbol / symbol_mapping param
 class NoobitRequestClosedOrders(FrozenBaseModel):
 
-    symbol: ntypes.SYMBOL
     symbols_resp: NoobitResponseSymbols
+    symbol: ntypes.SYMBOL
+    
+    @validator("symbol")
+    def symbol_validity(cls, v, values):
+        if not v in values["symbols_resp"].asset_pairs.keys():
+            raise ValueError("Unknown Symbol")
 
 
 
@@ -103,8 +120,8 @@ class NoobitRequestAddOrder(FrozenBaseModel):
     #  FIXME ? is this useful here ? shouldn it be oly in the resposne ?
     exchange: ntypes.EXCHANGE
 
-    symbol: ntypes.SYMBOL
     symbols_resp: NoobitResponseSymbols
+    symbol: ntypes.SYMBOL
 
     # this is irrelevant if symbol_mapping is a callable
     # symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
@@ -175,6 +192,10 @@ class NoobitRequestAddOrder(FrozenBaseModel):
     #         return v
     #     else:
     #         return None
+    @validator("symbol")
+    def symbol_validity(cls, v, values):
+        if not v in values["symbols_resp"].asset_pairs.keys():
+            raise ValueError("Unknown Symbol")
 
 
     @validator("orderQty")
