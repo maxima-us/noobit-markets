@@ -6,7 +6,7 @@ import httpx
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.rest.response import NOrderBook
 
-from noobit_markets.exchanges.binance.rest.private.ws_auth import get_wstoken_binance
+from noobit_markets.exchanges.binance.rest.public.symbols import get_symbols_binance
 from noobit_markets.exchanges.binance.websockets.public.api import BinanceWsPublic
 
 
@@ -16,21 +16,25 @@ feed_map = {
 
 
 async def main(loop):
+    
+    async with httpx.AsyncClient() as http_client:
+        symbols_resp = await get_symbols_binance(http_client)
+    
     async with websockets.connect("wss://stream.binance.com:9443/ws") as client:
-        # async with websockets.connect("wss://stream.binance.com:9443/ws/btcusdt@aggTrade") as client:
+    # async with websockets.connect("wss://stream.binance.com:9443/ws/btcusdt@aggTrade") as client:
 
-        kws = BinanceWsPublic(client, None, loop, feed_map)
-        symbol_mapping = lambda x: {"XBT-USD": "btcusdt"}[x]
-        symbol = ntypes.PSymbol("XBT-USD")
+        bws = BinanceWsPublic(client, None, loop, feed_map)
+        # TODO replace with symbols_resp
+        symbol = ntypes.PSymbol("XBT-USDT")
 
         async def coro1():
-            async for msg in kws.orderbook(symbol_mapping, symbol):
+            async for msg in bws.orderbook(symbols_resp.value, symbol):
                 _ob = NOrderBook(msg)
                 if _ob.is_ok():
                     print(_ob.table)
 
         async def coro2():
-            async for msg in kws.trade(symbol_mapping, symbol):
+            async for msg in bws.trade(symbols_resp.value, symbol):
                 # print("received new trade")
                 # FIXME should iterator return a Result or should we filter "en amont"
                 for trade in msg.value.trades:

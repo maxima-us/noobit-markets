@@ -4,18 +4,16 @@ from noobit_markets.exchanges.binance.websockets.public import orderbook
 from noobit_markets.exchanges.binance.websockets.public.trades import validate_parsed
 from pydantic.error_wrappers import ValidationError
 
-from pyrsistent import pmap
 
 # noobit base
 from noobit_markets.base import ntypes
 from noobit_markets.base.websockets import subscribe, BaseWsPublic, websockets
 from noobit_markets.base.models.result import Result, Ok, Err
-from noobit_markets.base.models.rest.response import NoobitResponseOrderBook, NoobitResponseSpread, NoobitResponseTrades
+from noobit_markets.base.models.rest.response import NoobitResponseOrderBook, NoobitResponseSpread, NoobitResponseSymbols, NoobitResponseTrades
 
 
 # noobit kraken ws
 from noobit_markets.exchanges.binance.websockets.public import trades, orderbook
-from websockets.client import WebSocketClientProtocol
 
 
 
@@ -39,12 +37,7 @@ from websockets.client import WebSocketClientProtocol
 class BinanceWsPublic(BaseWsPublic):
 
 
-    # def __init__(self, client: WebSocketClientProtocol, msg_handler, loop, feed_map):
-
-    #     # init super first to set up all queues and such
-    #     super().__init__(client, msg_handler, loop, feed_map)
-
-
+    # intentionally not typed
     async def aiter_ws(self, symbol_to_exchange, symbol, feed_name):
         stream_uri = f"wss://{self.client.host}:{str(self.client.port)}/ws/{symbol_to_exchange(symbol)}@{feed_name}"
         async with websockets.connect(stream_uri) as client:
@@ -54,7 +47,8 @@ class BinanceWsPublic(BaseWsPublic):
 
     # mostly for mypy hinting
     # prefix with b_ to not mess with method of superclass (mypy will complaib)
-    async def b_aiter_trade(self, symbol_to_exchange, symbol) -> typing.AsyncIterable[Result[NoobitResponseTrades, ValidationError]]:
+    async def b_aiter_trade(self, symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE, symbol: ntypes.SYMBOL) -> typing.AsyncIterable[Result[NoobitResponseTrades, ValidationError]]:
+        
         async for msg in self.aiter_ws(symbol_to_exchange, symbol, "aggTrade"):
             parsed_msg = trades.parse_msg(msg, symbol)
             valid_parsed = trades.validate_parsed(msg, parsed_msg)
@@ -67,7 +61,7 @@ class BinanceWsPublic(BaseWsPublic):
     # https://github.com/binance-exchange/binance-official-api-docs/blob/master/web-socket-streams.md#how-to-manage-a-local-order-book-correctly
     async def b_aiter_book(
             self, 
-            symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE,
+            symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE, 
             symbol: ntypes.SYMBOL,
             # snapshot: NoobitResponseOrderBook
         ) -> typing.AsyncIterable[Result[NoobitResponseOrderBook, ValidationError]]:
@@ -87,9 +81,10 @@ class BinanceWsPublic(BaseWsPublic):
     # ENDPOINTS
 
     #? should we return msg wrapped in result ?
-    async def trade(self, symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE, symbol: ntypes.PSymbol) -> typing.AsyncIterable[Result[NoobitResponseTrades, ValidationError]]:
+    async def trade(self, symbols_resp: NoobitResponseSymbols, symbol: ntypes.PSymbol) -> typing.AsyncIterable[Result[NoobitResponseTrades, ValidationError]]:
         super()._ensure_dispatch()
 
+        symbol_to_exchange = lambda x : {k: f"{v.exchange_pair.lower()}" for k, v in symbols_resp.asset_pairs.items()}[x]
         valid_sub_model = trades.validate_sub(symbol_to_exchange, symbol)
         
         if isinstance(valid_sub_model, Err):
@@ -104,8 +99,9 @@ class BinanceWsPublic(BaseWsPublic):
 
 
     
-    async def orderbook(self, symbol_to_exchange: ntypes.SYMBOL_TO_EXCHANGE, symbol: ntypes.PSymbol) -> typing.AsyncIterable[Result[NoobitResponseOrderBook, ValidationError]]:
+    async def orderbook(self, symbols_resp: NoobitResponseSymbols, symbol: ntypes.PSymbol) -> typing.AsyncIterable[Result[NoobitResponseOrderBook, ValidationError]]:
         
+        symbol_to_exchange = lambda x : {k: f"{v.exchange_pair.lower()}" for k, v in symbols_resp.asset_pairs.items()}[x]
         valid_sub_model = orderbook.validate_sub(symbol_to_exchange, symbol)
         if isinstance(valid_sub_model, Err):
             print(valid_sub_model)
