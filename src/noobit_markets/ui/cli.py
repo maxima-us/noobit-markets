@@ -3,11 +3,10 @@ from decimal import Decimal
 import datetime
 import functools
 import typing
-from noobit_markets.base.models.rest.response import NOrderBook
-import psutil
 import asyncio
 import argparse
 
+import psutil   # type: ignore
 from prompt_toolkit.application import Application
 from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 from prompt_toolkit.document import Document
@@ -35,6 +34,7 @@ import httpx
 from noobit_markets.base import ntypes
 from noobit_markets.base.errors import BaseError
 from noobit_markets.base.models.result import Err
+from noobit_markets.base.models.rest.response import NOrderBook
 
 # endpoints
 from noobit_markets.exchanges.kraken.interface import KRAKEN
@@ -87,7 +87,7 @@ def _handle_exception_patch(self, loop, context):
         self.log(f"Unhandled error in prompt_toolkit: {context.get('exception')}", exc_info=True)
 
 
-Application._handle_exception = _handle_exception_patch
+setattr(Application, "_handle_exception", _handle_exception_patch)
 
 
 class HummingbotCLI:
@@ -198,7 +198,7 @@ class HummingbotCLI:
 
     def change_prompt(self, prompt: str, is_password: bool = False):
         self.prompt_text = prompt
-        processors = []
+        processors: typing.List[typing.Any] = []
         if is_password:
             processors.append(PasswordProcessor())
         processors.append(BeforeInput(prompt))
@@ -353,13 +353,14 @@ class HummingbotCLI:
 
             for subparsers_action in subparsers_actions:
                 subparser = subparsers_action.choices.get(command)
-                self.log(subparser.format_help())
+                if subparser:
+                    self.log(subparser.format_help())
 
 
     # ========================================
     # ADD API KEYS
 
-    async def add_keys(self, exchange: ntypes.EXCHANGE, key: str, secret: str):
+    async def add_keys(self, exchange: str, key: str, secret: str):
 
         if not exchange: exchange = settings.EXCHANGE 
         else: exchange = exchange.upper()
@@ -408,7 +409,7 @@ class HummingbotCLI:
 
 
 
-    def show_symbols(self, exchange: ntypes.EXCHANGE):
+    def show_symbols(self, exchange: str):
         from noobit_markets.base.models.rest.response import NSymbol
 
         cap_exch = exchange.upper()
@@ -420,7 +421,7 @@ class HummingbotCLI:
                 _sym = NSymbol(self.symbols[cap_exch])
                 if _sym.is_err():
                     self.log("Err")
-                    self.log(_sym.vser)
+                    self.log(_sym.result)
                 else:
                     self.log("OK")
                     self.log(_sym.table)
@@ -433,7 +434,7 @@ class HummingbotCLI:
 
 
     @ensure_symbols
-    async def fetch_ohlc(self, exchange: ntypes.EXCHANGE, symbol: ntypes.SYMBOL, timeframe: ntypes.TIMEFRAME, since=None):
+    async def fetch_ohlc(self, exchange: str, symbol: str, timeframe: str, since: typing.Optional[int]=None):
         from noobit_markets.base.models.rest.response import NOhlc
 
         self.log_field.log("CALLED fetch_ohlc")
@@ -453,7 +454,7 @@ class HummingbotCLI:
         
 
     @ensure_symbols
-    async def fetch_orderbook(self, exchange: ntypes.EXCHANGE, symbol: ntypes.SYMBOL, depth: ntypes.DEPTH):
+    async def fetch_orderbook(self, exchange: str, symbol: str, depth: int):
         from noobit_markets.base.models.rest.response import NOrderBook
 
         self.log_field.log("CALLED fetch_orderbook")
@@ -472,7 +473,7 @@ class HummingbotCLI:
 
 
     @ensure_symbols
-    async def fetch_trades(self, exchange: ntypes.EXCHANGE, symbol: ntypes.SYMBOL, since=None):
+    async def fetch_trades(self, exchange: str, symbol: str, since: typing.Optional[int]=None):
         from noobit_markets.base.models.rest.response import NTrades
 
         self.log_field.log("CALLED fetch_trades")
@@ -495,7 +496,7 @@ class HummingbotCLI:
 
 
     @ensure_symbols
-    async def fetch_balances(self, exchange: ntypes.EXCHANGE):
+    async def fetch_balances(self, exchange: str):
         from noobit_markets.base.models.rest.response import NBalances
         
         self.log_field.log("CALLED fetch_balances")
@@ -508,7 +509,7 @@ class HummingbotCLI:
 
 
     @ensure_symbols
-    async def fetch_exposure(self, exchange: ntypes.EXCHANGE):
+    async def fetch_exposure(self, exchange: str):
         from noobit_markets.base.models.rest.response import NExposure
 
         self.log_field.log("CALLED fetch_exposure")
@@ -522,7 +523,7 @@ class HummingbotCLI:
 
 
     @ensure_symbols
-    async def fetch_usertrades(self, exchange: ntypes.EXCHANGE, symbol: ntypes.SYMBOL):
+    async def fetch_usertrades(self, exchange: str, symbol: str):
         from noobit_markets.base.models.rest.response import NTrades
 
         self.log_field.log("CALLED fetch_usertrades")
@@ -540,7 +541,7 @@ class HummingbotCLI:
 
 
     @ensure_symbols
-    async def fetch_openorders(self, exchange: ntypes.EXCHANGE, symbol: ntypes.SYMBOL):
+    async def fetch_openorders(self, exchange: str, symbol: str):
         from noobit_markets.base.models.rest.response import NOrders
     
         self.log_field.log("CALLED create_neworder") 
@@ -563,17 +564,17 @@ class HummingbotCLI:
     @ensure_symbols
     async def create_neworder(
         self,
-        exchange: ntypes.EXCHANGE,
-        symbol: ntypes.SYMBOL,
-        ordType: ntypes.ORDERTYPE,
+        exchange: str,
+        symbol: str,
+        ordType: str,
         clOrdID,
-        orderQty: Decimal,
-        price: Decimal,
-        timeInForce: ntypes.TIMEINFORCE,
-        quoteOrderQty: typing.Optional[Decimal] = None,
-        stopPrice: typing.Optional[Decimal] = None,
+        orderQty: float,
+        price: float,
+        timeInForce: str,
+        quoteOrderQty: typing.Optional[float] = None,
+        stopPrice: typing.Optional[float] = None,
         *,
-        side: ntypes.ORDERSIDE,
+        side: str,
     ):
         from noobit_markets.base.models.rest.response import NSingleOrder
 
@@ -593,9 +594,9 @@ class HummingbotCLI:
         else: ordType = ordType.lower()
 
         if not orderQty:
-            if not settings.ORDQTY or settings.ORQTY.isspace(): 
+            if not settings.ORDQTY: 
                 return Err("Please set or pass <orderQty> argument")
-            else: orderQty = settings.ORQTY
+            else: orderQty = settings.ORDQTY
         
         interface = globals()[exchange]
         _res = await interface.rest.private.new_order(
@@ -622,14 +623,14 @@ class HummingbotCLI:
     
     async def create_buyorder(
         self,
-        exchange: ntypes.EXCHANGE,
-        symbol: ntypes.SYMBOL,
-        ordType: ntypes.ORDERTYPE,
+        exchange: str,
+        symbol: str,
+        ordType: str,
         clOrdID,
-        orderQty: Decimal,
-        price: Decimal,
-        timeInForce: ntypes.TIMEINFORCE,
-        stopPrice: Decimal
+        orderQty: float,
+        price: float,
+        timeInForce: str,
+        stopPrice: float
     ):
 
         await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, side="buy")
@@ -637,14 +638,14 @@ class HummingbotCLI:
 
     async def create_sellorder(
         self,
-        exchange: ntypes.EXCHANGE,
-        symbol: ntypes.SYMBOL,
-        ordType: ntypes.ORDERTYPE,
+        exchange: str,
+        symbol: str,
+        ordType: str,
         clOrdID,
-        orderQty: Decimal,
-        price: Decimal,
-        timeInForce: ntypes.TIMEINFORCE,
-        stopPrice: Decimal
+        orderQty: float,
+        price: float,
+        timeInForce: str,
+        stopPrice: float
     ):
 
         await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, side="sell")
@@ -670,12 +671,12 @@ class HummingbotCLI:
         self.ws["KRAKEN"] = KRAKEN.ws.public(ws, msg_handler, self.loop, feed_map)
 
 
-    async def stream_orderbook(self, exchange: ntypes.EXCHANGE, symbol: ntypes.SYMBOL, depth: ntypes.DEPTH):
+    async def stream_orderbook(self, exchange: str, symbol: str, depth: str):
         
         if not exchange: exchange = settings.EXCHANGE
         if not symbol: symbol = settings.SYMBOL
         
-        async for msg in self.ws[exchange].orderbook(self.kraken_symbols.value, symbol, depth, True):
+        async for msg in self.ws[exchange].orderbook(self.symbols[exchange.upper()].value, symbol, depth, True):
             _ob = NOrderBook(msg)
             if _ob.is_ok():
                 self.log(_ob.table)

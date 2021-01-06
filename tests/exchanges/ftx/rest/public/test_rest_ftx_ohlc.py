@@ -49,6 +49,6 @@ async def test_ohlc_aiohttp():
 
 
 if __name__ == '__main__':
-    # pytest.main(['-s', __file__, '--block-network'])
+    pytest.main(['-s', __file__, '--block-network'])
     # record run
-    pytest.main(['-s', __file__, '--record-mode=new_episodes'])
+    # pytest.main(['-s', __file__, '--record-mode=new_episodes'])
