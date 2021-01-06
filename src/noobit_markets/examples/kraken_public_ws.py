@@ -31,14 +31,23 @@ async def main(loop):
         symbol = ntypes.PSymbol("XBT-USD")
 
         async def coro1():
+            
+            # async generator = same easy syntax as for loop
+            # should be the exact same signature as corresponding coro
             async for msg in kws.spread(symbols_resp.value, symbol):
+                
+                # async generator also returns a Result object (return type same as coro)
                 for spread in msg.value.spread:
-                    # print(spread)
                     print("new top bid : ", spread.bestBidPrice)
 
         async def coro2():
+            
+            # async generator = same easy syntax as foor loop
+            # should be the exact same signature as corresponding coro
             async for msg in kws.trade(symbols_resp.value, symbol):
-                # FIXME should iterator return a Result or should we filter "en amont"
+                
+                # async generator also returns a Result object (return type is same as coro)
+                # we can get the value held by the Result with the .value() method
                 for trade in msg.value.trades:
                     print(
                         "new trade @ :",

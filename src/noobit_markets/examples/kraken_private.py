@@ -1,10 +1,13 @@
 import asyncio
-import httpx
 
-# public
+import httpx
+import stackprinter
+stackprinter.set_excepthook(style="darkbg2")
+
+# noobit kraken public
 from noobit_markets.exchanges.kraken.rest.public.symbols import get_symbols_kraken
 
-# private
+# noobit kraken private
 from noobit_markets.exchanges.kraken.rest.private.balances import get_balances_kraken
 from noobit_markets.exchanges.kraken.rest.private.exposure import get_exposure_kraken
 from noobit_markets.exchanges.kraken.rest.private.orders import (
@@ -18,6 +21,7 @@ from noobit_markets.exchanges.kraken.rest.private.trades import get_usertrades_k
 from noobit_markets.exchanges.kraken.rest.private.ws_auth import get_wstoken_kraken
 from noobit_markets.exchanges.kraken.rest.private.trading import post_neworder_kraken
 
+# noobit base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.rest.response import NBalances, NExposure, NTrades, NSingleOrder
 
@@ -28,18 +32,13 @@ sym = asyncio.run(
     )
 )
 
+# return value is wrapped in a Result object, and accessible with the .value() method
+# we can inspec wether the call was successful by calling .is_err() or .is_ok()
 if sym.is_err():
     print(sym)
 else:
     print("Symbols Ok")
     symbols = sym.value
-    asset_from_exchange = {v: k for k, v in symbols.assets.items()}
-    symbol_from_exchange = {
-        f"{v.noobit_base}{v.noobit_quote}": k 
-        for k, v in symbols.asset_pairs.items()
-    }
-    symbol_to_exchange = {k: v.exchange_pair for k, v in symbols.asset_pairs.items()}
-
 
     # ============================================================
     # POST NEW ORDER
@@ -59,11 +58,16 @@ else:
             stopPrice=None,
         )
     )
+
+
+    # wrapping the result inside custom class to get access to more user friendly representations
     _nord = NSingleOrder(trd)
     if _nord.is_err():
+        # this is equivalent to calling result.value 
         print(_nord.result)
     else:
-        print(_nord.table)
+        # will print a nicely formatted tabulate table
+        # print(_nord.table)
         print("Trading New Order ok")
 
     # ============================================================
@@ -104,14 +108,14 @@ else:
 
     # ============================================================
     # OPEN ORDERS
+    # ============================================================
 
     opo = asyncio.run(
         get_openorders_kraken(
             client=httpx.AsyncClient(),
             symbols_resp=sym.value,
-            symbol=ntypes.PSymbol(
-                "DOT-USD"
-            ),  #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
+            # Notice we need to pass a PSymbol object to clear mypy
+            symbol=ntypes.PSymbol("DOT-USD")  
         )
     )
     if opo.is_err():
@@ -119,16 +123,17 @@ else:
     else:
         print("Open Orders ok")
 
+
     # ============================================================
     # CLOSED ORDERS
+    # ============================================================
 
     clo = asyncio.run(
         get_closedorders_kraken(
             client=httpx.AsyncClient(),
             symbols_resp=sym.value,
-            symbol=ntypes.PSymbol(
-                "DOT-USD"
-            ),  #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
+            # Notice we need to pass a PSymbol object to clear mypy
+            symbol=ntypes.PSymbol("DOT-USD")  
         )
     )
 
@@ -137,8 +142,10 @@ else:
     else:
         print("Closed Orders ok")
 
+
     # ============================================================
     # OPEN POSITIONS
+    # ============================================================
 
     opp = asyncio.run(
         get_openpositions_kraken(
@@ -151,16 +158,17 @@ else:
     else:
         print("Open Positions ok")
 
+
     # ============================================================
     # USER TRADES
+    # ============================================================
 
     utr = asyncio.run(
         get_usertrades_kraken(
             client=httpx.AsyncClient(),
-            symbol=ntypes.PSymbol(
-                "DOT-USD"
-            ),  #! NOTICE WE KNOW HAVE TO PASS IN PSymbol to clear mypy
             symbols_resp=sym.value,
+            # Notice we need to pass a PSymbol object to clear mypy
+            symbol=ntypes.PSymbol("DOT-USD")  
         )
     )
 
@@ -175,6 +183,7 @@ else:
 
     # ============================================================
     # WS AUTH TOKEN
+    # ============================================================
 
     wst = asyncio.run(
         get_wstoken_kraken(
