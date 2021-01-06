@@ -15,7 +15,7 @@ from noobit_markets.base.request import (
 )
 
 # Base
-from noobit_markets.base import ntypes, mappings
+from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result, Err
 from noobit_markets.base.models.rest.response import NoobitResponseOhlc, NoobitResponseSymbols, T_OhlcParsedRes
 from noobit_markets.base.models.rest.request import NoobitRequestOhlc
@@ -24,6 +24,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 # Kraken
 from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
+from noobit_markets.exchanges.kraken.types import K_TIMEFRAMES
 
 
 __all__ = (
@@ -79,7 +80,7 @@ def parse_request(
 
     payload = {
         "pair": symbol_to_exchange(valid_request.symbol),
-        "interval": mappings.TIMEFRAME[valid_request.timeframe],
+        "interval": K_TIMEFRAMES[valid_request.timeframe],
         # noobit ts are in ms vs ohlc kraken ts in s
         "since": valid_request.since * 10**-3 if valid_request.since else None
     }
