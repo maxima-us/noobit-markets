@@ -65,7 +65,7 @@ def parse_request(
 
 
     payload: _ParsedReq = {
-        "market_name": valid_request.symbols_resp.asset_pairs.get(valid_request.symbol).exchange_pair,
+        "market_name": valid_request.symbols_resp.asset_pairs[valid_request.symbol].exchange_pair,
         "resolution": F_TIMEFRAMES[valid_request.timeframe],
         "limit": 4000,
         # noobit ts are in ms vs ohlc kraken ts in s

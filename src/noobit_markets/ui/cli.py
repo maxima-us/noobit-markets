@@ -42,6 +42,55 @@ from noobit_markets.exchanges.binance.interface import BINANCE
 from pydantic.error_wrappers import ValidationError
 
 
+# intentionally not typed (better to not type decorators since return types will bevariable) 
+def ensure_symbols(f):
+    @functools.wraps(f)
+    async def wrapper(cli , exchange, *args, **kwargs): # cli is a HummingbotCli object
+
+        if not exchange: 
+            if not settings.EXCHANGE or settings.EXCHANGE.isspace(): 
+                cli.log("Please set or pass <exchange> argument")
+                return
+            else:
+                exchange = settings.EXCHANGE
+        else: exchange = exchange.upper()
+        
+        cli.log_field.log(f"Requested Exchange : {exchange}")
+
+        if not cli.symbols.get(exchange, None):
+            cli.log("Please run <symbols> command")
+            return
+
+
+        if exchange in ntypes.EXCHANGE.__members__.keys():
+            if exchange in cli.symbols.keys():
+
+                wrapped_res = await f(cli, exchange, *args, **kwargs)
+
+                if wrapped_res.is_err():
+                    # model validation error
+                    if isinstance(getattr(wrapped_res, "result", None), ValidationError):
+                        cli.log(wrapped_res.result)
+                    elif isinstance(getattr(wrapped_res, "result", None), BaseError):
+                    # parsed exchange error (exception)
+                        cli.log("ERROR")
+                        for err in wrapped_res.result:
+                            cli.log(str(err))
+                    elif isinstance(getattr(wrapped_res, "result", None), Exception):
+                        cli.log(str(wrapped_res.result))
+                    else:
+                        cli.log(wrapped_res)
+                else:
+                    cli.log("SUCCESS")
+                    cli.log(wrapped_res.table)
+
+            else:
+                cli.log("Please initialize symbols for this exchange")
+        else:
+            cli.log("Unknow Exchange requested")
+
+    return wrapper
+
 
 
 s_decimal_0 = Decimal("0")
@@ -289,53 +338,7 @@ class HummingbotCLI:
         
         return _ok
 
-    def ensure_symbols(f):
-        @functools.wraps(f)
-        async def wrapper(self, exchange, *args, **kwargs):
 
-            if not exchange: 
-                if not settings.EXCHANGE or settings.EXCHANGE.isspace(): 
-                    self.log("Please set or pass <exchange> argument")
-                    return
-                else:
-                    exchange = settings.EXCHANGE
-            else: exchange = exchange.upper()
-            
-            self.log_field.log(f"Requested Exchange : {exchange}")
-
-            if not self.symbols.get(exchange, None):
-                self.log("Please run <symbols> command")
-                return
-
-
-            if exchange in ntypes.EXCHANGE.__members__.keys():
-                if exchange in self.symbols.keys():
-
-                    wrapped_res = await f(self, exchange, *args, **kwargs)
-
-                    if wrapped_res.is_err():
-                        # model validation error
-                        if isinstance(getattr(wrapped_res, "result", None), ValidationError):
-                            self.log(wrapped_res.result)
-                        elif isinstance(getattr(wrapped_res, "result", None), BaseError):
-                        # parsed exchange error (exception)
-                            self.log("ERROR")
-                            for err in wrapped_res.result:
-                                self.log(str(err))
-                        elif isinstance(getattr(wrapped_res, "result", None), Exception):
-                            self.log(str(wrapped_res.result))
-                        else:
-                            self.log(wrapped_res)
-                    else:
-                        self.log("SUCCESS")
-                        self.log(wrapped_res.table)
-
-                else:
-                    self.log("Please initialize symbols for this exchange")
-            else:
-                self.log("Unknow Exchange requested")
-
-        return wrapper
 
 
     # ========================================

@@ -14,7 +14,7 @@ class KrakenAPI:
 
     def __init__(
             self,
-            loop: asyncio.BaseEventLoop,
+            loop: asyncio.AbstractEventLoop,
             client: httpx.AsyncClient,
             preload: bool = True
         ):

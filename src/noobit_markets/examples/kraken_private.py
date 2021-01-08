@@ -1,7 +1,8 @@
 import asyncio
+from decimal import Decimal
 
 import httpx
-import stackprinter
+import stackprinter #type: ignore
 stackprinter.set_excepthook(style="darkbg2")
 
 # noobit kraken public
@@ -23,6 +24,7 @@ from noobit_markets.exchanges.kraken.rest.private.trading import post_neworder_k
 
 # noobit base
 from noobit_markets.base import ntypes
+from noobit_markets.base.models.result import Err
 from noobit_markets.base.models.rest.response import NBalances, NExposure, NTrades, NSingleOrder
 
 
@@ -34,7 +36,7 @@ sym = asyncio.run(
 
 # return value is wrapped in a Result object, and accessible with the .value() method
 # we can inspec wether the call was successful by calling .is_err() or .is_ok()
-if sym.is_err():
+if isinstance(sym, Err):
     print(sym)
 else:
     print("Symbols Ok")
@@ -46,13 +48,13 @@ else:
     trd = asyncio.run(
         post_neworder_kraken(
             client=httpx.AsyncClient(),
-            symbol="DOT-USD",
+            symbol=ntypes.PSymbol("DOT-USD"),
             symbols_resp=sym.value,
             side="buy",
             ordType="limit",
             clOrdID="1234567",
-            orderQty=1.231599,
-            price=1.2323,
+            orderQty=Decimal(1.231599),
+            price=Decimal(1.2323),
             timeInForce="GTC",
             quoteOrderQty=None,
             stopPrice=None,

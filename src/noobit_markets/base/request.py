@@ -46,28 +46,9 @@ __all__ = [
 # ============================================================
 
 
-def retry_request(
-        retries: PositiveInt,
-        logger: typing.Callable,
-    ) -> typing.Callable[
-            ...,
-            typing.Coroutine[
-                typing.Any,
-                typing.Any,
-                Result[FrozenBaseModel, BaseError]
-            ]
-        ]:
-
-    def decorator(
-        func: typing.Callable[
-            ...,
-            typing.Coroutine[
-                typing.Any,
-                typing.Any,
-                Result[typing.Any, typing.Any]
-                ]
-            ]
-        ):
+# intentionally not typed (better to not type decorators since return types will bevariable) 
+def retry_request(retries, logger):
+    def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             retried = 0
@@ -86,9 +67,9 @@ def retry_request(
                         if result.value.accept:
                             return result
                         else:
+                            # we have a tuple of errors
                             msg = f"Retrying in {result.value[0].sleep} seconds - Retry Attempts: {retried}"
                             logger(msg)
-                            #! returns a tuple of errors
                             await asyncio.sleep(result.value[0].sleep)
                             retried += 1
                     except Exception as e:

@@ -146,7 +146,7 @@ async def get_trades_binance(
         logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.public.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.public.endpoints.trades,
-    ) -> Result[NoobitResponseTrades, ValidationError]:
+    ) -> Result[NoobitResponseTrades, Exception]:
 
 
     symbol_to_exchange = lambda x : {k: v.exchange_pair for k, v in symbols_resp.asset_pairs.items()}[x]

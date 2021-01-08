@@ -36,17 +36,11 @@ class NoobitBaseResponse(FrozenBaseModel):
 class NResultWrapper(ABC):
 
 
-    def __init__(self, vser: Result[NoobitBaseResponse, ValidationError]):
+    # def __init__(self, vser: Result[NoobitBaseResponse, Exception]):
 
+    # leave untyped for now, vser Ok value will always subclass NoobitBaseResponse, but mypy throws error for thi
+    def __init__(self, vser):
         self.vser = vser
-
-    # # in practice the input would be for ex `KrakenResponseOrderBook`
-    # def cast(self, model: NoobitResponseOhlc) 
-    #     try:
-    #         self.vser = self.model(symbol=symbol, asks=asks, bids=bids)
-    #         return Ok(self)
-    #     except ValidationError as e:
-    #         return Err(e)
 
     def is_ok(self):
         return self.vser.is_ok()

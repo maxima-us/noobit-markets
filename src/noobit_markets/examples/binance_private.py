@@ -1,7 +1,8 @@
 import asyncio
+from decimal import Decimal
 
 import httpx
-import stackprinter
+import stackprinter #type: ignore
 stackprinter.set_excepthook(style="darkbg2")
 
 
@@ -141,8 +142,8 @@ nord = asyncio.run(
         side="sell",
         ordType="limit",
         clOrdID="10101",
-        orderQty=1,
-        price=1.0,
+        orderQty=Decimal(1),
+        price=Decimal(1.0),
         timeInForce="GTC",
         quoteOrderQty=None,
         stopPrice=None,

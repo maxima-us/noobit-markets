@@ -242,8 +242,8 @@ async def post_neworder_binance(
         orderQty: Decimal,
         price: Decimal,
         timeInForce: ntypes.TIMEINFORCE,
-        quoteOrderQty: Decimal,
-        stopPrice: Decimal,
+        stopPrice: typing.Optional[Decimal] = None,
+        quoteOrderQty: typing.Optional[Decimal] = None,
         # prevent unintentional passing of following args
         *,
         logger: typing.Optional[typing.Callable] = None,

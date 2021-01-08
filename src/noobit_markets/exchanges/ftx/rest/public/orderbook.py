@@ -54,7 +54,7 @@ def parse_request(
     ) -> _ParsedReq:
 
     payload: _ParsedReq = {
-        "market_name": valid_request.symbols_resp.asset_pairs.get(valid_request.symbol).exchange_pair,
+        "market_name": valid_request.symbols_resp.asset_pairs[valid_request.symbol].exchange_pair,
         "depth": valid_request.depth
     }
 

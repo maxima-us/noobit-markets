@@ -1,7 +1,7 @@
 import asyncio
 
 import httpx
-import stackprinter
+import stackprinter #type: ignore
 stackprinter.set_excepthook(style="darkbg2")
 
 # noobit base

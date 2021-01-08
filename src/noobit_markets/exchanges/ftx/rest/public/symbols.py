@@ -82,7 +82,7 @@ __all__ = (
 
 class FtxResponseItemSymbols(FrozenBaseModel):
     name: str
-    baseCurrency: typing.Optional[str]
+    baseCurrency: typing.Optional[str]  #! causing problems with mypy since PAsset is expecting a str and not Optional[str]
     quoteCurrency: typing.Optional[str]
     type: str
     underlying: typing.Optional[str]

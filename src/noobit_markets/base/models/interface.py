@@ -1,4 +1,5 @@
 import typing
+from decimal import Decimal
 import asyncio
 
 import pydantic
@@ -6,15 +7,17 @@ import pydantic
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base import ntypes
 
-from noobit_markets.base.auth import BaseAuth as Auth
+from noobit_markets.base.auth import BaseAuth
+from noobit_markets.base.models.result import Err, Result
 
 # response models
 from noobit_markets.base.models.rest.response import (
-    NoobitResponseOhlc,
-    NoobitResponseOrderBook,
+    NoobitResponseClosedOrders, NoobitResponseItemOrder, NoobitResponseOhlc, NoobitResponseOpenOrders, NoobitResponseOpenPositions,
+    NoobitResponseOrderBook, NoobitResponseSpread,
     NoobitResponseSymbols,
     NoobitResponseBalances,
-    NoobitResponseExposure
+    NoobitResponseExposure,
+    NoobitResponseInstrument, NoobitResponseTrades
 )
 
 
@@ -24,102 +27,99 @@ from noobit_markets.base.models.rest.response import (
 
 class _PublicInterface(FrozenBaseModel):
 
-    ohlc: typing.Callable[
-        #argument types
-        [
-            asyncio.BaseEventLoop,
-            ntypes.CLIENT,
-            ntypes.SYMBOL,
-            ntypes.SYMBOL_TO_EXCHANGE,
-            ntypes.SYMBOL_FROM_EXCHANGE,
-            ntypes.TIMEFRAME,
-            typing.Callable,
-            pydantic.AnyHttpUrl,
-            str
-        ],
-        # return type
-        NoobitResponseOhlc
-    ]
-
-    orderbook: typing.Callable[
-        #argument types
-        [
-            asyncio.BaseEventLoop,
-            ntypes.CLIENT,
-            ntypes.SYMBOL,
-            ntypes.SYMBOL_TO_EXCHANGE,
-            ntypes.SYMBOL_FROM_EXCHANGE,
-            ntypes.DEPTH,
-            typing.Callable,
-            pydantic.AnyHttpUrl,
-            str
-        ],
-        # return type
-        NoobitResponseOrderBook
-    ]
-
-    symbols: typing.Callable[
-        #argument types
-        [
-            asyncio.BaseEventLoop,
-            ntypes.CLIENT,
-            typing.Callable,
-            pydantic.AnyHttpUrl,
-            str
-        ],
-        # return type
-        NoobitResponseSymbols
-    ]
-
-    trades: typing.Callable[
-        #argument types
-        [
-            asyncio.BaseEventLoop,
-            ntypes.CLIENT,
-            ntypes.SYMBOL,
-            ntypes.SYMBOL_TO_EXCHANGE,
-            ntypes.SYMBOL_FROM_EXCHANGE,
-            ntypes.TIMESTAMP,
-            typing.Callable,
-            pydantic.AnyHttpUrl,
-            str
-        ],
-        # return type
-        NoobitResponseOhlc
-    ]
 
     instrument: typing.Callable[
         #argument types
         [
-            asyncio.BaseEventLoop,
-            ntypes.CLIENT,
-            ntypes.SYMBOL,
-            ntypes.SYMBOL_TO_EXCHANGE,
-            ntypes.SYMBOL_FROM_EXCHANGE,
-            typing.Callable,
-            pydantic.AnyHttpUrl,
-            str
+            ntypes.CLIENT, # client
+            ntypes.SYMBOL, # symbol
+            NoobitResponseSymbols,  # symbols_resp
+            typing.Optional[typing.Callable], # logger
+            pydantic.AnyHttpUrl, # base_url
+            str # endpoint
         ],
         # return type
-        NoobitResponseOhlc
+        Result[NoobitResponseInstrument, Exception]
     ]
 
+
+    ohlc: typing.Callable[
+        #argument types
+        [
+            ntypes.CLIENT, # client
+            ntypes.SYMBOL, # symbol
+            NoobitResponseSymbols, # symbols_resp
+            ntypes.TIMEFRAME, # timeframe
+            ntypes.TIMESTAMP, # since
+            typing.Optional[typing.Callable], # logger
+            pydantic.AnyHttpUrl, # base_url
+            str # endpoint
+        ],
+        # return type
+        Result[NoobitResponseOhlc, Exception]
+    ]
+
+
+    orderbook: typing.Callable[
+        #argument types
+        [
+            ntypes.CLIENT, # client
+            ntypes.SYMBOL, # symbol
+            NoobitResponseSymbols, # symbols_resp
+            ntypes.DEPTH, # depth
+            typing.Optional[typing.Callable], # logger
+            pydantic.AnyHttpUrl, # base_url
+            str # endpoint
+        ],
+        # return type
+        Result[NoobitResponseOrderBook, Exception]
+    ]
+    
+    
     spread: typing.Callable[
         #argument types
         [
-            asyncio.BaseEventLoop,
-            ntypes.CLIENT,
-            ntypes.SYMBOL,
-            ntypes.SYMBOL_TO_EXCHANGE,
-            ntypes.SYMBOL_FROM_EXCHANGE,
-            ntypes.TIMESTAMP,
-            typing.Callable,
-            pydantic.AnyHttpUrl,
-            str
+            ntypes.CLIENT, # client
+            ntypes.SYMBOL, # symbol
+            NoobitResponseSymbols, # symbols_resp
+            typing.Optional[typing.Callable], # logger
+            pydantic.AnyHttpUrl, # base_url
+            str # endpoint
         ],
         # return type
-        NoobitResponseOhlc
+        Result[NoobitResponseSpread, Exception]
     ]
+
+
+    symbols: typing.Callable[
+        #argument types
+        [
+            ntypes.CLIENT, # client
+            typing.Optional[typing.Callable], # logger
+            pydantic.AnyHttpUrl, # base_url
+            str # endpoint
+        ],
+        # return type
+        Result[NoobitResponseSymbols, Exception]
+    ]
+
+
+    trades: typing.Callable[
+        #argument types
+        [
+            ntypes.CLIENT, # client
+            ntypes.SYMBOL, # symbol
+            NoobitResponseSymbols, # symbols_resp
+            typing.Optional[ntypes.TIMESTAMP], # since
+            typing.Optional[typing.Callable], # logger
+            pydantic.AnyHttpUrl, # base_url
+            str # endpoint
+        ],
+        # return type
+        Result[NoobitResponseTrades, Exception]
+    ]
+
+
 
 # ============================================================
 # REST PRIVATE ENDPOINTS
@@ -128,105 +128,118 @@ class _PublicInterface(FrozenBaseModel):
 
 class _PrivateInterface(FrozenBaseModel):
 
+
     balances: typing.Callable[
         #argument types
         [
-            asyncio.BaseEventLoop,
-            ntypes.CLIENT,
-            ntypes.SYMBOL_TO_EXCHANGE,
-            Auth,
-            typing.Callable,
-            pydantic.AnyHttpUrl,
-            str
+            ntypes.CLIENT, # client
+            NoobitResponseSymbols, # symbols_resp
+            typing.Optional[typing.Callable], # logger
+            BaseAuth, # auth
+            pydantic.AnyHttpUrl, # basse_url
+            str # endpoint
         ],
         # return type
-        # FIXME should be result
-        NoobitResponseBalances
+        Result[NoobitResponseBalances, Exception]
     ]
+
 
     exposure: typing.Callable[
         #argument types
         [
-            asyncio.BaseEventLoop,
-            ntypes.CLIENT,
-            ntypes.SYMBOL_TO_EXCHANGE,
-            Auth,
-            typing.Callable,
-            pydantic.AnyHttpUrl,
-            str
+            ntypes.CLIENT, # client
+            NoobitResponseSymbols, # symbols_resp
+            typing.Optional[typing.Callable], # logger
+            BaseAuth, # auth
+            pydantic.AnyHttpUrl, # base_url
+            str # endpoint
         ],
         # return type
-        # FIXME should be result
-        NoobitResponseExposure
+        Result[NoobitResponseExposure, Exception]
     ]
 
-    trades: typing.Callable[
-        #argument types
-        [
-            asyncio.BaseEventLoop,
-            ntypes.CLIENT,
-            ntypes.SYMBOL_TO_EXCHANGE,
-            Auth,
-            typing.Callable,
-            pydantic.AnyHttpUrl,
-            str
-        ],
-        # return type
-        # FIXME should be result
-        NoobitResponseExposure
-    ]
 
     open_positions: typing.Callable[
         #argument types
         [
-            asyncio.BaseEventLoop,
-            ntypes.CLIENT,
-            ntypes.SYMBOL_TO_EXCHANGE,
-            Auth,
-            typing.Callable,
-            pydantic.AnyHttpUrl,
-            str
+            ntypes.CLIENT, # client
+            NoobitResponseSymbols, # symbols_resp
+            typing.Optional[typing.Callable], # logger
+            BaseAuth, # auth
+            pydantic.AnyHttpUrl, # base_url
+            str # endpoint
         ],
         # return type
-        # FIXME should be result
-        NoobitResponseExposure
+        Result[NoobitResponseOpenPositions, Exception]
     ]
 
 
     open_orders: typing.Callable[
         #argument types
         [
-            asyncio.BaseEventLoop,
-            ntypes.CLIENT,
-            ntypes.SYMBOL_TO_EXCHANGE,
-            Auth,
-            typing.Callable,
-            pydantic.AnyHttpUrl,
-            str
+            ntypes.CLIENT, # client
+            NoobitResponseSymbols, # symbols_resp
+            typing.Optional[typing.Callable], # logger
+            BaseAuth, # auth
+            pydantic.AnyHttpUrl, # base_url
+            str # endpoint
         ],
         # return type
-        # FIXME should be result
-        NoobitResponseExposure
+        Result[NoobitResponseOpenOrders, Exception]
     ]
+
 
     closed_orders: typing.Callable[
         #argument types
         [
-            asyncio.BaseEventLoop,
-            ntypes.CLIENT,
-            ntypes.SYMBOL_TO_EXCHANGE,
-            Auth,
-            typing.Callable,
-            pydantic.AnyHttpUrl,
-            str
+            ntypes.CLIENT, # client
+            NoobitResponseSymbols, # symbols_resp
+            typing.Optional[typing.Callable], # logger
+            BaseAuth, # auth
+            pydantic.AnyHttpUrl, # base_url
+            str # endpoint
         ],
         # return type
-        # FIXME should be result
-        NoobitResponseExposure
+        Result[NoobitResponseClosedOrders, Exception]
     ]
 
 
-    new_order: typing.Callable
+    trades: typing.Callable[
+        #argument types
+        [
+            ntypes.CLIENT, # client
+            ntypes.SYMBOL, # symbol
+            NoobitResponseSymbols, # symbols_resp
+            typing.Optional[typing.Callable], # logger
+            BaseAuth, # auth
+            pydantic.AnyHttpUrl, # base_url
+            str # endpoint
+        ],
+        # return type
+        Result[NoobitResponseTrades, Exception]
+    ]
+
+    new_order: typing.Callable[
+        #argument types
+        [
+            ntypes.CLIENT, # client
+            ntypes.SYMBOL, # symbol
+            NoobitResponseSymbols, # symbols_resp
+            ntypes.ORDERSIDE, # side
+            ntypes.ORDERTYPE, # ordType
+            str, # clOrdID
+            Decimal, # orderQty
+            Decimal, # price
+            ntypes.TIMEINFORCE, # timeInForce
+            typing.Optional[Decimal], # stopPrice
+            typing.Optional[Decimal], #quoteOrderQty
+            typing.Optional[typing.Callable], # logger
+            BaseAuth, # auth
+            pydantic.AnyHttpUrl, # base_url
+            str # endpoint
+        ],
+        Result[NoobitResponseItemOrder, Exception]
+    ]
 
 
 class RestInterface(FrozenBaseModel):
