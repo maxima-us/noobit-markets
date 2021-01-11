@@ -8,8 +8,6 @@ BINANCE_ENDPOINTS = endpoints.RESTEndpoints(**{
 
         "endpoints": {
             "time": "time",
-            # ? needed, now that symbols returns both assets and asset_pairs mappings ?
-            "assets": "exchangeInfo",
             "symbols": "exchangeInfo",
             "instrument": "ticker/24hr",
             "ohlc": "klines",

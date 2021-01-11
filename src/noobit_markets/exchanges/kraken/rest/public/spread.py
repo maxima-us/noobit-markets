@@ -177,7 +177,8 @@ async def get_spread_kraken(
         *,
         logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
-        endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.spread,
+        # intentionally not typed
+        endpoint = endpoints.KRAKEN_ENDPOINTS.public.endpoints.spread,
     ) -> Result[NoobitResponseSpread, ValidationError]:
 
 

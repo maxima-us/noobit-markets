@@ -157,7 +157,8 @@ async def get_instrument_kraken(
         *,
         logger: typing.Optional[typing.Callable] = None,
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
-        endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.instrument,
+        # intentionally not typed
+        endpoint = endpoints.KRAKEN_ENDPOINTS.public.endpoints.instrument,
     ) -> Result[NoobitResponseInstrument, ValidationError]:
 
 

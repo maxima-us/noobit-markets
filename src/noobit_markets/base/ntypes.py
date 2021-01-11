@@ -9,7 +9,29 @@ import aiohttp
 import pydantic
 
 
-
+__all__ = (
+    "CLIENT",
+    "EXCHANGE",
+    "COUNT",
+    "PERCENT",
+    "TIMESTAMP",
+    "TIMEFRAME",
+    "SYMBOL",
+    "PSymbol",
+    "ASSET",
+    "PAsset",
+    "DEPTH",
+    "ASKS",
+    "ASK",
+    "BIDS",
+    "BID",
+    "SPREAD",
+    "OHLC"
+    "ORDERTYPE",
+    "ORDERSIDE",
+    "ORDERSTATUS",
+    "TIMEINFORCE"
+)
 
 # ============================================================
 # BASE CLASSES
@@ -22,13 +44,13 @@ class NInt(pydantic.ConstrainedInt):
 
     def __str__(self):
         return str(self._value)
-        # return f"<{self.__class__.__name__}>:{self._value}"
 
     def __repr__(self):
-        return f"<{self.__class__.__name__}>:{self._value}"
+        return f"<{self.__class__.__name__}:{self._value}>"
 
 
 class Nstr(pydantic.ConstrainedStr):
+
 
     def __init__(self, _value: str):
         self._value = _value
@@ -36,10 +58,9 @@ class Nstr(pydantic.ConstrainedStr):
     def __str__(self):
         # we want to be able to concat strings
         return self._value
-        # return f"<{self.__class__.__name__}>:{self._value}"
 
     def __repr__(self):
-        return f"<{self.__class__.__name__}>:{self._value}"
+        return f"<{self.__class__.__name__}:{self._value}>"
 
 
 class AutoName(Enum):
@@ -66,21 +87,31 @@ CLIENT = typing.Union[
 #     "FTX"
 # ]
 
+# TODO dont know if Enum is most appropriate here
 class EXCHANGE(AutoName):
     KRAKEN = auto()
     BINANCE = auto()
     FTX = auto()
 
 
+# pydantic percent
+#   type will only be checked upon validation of a 
+#   pydantic model which has a field of the present type
 class PPercent(NInt):
     ge=0
     le=100
     strict=False
 
+
+# pydantic percent
+#   type will only be checked upon validation of a 
+#   pydantic model which has a field of the present type
 class PCount(NInt):
     ge=0
     strict=False
 
+
+# aliases
 COUNT = PCount
 PERCENT = PPercent
 
@@ -89,10 +120,10 @@ PERCENT = PPercent
 # TIME
 # ============================================================
 
-
 TIMESTAMP = pydantic.PositiveInt
 
 
+# TODO should this be an enum ?
 TIMEFRAME = Literal[
     "1M",
     "5M",
@@ -111,32 +142,33 @@ TIMEFRAME = Literal[
 # ASSETS & SYMBOLS
 # ============================================================
 
-# base class for SYMBOLS and ASSETS
-
 
 # pydantic symbol
+#   type will only be checked upon validation of a 
+#   pydantic model which has a field of the present type
 class PSymbol(Nstr):
     regex=re.compile(r'[A-Z0-9]+-[A-Z]+')
     strict=True
 
+
 # pydantic asset
+#   type will only be checked upon validation of a 
+#   pydantic model which has a field of the present type
 class PAsset(Nstr):
-    regex=re.compile(r'[A-Z0-9]{2,10}')
+    regex=re.compile(r'^[A-Z0-9]{2,10}$')
     strict=True
 
-# ? should be keep this ??
+
+# aliases
 SYMBOL = PSymbol
 ASSET = PAsset
 
+
 # symbol mappings (symbol = assetpair)
-# SYMBOL_FROM_EXCHANGE = typing.Mapping[str, PSymbol]
-# SYMBOL_TO_EXCHANGE = typing.Mapping[PSymbol, str]
 SYMBOL_FROM_EXCHANGE = typing.Callable[[str], PSymbol]
 SYMBOL_TO_EXCHANGE = typing.Callable[[PSymbol], str]
 
 # asset mappings
-# ASSET_TO_EXCHANGE = typing.Dict[PAsset, str]
-# ASSET_FROM_EXCHANGE = typing.Mapping[str, PAsset]
 ASSET_FROM_EXCHANGE = typing.Callable[[str], PAsset]
 ASSET_TO_EXCHANGE = typing.Callable[[PAsset], str]
 
@@ -147,14 +179,6 @@ ASSET_TO_EXCHANGE = typing.Callable[[PAsset], str]
 # ENDPOINTS
 # ============================================================
 
-
-# class PDepth(NInt):
-#     ge=0
-#     le=100
-#     strict=False
-
-# # ? should we keep this ?
-# DEPTH = PDepth
 
 #! valid option are 10, 25, 100, 500, 1000 ==> https://docs.kraken.com/websockets/#message-subscribe
 #! ftx limits to 100 ==> https://docs.ftx.com/?python#get-orderbook

@@ -50,7 +50,8 @@ async def get_wstoken_kraken(
         logger: typing.Optional[typing.Callable] = None,
         auth=KrakenAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
-        endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.ws_token
+        # intentionally not typed
+        endpoint = endpoints.KRAKEN_ENDPOINTS.private.endpoints.ws_token
     ) -> Result[KrakenResponseWsToken, pydantic.ValidationError]:
 
     req_url = urljoin(base_url, endpoint)

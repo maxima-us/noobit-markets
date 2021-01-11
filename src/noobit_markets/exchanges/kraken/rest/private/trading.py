@@ -239,7 +239,7 @@ async def post_neworder_kraken(
         orderQty: Decimal,
         price: Decimal,
         timeInForce: ntypes.TIMEINFORCE,
-        stopPrice: typing.Optional[Decimal],
+        stopPrice: typing.Optional[Decimal] = None,
         # until kraken enables use of `viqc` flag, always pass in None
         quoteOrderQty: typing.Optional[Decimal] = None,
         # prevent unintentional passing of following args
