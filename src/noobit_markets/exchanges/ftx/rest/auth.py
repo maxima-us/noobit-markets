@@ -60,10 +60,11 @@ class FtxAuth(FtxBase):
         return auth_headers
 
 
-    def _sign(self, method: Literal["GET", "POST"], req_path: str, body: typing.Optional[typing.Dict], timestamp: int):
+    def _sign(self, method: Literal["GET", "POST", "DELETE"], req_path: str, body: typing.Optional[typing.Dict], timestamp: int):
 
         message = f"{timestamp}{method}{req_path}"
         if method == "POST": message += json.dumps(body)
+        # if body: message += json.dumps(body)
         sig_payload = message.encode()
 
         signature = hmac.new(

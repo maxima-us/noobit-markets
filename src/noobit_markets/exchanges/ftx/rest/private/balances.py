@@ -13,7 +13,7 @@ from noobit_markets.base.request import (
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result, Err, Ok
-from noobit_markets.base.models.rest.response import NoobitResponseBalances
+from noobit_markets.base.models.rest.response import NoobitResponseBalances, NoobitResponseSymbols
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 # Kraken
@@ -21,6 +21,10 @@ from noobit_markets.exchanges.ftx.rest.auth import FtxAuth, FtxPrivateRequest
 from noobit_markets.exchanges.ftx import endpoints
 from noobit_markets.exchanges.ftx.rest.base import get_result_content_from_req
 
+
+__all__ = (
+    "get_balances_ftx"
+)
 
 
 #============================================================
@@ -69,11 +73,16 @@ def parse_result(result_data: FtxResponseBalances) -> typing.Mapping[ntypes.ASSE
 @retry_request(retries=pydantic.PositiveInt(10), logger=lambda *args: print("===xxxxx>>>> : ", *args))
 async def get_balances_ftx(
         client: ntypes.CLIENT,
-        asset_from_exchange: ntypes.ASSET_FROM_EXCHANGE,
+        symbols_resp: NoobitResponseSymbols,
+        #  prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
         auth=FtxAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.FTX_ENDPOINTS.private.url,
         endpoint: str = endpoints.FTX_ENDPOINTS.private.endpoints.balances,
     ) -> Result[NoobitResponseBalances, pydantic.ValidationError]:
+
+    asset_from_exchange = lambda x: {v: k for k, v in symbols_resp.assets.items()}[x]
 
     req_url = "/".join([base_url, "wallet", "balances"])
     method = "GET"

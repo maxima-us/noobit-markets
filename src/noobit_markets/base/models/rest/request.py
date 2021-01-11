@@ -124,9 +124,13 @@ class NoobitRequestClosedOrders(FrozenBaseModel):
     @validator("symbol")
     def symbol_validity(cls, v, values):
         if not v in values["symbols_resp"].asset_pairs.keys():
-            raise ValueError("Unknown Symbol")
+            raise ValueError(f"Unknown Symbol : {v}")
 
         return v
+
+
+class NoobitRequestOpenOrders(NoobitRequestClosedOrders):
+    pass
 
 
 

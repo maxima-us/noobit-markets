@@ -120,7 +120,7 @@ def parse_to_assets(
     ) -> typing.Dict[ntypes.PAsset, str]:
 
     bases = {
-        ntypes.PAsset(item.baseCurrency): item.baseCurrency for item in result_data.symbols if item.type == "spot"
+        ntypes.PAsset(item.baseCurrency): item.baseCurrency for item in result_data.symbols if item.type == "spot" and not any(i in item.baseCurrency for i in ["BULL", "BEAR", "WIN"])
     }
     quotes = {
         ntypes.PAsset(item.quoteCurrency): item.quoteCurrency for item in result_data.symbols if item.type == "spot"
@@ -136,7 +136,7 @@ def parse_to_assetpairs(
         result_data: FtxResponseSymbols
     ) -> typing.Dict[ntypes.SYMBOL, T_SymbolParsedPair]:
 
-    list_assetpairs = [_single_assetpair(item) for item in result_data.symbols if item.type == "spot"]
+    list_assetpairs = [_single_assetpair(item) for item in result_data.symbols if (item.type == "spot" and not any(i in item.baseCurrency for i in ["BULL", "BEAR", "WIN"]))]
     indexed_assetpairs = {item["exchange_pair"].replace("/", "-").replace("BTC", "XBT"): item for item in list_assetpairs}
 
     return indexed_assetpairs

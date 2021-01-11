@@ -42,7 +42,7 @@ async def result_or_err(resp_obj: httpx.Response) -> Result:
 
 
 
-async def parse_error_content(
+def parse_error_content(
         error_content: dict,
         sent_request: pyrsistent.PMap
     ) -> typing.Tuple[Exception, ...]:

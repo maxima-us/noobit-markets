@@ -9,14 +9,13 @@ from noobit_markets.base import ntypes
 
 class _PublicEndpoints(FrozenBaseModel):
 
-    time: str
-    assets: str
+    time: typing.Optional[str]
     symbols: str
-    instrument: str
+    instrument: typing.Optional[str]
     ohlc: str
     orderbook: str
     trades: str
-    spread: str
+    spread: typing.Optional[str]
 
 
 class _PublicInterface(FrozenBaseModel):
@@ -28,21 +27,20 @@ class _PublicInterface(FrozenBaseModel):
 class _PrivateEndpoints(FrozenBaseModel):
 
     balances: str
-    account_balance: str
+    ledger: typing.Optional[str]
+    ledger_info:typing.Optional[str]
     exposure: str
     open_positions: str
     open_orders: str
-    closed_orders: str
     trades_history: str
-    closed_positions: str
-    ledger: str
-    order_info: str
     trades_info: str
-    ledger_info: str
+    order_info: str
+    closed_orders: str
+    closed_positions: str
     volume: str
     new_order: str
     remove_order: str
-    ws_token: str
+    ws_token: typing.Optional[str]
 
 
 class _PrivateInterface(FrozenBaseModel):
