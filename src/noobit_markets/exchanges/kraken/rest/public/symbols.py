@@ -205,7 +205,7 @@ async def get_symbols_kraken(
     else:
         # filter out darkpools and pairs with numerical chars
         # filter out any alphanumeric pair
-        filtered_result = {k: v for k, v in result_content.value.items() if ".d" not in k and not hasnums(k)}
+        filtered_result = {k: v for k, v in result_content.value.items() if "." not in k and not hasnums(k)}
     
     if logger:
         logger(f"Symbols - Result Content : {result_content.value}")

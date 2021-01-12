@@ -22,6 +22,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 # binance
 from noobit_markets.exchanges.binance import endpoints
 from noobit_markets.exchanges.binance.rest.base import get_result_content_from_req
+from noobit_markets.exchanges.binance.types import B_TIMEFRAMES, B_TIMEFRAME_FROM_N
 
 
 __all__ = (
@@ -37,7 +38,7 @@ __all__ = (
 class BinanceRequestOhlc(FrozenBaseModel):
 
     symbol: str
-    interval: Literal["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"]
+    interval: B_TIMEFRAMES
 
     # needs to be in ms
     startTime: typing.Optional[pydantic.PositiveInt]
@@ -68,8 +69,7 @@ def parse_request(
 
     payload: _ParsedReq = {
         "symbol": symbol_to_exchange(valid_request.symbol),
-        #FIXME mapping cant be at base level, dependent on every exchange
-        "interval": valid_request.timeframe.lower(),
+        "interval": B_TIMEFRAME_FROM_N[valid_request.timeframe],
         # noobit ts are in ms vs ohlc kraken ts in s
         "startTime": valid_request.since
     }

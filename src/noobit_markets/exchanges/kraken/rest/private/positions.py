@@ -28,6 +28,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.exchanges.kraken.rest.auth import KrakenAuth, KrakenPrivateRequest
 from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
+from noobit_markets.exchanges.kraken.types import K_ORDERSIDE_TO_N, K_ORDERTYPE_TO_N
 
 
 __all__ =(
@@ -119,8 +120,8 @@ def _single_position(key: str, info: OpenPositionInfo, symbol_from_exchange: nty
         "orderID": info.ordertxid,
         "symbol": symbol_from_exchange(info.pair),
         "currency": symbol_from_exchange(info.pair).split("-")[1],
-        "side": info.type,
-        "ordType": info.ordertype,
+        "side": K_ORDERSIDE_TO_N[info.type],
+        "ordType": K_ORDERTYPE_TO_N[info.ordertype],
 
         "clOrdID": None,
 

@@ -39,15 +39,13 @@ class KrakenResponseBalances(FrozenBaseModel):
 
 def parse_result(
         result_data: typing.Mapping[str, Decimal],
-        # FIXME commented out just for testing
-        # asset_mapping: ntypes.ASSET_FROM_EXCHANGE
         asset_from_exchange: ntypes.ASSET_FROM_EXCHANGE
     ) -> typing.Mapping[ntypes.ASSET, Decimal]:
 
     # DARKPOOL PAIRS: suffixed by .d
     # STAKED PAIRS: suffixed by .s
     # parsed = {(asset_mapping(asset) if ".s" not in asset else asset.replace(".", "")): amount for asset, amount in result_data.items() if not asset == "KFEE" and amount > Decimal(0) and ".d" not in asset}
-    parsed = {asset_from_exchange(asset): amount for asset, amount in result_data.items() if not asset == "KFEE" and amount > Decimal(0) and ".d" not in asset}
+    parsed = {asset_from_exchange(asset): amount for asset, amount in result_data.items() if not asset == "KFEE" and amount > Decimal(0) and "." not in asset}
     return pmap(parsed)
 
 

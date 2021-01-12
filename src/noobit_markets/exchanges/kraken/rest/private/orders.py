@@ -30,6 +30,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.exchanges.kraken.rest.auth import KrakenAuth, KrakenPrivateRequest
 from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
+from noobit_markets.exchanges.kraken.types import K_ORDERTYPE_TO_N, K_ORDERSIDE_TO_N
 
 
 __all__ = (
@@ -236,8 +237,8 @@ def _single_order(
             # "currency": symbol.split("-")[1] if symbol_to_exchange(symbol) == order.descr.pair else None,
             "currency": symbol_from_exchange(order.descr.pair).split("-")[1],
             # "currency": "USD",
-            "side": order.descr.type,
-            "ordType": order.descr.ordertype,
+            "side": K_ORDERSIDE_TO_N[order.descr.type],
+            "ordType": K_ORDERTYPE_TO_N[order.descr.ordertype],
             "execInst": None,
 
             "clOrdID": order.userref,
@@ -246,7 +247,7 @@ def _single_order(
             "marginRatio": 0 if order.descr.leverage == "none" else 1/int(order.descr.leverage[0]),
             "marginAmt": 0 if order.descr.leverage == "none" else Decimal(order.cost)/int(order.descr.leverage[0]),
             # TODO orderstatus mapping
-            "ordStatus": "new",
+            "ordStatus": "NEW",
             "workingIndicator": True if (order.status in ["pending", "open"]) else False,
             "ordRejReason": getattr(order, "reason", None),
 

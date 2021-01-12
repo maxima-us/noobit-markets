@@ -18,10 +18,11 @@ from noobit_markets.base.models.rest.request import NoobitRequestClosedOrders, N
 from noobit_markets.base.models.rest.response import NoobitResponseBalances, NoobitResponseClosedOrders, NoobitResponseOpenOrders, NoobitResponseSymbols, T_OrderParsedItem, T_OrderParsedRes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
-# Kraken
+# Ftx
 from noobit_markets.exchanges.ftx.rest.auth import FtxAuth, FtxPrivateRequest
 from noobit_markets.exchanges.ftx import endpoints
 from noobit_markets.exchanges.ftx.rest.base import get_result_content_from_req
+from noobit_markets.exchanges.ftx.types import F_ORDERSIDE, F_ORDERSTATUS, F_ORDERSTATUS_TO_N, F_ORDERTYPE
 
 
 __all__ = (
@@ -130,11 +131,11 @@ class FtxResponseItemOrder(FrozenBaseModel):
     price: Decimal
     avgFillPrice: Decimal
     remainingSize: Decimal
-    side: Literal["buy", "sell"]
+    side: F_ORDERSIDE 
     size: Decimal
     # TODO hardcode as ftx types
-    status: Literal["new", "open", "closed"]
-    type: Literal["limit", "market"]
+    status: F_ORDERSTATUS 
+    type: F_ORDERTYPE
     reduceOnly: bool
     ioc: bool
     postOnly: bool
@@ -168,15 +169,15 @@ def parse_order_item(order: FtxResponseItemOrder, symbol_from_exchange: ntypes.S
         "orderId": order.id,
         "symbol": symbol_from_exchange(order.market),
         "currency": symbol_from_exchange(order.market).split("-")[1],
-        "side": order.side,
-        "ordType": order.type,
+        "side": order.side.upper(),
+        "ordType": order.type.upper(),
         "execInst": None,
         "clOrdID": order.clientId,
         "account": None,
         "cashMargin": "cash", # TODO needed ?
         "marginRatio": 0,
         "marginAmt": 0,
-        "ordStatus": order.status,
+        "ordStatus": F_ORDERSTATUS_TO_N[order.status],
         "workingIndicator": True if order.status in ["new", "open"] else False,
         "ordRejReason": None,
         "timeInForce": None,

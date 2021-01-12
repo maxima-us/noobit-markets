@@ -210,37 +210,35 @@ OHLC = typing.Tuple[Decimal, Decimal, Decimal, Decimal, Decimal, Decimal]
 # KRAKEN: Other advanced order types such as stop-loss-limit are not enabled
 ORDERTYPE = Literal[
     # kraken
-    "market",
-    "limit",
-    "stop-loss",
-    "take-profit",
-    # "settle-position",
+    "MARKET",
+    "LIMIT",
+    "STOP-LOSS",
+    "TAKE-PROFIT",
 
     # binance
-    "stop-loss-limit",
-    "take-profit-limit",
-    "limit-maker",
-    "stop market"   #TODO received this from kraken api, occurs when a stop gets hit
+    "STOP-LOSS-LIMIT",
+    "TAKE-PROFIT-LIMIT",
+    "LIMIT-MAKER",
 ]
 
 
 ORDERSIDE = Literal[
-    "buy",
-    "sell",
+    "BUY",
+    "SELL",
 ]
 
 
 # See https://fixwiki.org/fixwiki/OrdStatus
 ORDERSTATUS = Literal[
-    "pending-new",
-    "new",
-    "partially-filled",
-    "filled",
-    "pending-cancel",
-    "canceled",
-    "closed",
-    "expired",
-    "rejected"
+    "PENDING-NEW",
+    "NEW",
+    "PARTIALLY-FILLED",
+    "FILLED",
+    "PENDING-CANCEL",
+    "CANCELED",
+    "CLOSED",
+    "EXPIRED",
+    "REJECTED"
     ""
 ]
 
@@ -249,9 +247,9 @@ TIMEINFORCE = Literal[
     "GTC",
     "IOC",
     "FOK",
-    "good-till-cancel",
-    "immediate-or-cancel",
-    "fill-or-kill",
+    "GOOD-TILL-CANCEL",
+    "IMMEDIATE-OR-CANCEL",
+    "FILL-OR-KILL",
 ]
 
 

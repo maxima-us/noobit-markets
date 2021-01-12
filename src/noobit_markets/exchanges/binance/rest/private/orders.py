@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 import pydantic
 from pydantic import ValidationError
 from pyrsistent import pmap
-from typing_extensions import Literal, TypedDict
+from typing_extensions import TypedDict
 
 from noobit_markets.base.request import (
     retry_request,
@@ -20,15 +20,17 @@ from noobit_markets.base.models.rest.request import NoobitRequestClosedOrders
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 
-# Kraken
+# Binance
 from noobit_markets.exchanges.binance.rest.auth import BinanceAuth, BinancePrivateRequest
 from noobit_markets.exchanges.binance import endpoints
 from noobit_markets.exchanges.binance.rest.base import get_result_content_from_req
+from noobit_markets.exchanges.binance.types import *
 
 
 __all__ = (
     "get_closedorders_binance"
 )
+
 
 # ============================================================
 # BINANCE REQUEST
@@ -100,10 +102,10 @@ class BinanceResponseItemOrders(FrozenBaseModel):
     origQty: Decimal
     executedQty: Decimal
     cummulativeQuoteQty: Decimal
-    status: Literal["NEW", "FILLED", "CANCELED", "PENDING_CANCEL", "REJECTED", "EXPIRED"]
-    timeInForce: Literal["GTC", "FOK", "IOC"]
-    type: Literal["LIMIT", "MARKET", "STOP_LOSS", "STOP_LOSS_LIMIT", "TAKE_PROFIT", "TAKE_PROFIT_LIMIT", "LIMIT_MAKER"]
-    side: Literal["BUY", "SELL"]
+    status: B_ORDERSTATUS
+    timeInForce: B_TIMEINFORCE
+    type: B_ORDERTYPE
+    side: B_ORDERSIDE
     stopPrice: Decimal
     icebergQty: Decimal
     time: pydantic.PositiveInt
@@ -136,20 +138,23 @@ def _single_order(
         # TODO return error if symbols dont match
         "symbol": symbol_from_exchange(item.symbol),
         "currency": symbol_from_exchange(item.symbol).split("-"),
-        "side": item.side.lower(),
-        "ordType": item.type.replace("_", "-").lower(),
+        "side": item.side,
+        # "ordType": item.type.replace("_", "-").lower(),
+        "ordType": B_ORDERTYPE_TO_N[item.type],
         "execInst": None,
         "clOrdID": None,
         "account": None,
         "cashMargin": "cash",
-        "ordStatus": item.status.replace("_", "-").lower(),
+        # "ordStatus": item.status.replace("_", "-").lower(),
+        "ordStatus": B_ORDERSTATUS_TO_N[item.status],
         "workingIndicator": item.isWorking,
         "ordRejReason": None,
-        "timeInForce": {
-            "GTC": "good-til-cancel",
-            "FOK": "fill-or-kill",
-            "IOC": "immediate-or-cancel"
-        }.get(item.timeInForce, None),
+        # "timeInForce": {
+        #     "GTC": "good-til-cancel",
+        #     "FOK": "fill-or-kill",
+        #     "IOC": "immediate-or-cancel"
+        # }.get(item.timeInForce, None),
+        "timeInForce": B_TIMEINFORCE_TO_N[item.timeInForce],
         "transactTime": item.time,
         "sendingTime": item.updateTime,
         "grossTradeAmt": item.origQuoteOrderQty,
@@ -201,7 +206,7 @@ async def get_closedorders_binance(
 
     symbol_to_exchange = lambda x: {k: v.exchange_pair for k, v in symbols_resp.asset_pairs.items()}[x]
     symbol_from_exchange = lambda x: {f"{v.noobit_base}{v.noobit_quote}": k for k, v in symbols_resp.asset_pairs.items()}[x]
-    
+
     req_url = urljoin(base_url, endpoint)
     method = "GET"
     headers: typing.Dict = auth.headers()
@@ -209,7 +214,7 @@ async def get_closedorders_binance(
     valid_noobit_req = _validate_data(NoobitRequestClosedOrders, pmap({"symbol": symbol, "symbols_resp": symbols_resp}))
     if valid_noobit_req.is_err():
         return valid_noobit_req
-    
+
     if logger:
         logger(f"Closed Orders - Noobit Request : {valid_noobit_req.value}")
 
@@ -221,14 +226,14 @@ async def get_closedorders_binance(
     valid_binance_req = _validate_data(BinanceRequestClosedOrders, pmap(signed_req))
     if valid_binance_req.is_err():
         return valid_binance_req
-    
+
     if logger:
         logger(f"Closed Orders - Parsed Request : {valid_binance_req.value}")
 
     result_content = await get_result_content_from_req(client, method, req_url, valid_binance_req.value, headers)
     if result_content.is_err():
         return result_content
-    
+
     if logger:
         logger(f"Closed Orders - Result Content : {result_content.value}")
 

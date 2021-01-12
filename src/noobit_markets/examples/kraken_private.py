@@ -42,19 +42,22 @@ else:
     print("Symbols Ok")
     symbols = sym.value
 
+
+
     # ============================================================
     # POST NEW ORDER
+    # ============================================================
 
     trd = asyncio.run(
         post_neworder_kraken(
             client=httpx.AsyncClient(),
             symbol=ntypes.PSymbol("DOT-USD"),
             symbols_resp=sym.value,
-            side="buy",
-            ordType="limit",
+            side="BUY",
+            ordType="LIMIT",
             clOrdID="1234567",
-            orderQty=Decimal(1.231599),
-            price=Decimal(1.2323),
+            orderQty=1.231599,
+            price=1.2323,
             timeInForce="GTC",
             quoteOrderQty=None,
             stopPrice=None,
@@ -72,8 +75,12 @@ else:
         # print(_nord.table)
         print("Trading New Order ok")
 
+
+
     # ============================================================
     # BALANCES
+    # ============================================================
+
 
     bal = asyncio.run(
         get_balances_kraken(
@@ -90,8 +97,11 @@ else:
         print("Balances ok")
 
 
+
     # ============================================================
     # EXPOSURE
+    # ============================================================
+
 
     expo = asyncio.run(
         get_exposure_kraken(
@@ -112,6 +122,7 @@ else:
     # OPEN ORDERS
     # ============================================================
 
+
     opo = asyncio.run(
         get_openorders_kraken(
             client=httpx.AsyncClient(),
@@ -130,6 +141,7 @@ else:
     # CLOSED ORDERS
     # ============================================================
 
+
     clo = asyncio.run(
         get_closedorders_kraken(
             client=httpx.AsyncClient(),
@@ -145,9 +157,12 @@ else:
         print("Closed Orders ok")
 
 
+
+
     # ============================================================
     # OPEN POSITIONS
     # ============================================================
+
 
     opp = asyncio.run(
         get_openpositions_kraken(
@@ -161,9 +176,11 @@ else:
         print("Open Positions ok")
 
 
+
     # ============================================================
     # USER TRADES
     # ============================================================
+
 
     utr = asyncio.run(
         get_usertrades_kraken(
@@ -181,6 +198,8 @@ else:
     else:
         # print(_trd.table)
         print("Trades ok")
+
+
 
 
     # ============================================================

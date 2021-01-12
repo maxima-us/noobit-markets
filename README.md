@@ -6,7 +6,7 @@
 ### Overview
 
 Building Blocks for connecting and trading with cryptocurrency exchanges under a unified format.\
-Primarily meant to be  integrated within larger applications, but also provides a basic CLI app.
+Primarily meant to be integrated within larger applications, but also provides a basic CLI app.
 <br/>
 Presently supported exchanges:
 - Kraken
@@ -39,11 +39,12 @@ For now we restrict instruments to spot pairs.
 
 <br/>
 
-### Result Container:
+### Containers:
 
--	To provide the user with more explicit returns, responses are wrapped in a `Result` object, which can either be of type `Ok` or `Err`.\
+-	To provide the user with more explicit returns, responses are wrapped in a `Result` container object, which can either be of type `Ok` or `Err`.\
 The Result object's `.value()` method gives access to the value it holds, which will either be a response (validated against its expected model) or an exception.
 -	This allows to avoid having to raise Exceptions and stopping the program from running. 
+-   Additionally, we provide containers which give the user richer representations of the data. For now, this is limited to tables, but can easily be extended to include pandas dataframes for ex.
 
 <br/>
 
@@ -58,5 +59,5 @@ When chaining multiple functions, in case of a failure, we immediately return th
 ### Usage
 
 -	For each exchange, an interface maps keys to coroutines or websocket APIs. For an example of Krakens interface see [here](https://github.com/maxima-us/noobit-markets/blob/master/src/noobit_markets/exchanges/kraken/interface.py)
--	For how to use coroutines and websocket APIs within an async app, examples are available for each exchange [here](https://github.com/maxima-us/noobit-markets/tree/master/src/noobit_markets/examples)
+-	For how to use coroutines and websocket APIs within an async app, examples with annotations and comments are available for each exchange [here](https://github.com/maxima-us/noobit-markets/tree/master/src/noobit_markets/examples)
 -	To start the CLI app, run the `noobit-cli` command. As a prerequisite for subsequent CLI command, run the `symbols` command in the CLI on each startup.

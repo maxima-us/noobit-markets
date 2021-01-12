@@ -115,10 +115,10 @@ def _single_trade(
         "trdMatchID": None,
         # noobit timestamp = ms
         "transactTime": data.time,
-        "side": "buy" if data.isBuyerMaker is False else "sell",
+        "side": "BUY" if data.isBuyerMaker is False else "SELL",
         # binance only lists market order
         # => trade = limit order lifted from book by market order
-        "ordType": "market",
+        "ordType": "MARKET",
         "avgPx": data.price,
         "cumQty": data.quoteQty,
         "grossTradeAmt": data.price * data.quoteQty,

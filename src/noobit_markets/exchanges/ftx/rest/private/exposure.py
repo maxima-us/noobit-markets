@@ -5,13 +5,16 @@ from noobit_markets.exchanges.ftx.rest.auth import FtxAuth
 from pydantic import ValidationError
 from pyrsistent import pmap
 
+
+# base
 from noobit_markets.base.request import _validate_data
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Err, Result
 from noobit_markets.base.models.rest.response import NoobitResponseExposure, NoobitResponseSymbols
 
-from noobit_markets.exchanges.ftx.rest.auth import FtxAuth
 
+# FTX
+from noobit_markets.exchanges.ftx.rest.auth import FtxAuth
 from .balances import get_balances_ftx
 from ..public.trades import get_trades_ftx
 

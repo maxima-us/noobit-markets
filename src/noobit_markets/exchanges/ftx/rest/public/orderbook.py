@@ -38,6 +38,7 @@ class FtxRequestOrderBook(FrozenBaseModel):
     # https://docs.ftx.com/?python#get-orderbook
 
     market_name: str
+    # TODO Restricted values ? should be in ftx/types.py
     depth: ntypes.DEPTH
 
 

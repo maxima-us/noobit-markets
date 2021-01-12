@@ -7,7 +7,7 @@ from datetime import date
 import pydantic
 from pydantic.error_wrappers import ValidationError
 from pyrsistent import pmap, PRecord, field
-from typing_extensions import Literal
+from typing_extensions import Literal, TypedDict
 
 from noobit_markets.base.request import (
     retry_request,
@@ -24,7 +24,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 # Kraken
 from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
-from noobit_markets.exchanges.kraken.types import K_TIMEFRAMES
+from noobit_markets.exchanges.kraken.types import K_TIMEFRAME_FROM_N
 
 
 __all__ = (
@@ -63,13 +63,10 @@ class KrakenRequestOhlc(FrozenBaseModel):
         return v
 
 
-class _ParsedReq(PRecord):
-    # TODO should be replaced with TypedDict anyway, we only want to check field names
-    # needs to allow None types, or might throw following error if we pass inexistant symbol: 
-    # pyrsistent._field_common.PTypeError: Invalid type for field _ParsedReq.pair, was NoneType
-    pair = field(type=(str, type(None)))
-    interval = field(type=(int, type(None)))
-    since = field(type=(int, type(None)))
+class _ParsedReq(TypedDict):
+    pair: Any
+    interval: Any
+    since: Any
 
 
 def parse_request(
@@ -78,15 +75,15 @@ def parse_request(
     ) -> _ParsedReq:
 
 
-    payload = {
+    payload: _ParsedReq = {
         "pair": symbol_to_exchange(valid_request.symbol),
-        "interval": K_TIMEFRAMES[valid_request.timeframe],
+        "interval": K_TIMEFRAME_FROM_N[valid_request.timeframe],
         # noobit ts are in ms vs ohlc kraken ts in s
         "since": valid_request.since * 10**-3 if valid_request.since else None
     }
 
 
-    return _ParsedReq(**payload)
+    return payload
 
 
 

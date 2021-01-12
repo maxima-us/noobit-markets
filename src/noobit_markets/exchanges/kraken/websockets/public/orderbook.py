@@ -31,7 +31,6 @@ def validate_sub(symbol_to_exchange: SYMBOL_TO_EXCHANGE, symbol: SYMBOL, depth: 
         raise e
 
 
-# TODO use partial where we just pass in the model
 def validate_parsed(msg, parsed_msg):
 
     try:

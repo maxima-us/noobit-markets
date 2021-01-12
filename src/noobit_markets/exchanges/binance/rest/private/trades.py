@@ -19,7 +19,7 @@ from noobit_markets.base.models.rest.response import NoobitResponseSymbols, Noob
 from noobit_markets.base.models.rest.request import NoobitRequestTrades
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
-# Kraken
+# Binance
 from noobit_markets.exchanges.binance.rest.auth import BinanceAuth, BinancePrivateRequest
 from noobit_markets.exchanges.binance import endpoints
 from noobit_markets.exchanges.binance.rest.base import get_result_content_from_req
@@ -123,8 +123,8 @@ def parse_result(
 
 
 def _single_order(
-    item: BinanceResponseItemTrades, 
-    symbol: ntypes.SYMBOL, 
+    item: BinanceResponseItemTrades,
+    symbol: ntypes.SYMBOL,
     symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE
     ) -> T_PrivateTradesParsedItem:
 
@@ -132,8 +132,8 @@ def _single_order(
         "symbol": symbol_from_exchange(item.symbol),
         "trdMatchID": item.id,
         "orderID": item.orderId,
-        "side": "buy" if item.isBuyer else "sell",
-        "ordType": "limit" if item.isMaker else "market",
+        "side": "BUY" if item.isBuyer else "SELL",
+        "ordType": "LIMIT" if item.isMaker else "MARKET",
         "avgPx": item.price,
         "cumQty": item.qty,
         "grossTradeAmt": item.quoteQty,
@@ -167,7 +167,7 @@ async def get_trades_binance(
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.private.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.private.endpoints.trades_history
     ) -> Result[NoobitResponseTrades, ValidationError]:
-    
+
     symbol_to_exchange = lambda x: {k: v.exchange_pair for k, v in symbols_resp.asset_pairs.items()}[x]
     symbol_from_exchange= lambda x: {v.exchange_pair: k for k, v in symbols_resp.asset_pairs.items()}[x]
 
@@ -178,7 +178,7 @@ async def get_trades_binance(
     valid_noobit_req = _validate_data(NoobitRequestTrades, pmap({"symbol": symbol, "symbols_resp": symbols_resp, "since": None}))
     if isinstance(valid_noobit_req, Err):
         return valid_noobit_req
-    
+
     if logger:
         logger(f"User Trades - Noobit Request : {valid_noobit_req.value}")
 
@@ -190,7 +190,7 @@ async def get_trades_binance(
     valid_binance_req = _validate_data(BinanceRequestUserTrades, pmap(signed_req))
     if valid_binance_req.is_err():
         return valid_binance_req
-    
+
     if logger:
         logger(f"User Trades - Parsed Request : {valid_binance_req.value}")
 

@@ -133,7 +133,7 @@ def parse_to_assetpairs(
     parsed = {
         ntypes.PSymbol(f"{data.baseAsset.replace('BTC', 'XBT')}-{data.quoteAsset.replace('BTC', 'XBT')}"): _single_assetpair(data)
         #? filter out pairs that are not trading ?
-        for data in result_data if data.status == "TRADING" and data.baseAsset != "KP3R"
+        for data in result_data if data.status == "TRADING" # and data.baseAsset != "KP3R"
     }
 
     return parsed

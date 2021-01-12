@@ -25,12 +25,14 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.exchanges.kraken.rest.auth import KrakenAuth, KrakenPrivateRequest
 from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
+from noobit_markets.exchanges.kraken.types import K_ORDERSIDE_FROM_N, K_ORDERTYPE_FROM_N
 from .orders import get_openorders_kraken, get_closedorders_kraken
 
 
 __all__= (
     "post_neworder_kraken"
 )
+
 
 
 # ============================================================
@@ -175,15 +177,15 @@ def parse_request(
     # e.g leverage needs to be string "none"
     payload: _ParsedReq = {
         "pair": symbol_to_exchange(valid_request.symbol),
-        "type": valid_request.side,
-        "ordertype": valid_request.ordType,
-        "price": valid_request.stopPrice if valid_request.ordType in ["stop-loss-limit", "take-profit-limit", "stop-loss", "take-profit"] else valid_request.price,
-        "price2": valid_request.price if valid_request.ordType in ["stop-loss-limit", "take-profit-limit"] else None,
+        "type": K_ORDERSIDE_FROM_N[valid_request.side],
+        "ordertype": K_ORDERTYPE_FROM_N[valid_request.ordType],
+        "price": valid_request.stopPrice if valid_request.ordType in ["STOP-LOSS-LIMIT", "TAKE-PROFIT-LIMIT", "STOP-LOSS", "TAKE-PROFIT"] else valid_request.price,
+        "price2": valid_request.price if valid_request.ordType in ["STOP-LOSS-LIMIT", "TAKE-PROFIT-LIMIT"] else None,
         "volume": valid_request.orderQty if valid_request.orderQty else valid_request.quoteOrderQty,
         "leverage": None,
         #`vqic` flag is deactivated, so we cant actually pass `quoteOrderQty`
         # "oflags": ("post",) if valid_request.ordType == "limit" else ("viqc",) if valid_request.ordType == "market" and valid_request.quoteOrderQty else ("fciq",),
-        "oflags": ("post", ) if valid_request.ordType == "limit" else ("fciq",),
+        "oflags": ("post", ) if valid_request.ordType == "LIMIT" else ("fciq",),
         # noobit ts are in ms vs ohlc kraken ts in s
         "starttm": None,
         "expiretm": None,

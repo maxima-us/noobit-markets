@@ -132,11 +132,11 @@ def _single_trade(
         "trdMatchID": data.id,
         # noobit timestamp = ms
         "transactTime": datetime.timestamp(datetime.fromisoformat(data.time)),
-        "side": data.side,
+        "side": data.side.upper(),
         # binance only lists market order
         # => trade = limit order lifted from book by market order
         # FIXME change model to allow None
-        "ordType": "market",
+        "ordType": "MARKET",
         "avgPx": data.price,
         "cumQty": data.size,
         "grossTradeAmt": data.price * data.size,

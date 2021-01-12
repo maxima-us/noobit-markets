@@ -23,6 +23,11 @@ __all__ = (
 )
 
 
+# ============================================================
+# FETCH
+# ============================================================
+
+
 async def get_exposure_binance(
         client: ntypes.CLIENT,
         symbols_resp: NoobitResponseSymbols,

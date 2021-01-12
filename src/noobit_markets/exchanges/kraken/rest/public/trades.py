@@ -24,6 +24,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 # Kraken
 from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
+from noobit_markets.exchanges.kraken.types import K_ORDERTYPE_TO_N, K_ORDERSIDE_TO_N
 
 
 __all__ = (
@@ -163,8 +164,8 @@ def _single_trade(
         "trdMatchID": None,
         # noobit timestamp = ms
         "transactTime": data[2]*10**3,
-        "side": "buy" if data[3] == "b" else "sell",
-        "ordType": "market" if data[4] == "m" else "limit",
+        "side": K_ORDERSIDE_TO_N[data[3]],
+        "ordType": K_ORDERTYPE_TO_N[data[4]],
         "avgPx": data[0],
         "cumQty": data[1],
         "grossTradeAmt": Decimal(data[0]) * Decimal(data[1]),

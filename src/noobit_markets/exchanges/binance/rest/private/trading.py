@@ -24,7 +24,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.exchanges.binance.rest.auth import BinanceAuth, BinancePrivateRequest
 from noobit_markets.exchanges.binance import endpoints
 from noobit_markets.exchanges.binance.rest.base import get_result_content_from_req
-from noobit_markets.exchanges.binance.types import *
+from noobit_markets.exchanges.binance.types import * 
 
 
 __all__ = (
@@ -80,9 +80,9 @@ def parse_request(
 
     payload: _ParsedReq = {
         "symbol": symbol_to_exchange(valid_request.symbol),
-        "side": valid_request.side.upper(),
-        "type": valid_request.ordType.upper().replace("-", "_"),
-        "timeInForce": valid_request.timeInForce,
+        "side": valid_request.side,
+        "type": B_ORDERTYPE_FROM_N[valid_request.ordType],
+        "timeInForce": B_TIMEINFORCE_FROM_N[valid_request.timeInForce],
         "quantity": valid_request.orderQty,
         "quoteOrderQty": valid_request.quoteOrderQty,
         "price": None if valid_request.ordType == "market" else valid_request.price,
@@ -189,8 +189,8 @@ def parse_result(
         "orderID": result_data.orderId,
         "symbol": symbol,
         "currency": symbol.split("-")[1],
-        "side": result_data.side.lower(),
-        "ordType": result_data.type.lower(),
+        "side": result_data.side,
+        "ordType": B_ORDERTYPE_TO_N[result_data.type],
         "execInst": None,
         "clOrdID": result_data.clientOrderId,
         "account": None,
@@ -200,7 +200,7 @@ def parse_result(
         "ordStatus": "filled" if result_data.type == "MARKET" else "new",
         "workingIndicator": True,
         "ordRejReason": None,
-        "timeInForce": result_data.timeInForce,
+        "timeInForce": B_TIMEINFORCE_TO_N[result_data.timeInForce],
         "transactTime": result_data.transactTime,
         "sendingTime": None,
         "effectiveTime": None,

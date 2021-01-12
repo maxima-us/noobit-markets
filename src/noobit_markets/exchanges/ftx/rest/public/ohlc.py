@@ -21,7 +21,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 # FTX
 from noobit_markets.exchanges.ftx import endpoints
 from noobit_markets.exchanges.ftx.rest.base import get_result_content_from_req
-from noobit_markets.exchanges.ftx.types import F_TIMEFRAMES
+from noobit_markets.exchanges.ftx.types import F_TIMEFRAMES, F_TIMEFRAME_FROM_N
 
 
 __all__ = (
@@ -43,7 +43,7 @@ class FtxRequestOhlc(FrozenBaseModel):
     #https://docs.ftx.com/?python#get-historical-prices
 
     market_name: str
-    resolution: Literal[15, 60, 300, 900, 3600, 14400, 86400]
+    resolution: F_TIMEFRAMES
     limit: FtxLimit
 
     start_time: typing.Optional[pydantic.PositiveInt]
@@ -66,7 +66,7 @@ def parse_request(
 
     payload: _ParsedReq = {
         "market_name": valid_request.symbols_resp.asset_pairs[valid_request.symbol].exchange_pair,
-        "resolution": F_TIMEFRAMES[valid_request.timeframe],
+        "resolution": F_TIMEFRAME_FROM_N[valid_request.timeframe],
         "limit": 4000,
         # noobit ts are in ms vs ohlc kraken ts in s
         "start_time": valid_request.since * 10**-3 if valid_request.since else None,
