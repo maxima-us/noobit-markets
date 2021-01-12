@@ -13,7 +13,6 @@ Presently supported exchanges:
 - Binance
 - Ftx
 <br/>
-<br/>
 
 For now we restrict instruments to spot pairs.
 
