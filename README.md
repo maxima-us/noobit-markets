@@ -5,38 +5,59 @@
 
 ### Overview
 
-Building Blocks for connecting and trading with cryptocurrency exchanges under a unified format. Primarily meant to be  integrated within larger applications, but also provides a basic CLI app.
+Building Blocks for connecting and trading with cryptocurrency exchanges under a unified format.\
+Primarily meant to be  integrated within larger applications, but also provides a basic CLI app.
 <br/>
-### Design Considerations
+Presently supported exchanges:
+- Kraken
+- Binance
+- Ftx
+<br/>
+<br/>
 
-#### Domains and Models
+For now we restrict instruments to spot pairs.
 
-Particular emphasis has been put on clearly defining domains, as such we rely very heavily on (pydantic) models.
-`noobit models` for both requests and responses ensure that across different exchanges, the user experience and data are exactly the same (e.g wether a user makes a GET request for orderbook data on Binance or streams it over WebSocket on Kraken, the data will be of the same format). 
-Exchange responses get parsed into `noobit responses` and validated against the corresponding model.
+<br/>
 
+### Features 
 
-#### Result
+-	Unified API, independent of exchange
+-	Fully typed with annotations and checked with mypy
+-	Fully modeled domains relying on Pydantic models (for validation and serialization)
+-	Safe and explicit function returns thanks to a railway oriented approach and Result containers
+-	CLI app that bundles all lower level coroutines and websocket streams in a user friendly manner
 
-To provide the user with more explicit returns, responses are wrapped in a rust like Result object, which can either be of type Ok or Err.
-The Result object's `.value()` method gives access to the value it holds, which will either be a noobit response or an exception.
+<br/>
 
+### Models & Pydantic:
 
-#### Typing
+-	We rely heavily on Pydantic to check the user input and what he receives, against what we expected\
+(that is, the models we have defined and should represent our domains)
+-	It is important to know that pydantic not only handles validation, but also serialization.
+-	As such, it will serialize data to the declared type of the field before validation, if possible\
+(e.g if the field “price” is declared as a `Decimal`, passing a float will not throw any `ValidationError` as a float can be cast to a `Decimal`)
+-	You can browse our unified models [here](https://github.com/maxima-us/noobit-markets/tree/master/src/noobit_markets/base/models/rest)
 
-We aim to be fully MyPy compliant.
+<br/>
+
+### Result Container:
+
+-	To provide the user with more explicit returns, responses are wrapped in a `Result` object, which can either be of type `Ok` or `Err`.\
+The Result object's `.value()` method gives access to the value it holds, which will either be a response (validated against its expected model) or an exception.
+-	This allows to avoid having to raise Exceptions and stopping the program from running. 
+
+<br/>
+
+### Railway oriented approach:
+
+-	This approach seeks to ensure every function or method returns a success or a failure.\
+When chaining multiple functions, in case of a failure, we immediately return the failure to the user and “stop the chain”.
+-	See [this article](https://fsharpforfunandprofit.com/posts/recipe-part2/#railway-oriented-programming) for a more detailed explanation.
+
 <br/>
 
 ### Usage
 
-#### Api 
-
-You can access the coroutines and ws apis via the exchange's interface , for ex : `get_ohlc = interface.KRAKEN.rest.public.ohlc`
-
-Every coroutine requires a `symbols` argument to be passed, which should be the noobit response received from the symbols endpoint.
-
-You can check out code examples for each exchange in the examples folder.
-
-#### Cli
-
-From the ui folder, run `python cli.py` to start the CLI app, or run the noobit command `noobit-cli` from anywhere. As a prerequisite for subsequent commands, run the `symbols` command on each startup.
+-	For each exchange, an interface maps keys to coroutines or websocket APIs. For an example of Krakens interface see [here](https://github.com/maxima-us/noobit-markets/blob/master/src/noobit_markets/exchanges/kraken/interface.py)
+-	For how to use coroutines and websocket APIs within an async app, examples are available for each exchange [here](https://github.com/maxima-us/noobit-markets/tree/master/src/noobit_markets/examples)
+-	To start the CLI app, run the `noobit-cli` command. As a prerequisite for subsequent CLI command, run the `symbols` command in the CLI on each startup.
