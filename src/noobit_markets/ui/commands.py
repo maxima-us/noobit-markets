@@ -5,6 +5,12 @@ import functools
 
 from noobit_markets.ui import settings
 from noobit_markets.ui.keybinds import safe_ensure_future
+from noobit_markets.base.ntypes import EXCHANGE
+
+
+exchange_list_upper = [exch.value for exch in EXCHANGE]
+exchange_list_lower = [v.lower() for v in exchange_list_upper]
+exchange_list = list(sorted([*exchange_list_upper, *exchange_list_lower], key=lambda v: v.upper()))
 
 
 class ArgumentParserError(Exception):
@@ -49,7 +55,7 @@ def load_parser(hb):    #hb refers to hummingbot app
     # SET VARIABLES
 
     setvars_parser = subparsers.add_parser("set", help="Set variables")
-    setvars_parser.add_argument("-e", "--exchange", type=str, choices=("kraken", "binance"), help="Name of the exchange that you want to connect")
+    setvars_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list, help="Name of the exchange that you want to connect")
     setvars_parser.add_argument("-s", "--symbol", type=str, help="Name of the symbol that you want to connect")
     setvars_parser.add_argument("-t", "--ordType", type=str, help="Type of the order that you want to connect")
     setvars_parser.add_argument("-q", "--orderQty", type=float, help="Quantity of the order that you want to connect")
@@ -92,7 +98,7 @@ def load_parser(hb):    #hb refers to hummingbot app
     # API KEYS
 
     addkeys_parser = subparsers.add_parser("add-keys")
-    addkeys_parser.add_argument("-e", "--exchange", type=str)
+    addkeys_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     addkeys_parser.add_argument("-k", "--key", type=str)
     addkeys_parser.add_argument("-s", "--secret", type=str)
     addkeys_parser.set_defaults(func=hb.add_keys)
@@ -102,7 +108,7 @@ def load_parser(hb):    #hb refers to hummingbot app
     # FETCH COMMANDS
 
     ohlc_parser = subparsers.add_parser("ohlc")
-    ohlc_parser.add_argument("-e", "--exchange", type=str)
+    ohlc_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     ohlc_parser.add_argument("-s", "--symbol", type=str)
     ohlc_parser.add_argument("-tf", "--timeframe", type=str, required=True)
     ohlc_parser.set_defaults(func=hb.fetch_ohlc)
@@ -111,31 +117,31 @@ def load_parser(hb):    #hb refers to hummingbot app
     symbols_parser.set_defaults(func=hb.fetch_symbols)
 
     book_parser = subparsers.add_parser("book")
-    book_parser.add_argument("-e", "--exchange", type=str)
+    book_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     book_parser.add_argument("-s", "--symbol", type=str)
     book_parser.add_argument("-d", "--depth", type=int)
     book_parser.set_defaults(func=hb.fetch_orderbook)
 
     trades_parser = subparsers.add_parser("trades")
-    trades_parser.add_argument("-e", "--exchange", type=str)
+    trades_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     trades_parser.add_argument("-s", "--symbol", type=str)
     trades_parser.set_defaults(func=hb.fetch_trades)
 
     balances_parser = subparsers.add_parser("balances")
-    balances_parser.add_argument("-e", "--exchange", type=str)
+    balances_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     balances_parser.set_defaults(func=hb.fetch_balances)
 
     exposure_parser = subparsers.add_parser("exposure")
-    exposure_parser.add_argument("-e", "--exchange", type=str)
+    exposure_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     exposure_parser.set_defaults(func=hb.fetch_exposure)
 
     usertrades_parser = subparsers.add_parser("usertrades")
-    usertrades_parser.add_argument("-e", "--exchange", type=str)
+    usertrades_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     usertrades_parser.add_argument("-s", "--symbol", type=str)
     usertrades_parser.set_defaults(func=hb.fetch_usertrades)
     
     openorders_parser = subparsers.add_parser("open-orders")
-    openorders_parser.add_argument("-e", "--exchange", type=str)
+    openorders_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     openorders_parser.add_argument("-s", "--symbol", type=str)
     openorders_parser.set_defaults(func=hb.fetch_openorders)
 
@@ -144,7 +150,7 @@ def load_parser(hb):    #hb refers to hummingbot app
     # TRADING
 
     buy_parser = subparsers.add_parser("buy")
-    buy_parser.add_argument("-e", "--exchange", type=str)
+    buy_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     buy_parser.add_argument("-s", "--symbol", type=str)
     buy_parser.add_argument("-t", "--ordType", type=str)
     buy_parser.add_argument("-q", "--orderQty", type=float)
@@ -155,7 +161,7 @@ def load_parser(hb):    #hb refers to hummingbot app
     buy_parser.set_defaults(func=hb.create_buyorder)
 
     sell_parser = subparsers.add_parser("sell")
-    sell_parser.add_argument("-e", "--exchange", type=str)
+    sell_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     sell_parser.add_argument("-s", "--symbol", type=str)
     sell_parser.add_argument("-t", "--ordType", type=str)
     sell_parser.add_argument("-q", "--orderQty", type=float)
@@ -168,7 +174,7 @@ def load_parser(hb):    #hb refers to hummingbot app
 
 
     #========================================
-    # WS COMMANDS
+    # STREAM WS COMMANDS
 
     connect_parser = subparsers.add_parser("connect")
     connect_parser.set_defaults(func=hb.connect)
@@ -177,22 +183,33 @@ def load_parser(hb):    #hb refers to hummingbot app
     streambook_parser.add_argument("-e", "--exchange", type=str)
     streambook_parser.add_argument("-s", "--symbol", type=str)
     streambook_parser.add_argument("-d", "--depth", type=int)
-    streambook_parser.set_defaults(func=hb.stream_orderbook)
+    streambook_parser.set_defaults(loop=hb.stream_orderbook)
 
     #========================================
     # SHOW TASK RESULTS
 
     showsymbols_parser = subparsers.add_parser("show-symbols")
-    showsymbols_parser.add_argument("-e", "--exchange", type=str)
+    showsymbols_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     showsymbols_parser.set_defaults(func=hb.show_symbols)
 
 
     return parser
 
+import asyncio
 
 def _handle_commands(hb, raw_command):
     args = hb.argparser.parse_args(args=raw_command.split())
     kwargs = vars(args)
+
+    if hasattr(args, "loop"):
+        f = args.loop
+        del kwargs["loop"]
+        # task = hb.loop.create_task(f(**kwargs))
+        task = asyncio.ensure_future(f(**kwargs))
+        task.add_done_callback(lambda t: hb.log_field.log(f"Task finished : {task}\n"))
+        return
+
+
     if not hasattr(args, "func"):
         return
     f = args.func
@@ -205,6 +222,7 @@ def _handle_commands(hb, raw_command):
     if inspect.iscoroutinefunction(f):
         hb.log_field.log(f"Task created : {f.__name__}")
         task = safe_ensure_future(f(**kwargs))
-        task.add_done_callback(lambda t: hb.log_field.log(f"Task finished : {f.__name__}\n"))
+        # task.add_done_callback(lambda t: hb.log_field.log(f"Task finished : {f.__name__}\n"))
+        task.add_done_callback(lambda t: hb.log_field.log(f"Task finished : {task}\n"))
     else:
         f(**kwargs)

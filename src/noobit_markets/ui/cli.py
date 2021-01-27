@@ -2,6 +2,7 @@
 from decimal import Decimal
 import datetime
 import functools
+import io
 import typing
 import asyncio
 import argparse
@@ -31,12 +32,14 @@ from noobit_markets.ui import settings
 
 # req for endpoints
 import httpx
+from noobit_markets.base.websockets import BaseWsPublic
 from noobit_markets.base import ntypes
 from noobit_markets.base.errors import BaseError
 from noobit_markets.base.models.result import Err
-from noobit_markets.base.models.rest.response import NOrderBook
+from noobit_markets.base.models.rest.response import NOrderBook, NResultWrapper
 
 # endpoints
+from noobit_markets.exchanges.kraken.websockets.public.api import KrakenWsPublic
 from noobit_markets.exchanges.kraken.interface import KRAKEN
 from noobit_markets.exchanges.binance.interface import BINANCE
 from pydantic.error_wrappers import ValidationError
@@ -78,8 +81,10 @@ def ensure_symbols(f):
                             cli.log(str(err))
                     elif isinstance(getattr(wrapped_res, "result", None), Exception):
                         cli.log(str(wrapped_res.result))
+                    elif isinstance(wrapped_res, NResultWrapper):
+                        cli.log(wrapped_res.result)
                     else:
-                        cli.log(wrapped_res)
+                        cli.log(f"Unexpected : {wrapped_res}")
                 else:
                     cli.log("SUCCESS")
                     cli.log(wrapped_res.table)
@@ -183,7 +188,8 @@ class HummingbotCLI:
         #! maximaus added
         self.argparser = load_parser(self)
         self.client = httpx.AsyncClient()
-        self.ws = {}
+        # TODO update type annotation
+        self.ws: typing.Dict[str, KrakenWsPublic] = {}
         # TODO we dont want to hardcode this for every exchange
         self.symbols: typing.Dict = {}
         #     "KRAKEN": None,
@@ -573,7 +579,7 @@ class HummingbotCLI:
         clOrdID,
         orderQty: float,
         price: float,
-        timeInForce: str,
+        timeInForce: str = "GTC",
         quoteOrderQty: typing.Optional[float] = None,
         stopPrice: typing.Optional[float] = None,
         *,
@@ -594,7 +600,7 @@ class HummingbotCLI:
                 return Err("Please set or pass <ordType> argument")
             else: ordType = settings.ORDTYPE
         # TODO be consistent: either all noobit types in capital or in lowercase
-        else: ordType = ordType.lower()
+        else: ordType = ordType.upper()
 
         if not orderQty:
             if not settings.ORDQTY: 
@@ -606,8 +612,8 @@ class HummingbotCLI:
             client=self.client,
             symbol=symbol, 
             symbols_resp=self.symbols[exchange].value, 
-            side=side.lower(), 
-            ordType=ordType.lower(), 
+            side=side, 
+            ordType=ordType, 
             clOrdID=clOrdID, 
             orderQty=orderQty, 
             price=price, 
@@ -616,6 +622,7 @@ class HummingbotCLI:
             stopPrice=stopPrice
             )
         _nord = NSingleOrder(_res)
+        
         return _nord
 
 
@@ -636,7 +643,7 @@ class HummingbotCLI:
         stopPrice: float
     ):
 
-        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, side="buy")
+        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, side="BUY")
 
 
     async def create_sellorder(
@@ -651,7 +658,7 @@ class HummingbotCLI:
         stopPrice: float
     ):
 
-        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, side="sell")
+        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, side="SELL")
 
 
 
@@ -661,6 +668,7 @@ class HummingbotCLI:
     async def connect(self):
         import websockets
         from noobit_markets.exchanges.kraken.websockets.public.routing import msg_handler
+        from noobit_markets.exchanges.kraken.websockets.public.api import KrakenWsPublic
 
         
         feed_map = {
@@ -670,24 +678,57 @@ class HummingbotCLI:
             "spread": "spread"
         }
 
-        ws = await websockets.connect("wss://ws.kraken.com")
-        self.ws["KRAKEN"] = KRAKEN.ws.public(ws, msg_handler, self.loop, feed_map)
+        #! only connect Kraken for now
+        client = await websockets.connect("wss://ws.kraken.com")
+        self.ws["KRAKEN"] = KrakenWsPublic(client, msg_handler, self.loop, feed_map)
+
+        self.log(client)
 
 
+    #! only stream Kraken for now, need to call connect before
     async def stream_orderbook(self, exchange: str, symbol: str, depth: str):
-        
+
+
         if not exchange: exchange = settings.EXCHANGE
         if not symbol: symbol = settings.SYMBOL
         
-        async for msg in self.ws[exchange].orderbook(self.symbols[exchange.upper()].value, symbol, depth, True):
-            _ob = NOrderBook(msg)
-            if _ob.is_ok():
-                self.log(_ob.table)
-            else:
-                self.log(_ob.result)
+        self.log(self.ws[exchange])
+        self.log(self.ws[exchange].client)
+        self.log(self.ws[exchange].orderbook)
+
+        # while True:
+            # self.log_field.log("Heartbeat")
+            # await asyncio.sleep(2)
+
+        async for msg in self.ws[exchange].orderbook(self.symbols[exchange].value, symbol, depth, True):
+            self.log_field.log("Got new message from orderbook websocket")
+        #     _ob = NOrderBook(msg)
+        #     if _ob.is_ok():
+        #         self.log(_ob.table)
+        #     else:
+        #         self.log(_ob.result)
 
 
     # ========================================
+
+
+import io
+class Logger:
+    def __init__(self, hb):
+        self.cli = hb
+
+    def write(self, message):
+        self.cli.log(message)
+
+
+class CliPrinter(io.TextIOBase):
+
+    def __init__(self, hb):
+        super().__init__()
+        self.cli = hb
+
+    def write(self, message):
+        self.cli.log(message)
 
 
 #============================================================
@@ -695,10 +736,13 @@ class HummingbotCLI:
 
 
 import click
-
+import sys
 @click.command()
 def launch():
     app = HummingbotCLI()
+    logger = Logger(app)
+
+    # sys.stdout = CliPrinter(app)
     asyncio.run(app.run())
 
 

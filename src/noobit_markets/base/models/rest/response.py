@@ -8,6 +8,8 @@ from abc import ABC, abstractproperty
 import typing
 from decimal import Decimal
 
+from colorama import Back, Fore, init
+init(autoreset=True, wrap=True)
 from typing_extensions import Literal, TypedDict
 from pydantic import PositiveInt, Field, ValidationError
 
@@ -35,8 +37,6 @@ class NoobitBaseResponse(FrozenBaseModel):
 # provide more representations options
 class NResultWrapper(ABC):
 
-
-    # def __init__(self, vser: Result[NoobitBaseResponse, Exception]):
 
     # leave untyped for now, vser Ok value will always subclass NoobitBaseResponse, but mypy throws error for thi
     def __init__(self, vser):
@@ -145,11 +145,12 @@ class NInstrument(NResultWrapper):
                     "Best Ask": [_inst.bestAsk],
                     "Best Bid": [_inst.bestBid],
                 },
-                headers="keys"
+                headers="keys",
+                tablefmt="pretty"
             )
             return tb
         else:
-            return "Returned an invalid result"
+            return f"Returned an invalid result : {self.vser}"
 
 
 # ============================================================
@@ -208,11 +209,12 @@ class NOhlc(NResultWrapper):
                     "Low": [k.low for k in _ohlc],
                     "Close": [k.close for k in _ohlc],
                 },
-                headers="keys"
+                headers="keys",
+                tablefmt="pretty"
             )
             return table
         else:
-            return "Returned an invalid result"
+            return f"Returned an invalid result : {self.vser}"
 
 
 # ============================================================
@@ -263,11 +265,12 @@ class NOrderBook(NResultWrapper):
                     "Bid Price": [k for k in _bids.keys()],
                     "Bid Volume": [k for k in _bids.values()],
                 },
-                headers="keys"
+                headers="keys",
+                tablefmt="pretty"
             )
             return table
         else:
-            return "Returned an invalid result"
+            return f"Returned an invalid result : {self.vser}"
 
 
 
@@ -356,25 +359,6 @@ class NoobitResponseSymbols(NoobitBaseResponse):
     asset_pairs: typing.Mapping[ntypes.SYMBOL, NoobitResponseItemSymbols]
     assets: typing.Mapping[ntypes.PAsset, str]
 
-    # FIXME why does this not work
-    # @validator("assets")
-    # def validity(cls, v, values):
-    #     print("VALIDATING")
-    #     errors = ["TEST"]
-    #     for key, val in v.items():
-    #         if not isinstance(key, ntypes.SYMBOL):
-    #             # raise ValueError(f"Invalid Symbol {key}")
-    #             errors.append(key)
-    #         if not isinstance(val, NoobitResponseItemSymbols):
-    #             # raise ValueError(f"Invalid Symbol {key}")
-    #             errors.append(key)
-        
-    #     if errors:
-    #         raise ValueError("Invalid symbols :", *errors)
-        
-    #     return v
-
-
 
 
 # ====================
@@ -401,11 +385,12 @@ class NSymbol(NResultWrapper):
                     "Price Decimals": [k.price_decimals for k in _pairs.values()],
                     "Order min": [k.order_min for k in _pairs.values()],
                 },
-                headers="keys"
+                headers="keys",
+                tablefmt="pretty"
             )
             return table
         else:
-            return "Returned an invalid result"
+            return f"Returned an invalid result : {self.vser}"
 
 
 
@@ -540,8 +525,7 @@ class NoobitResponseTrades(NoobitBaseResponse):
 
     trades: typing.Tuple[NoobitResponseItemTrade, ...]
 
-    # TODO remove in endpoints
-    # last: typing.Optional[ntypes.TIMESTAMP] = Field(...)
+
 
 
 # ====================
@@ -560,17 +544,19 @@ class NTrades(NResultWrapper):
                     "Symbol": [k.symbol for k in _trades],
                     "Avg Price": [k.avgPx for k in _trades],
                     "Filled Qty": [k.cumQty for k in _trades],
-                    "Side": [k.side for k in _trades],
+                    # "Side": [f"{Fore.GREEN if k.side == 'BUY' else Fore.RED}{k.side}" for k in _trades],  #FIXME how to add colors ???
+                    "Side": [k.side  for k in _trades],
                     "Type": [k.ordType for k in _trades],
                     "Trade ID": [k.trdMatchID for k in _trades],
                     "Order ID": [k.orderID for k in _trades],
                     "Client Order ID": [k.clOrdID for k in _trades] 
                 },
-                headers="keys"
+                headers="keys",
+                tablefmt="pretty"
             )
             return table
         else:
-            return "Returned an invalid result"
+            return f"Returned an invalid result : {self.vser}"
 
 
 
@@ -610,11 +596,12 @@ class NBalances(NResultWrapper):
                     "Symbol": [k for k in _bals.keys()],
                     "Balance": [k for k in _bals.values()]
                 },
-                headers="keys"
+                headers="keys",
+                tablefmt="pretty"
             )
             return table
         else:
-            return "Returned an invalid result"
+            return f"Returned an invalid result : {self.vser}"
 
 
 # ============================================================
@@ -683,11 +670,12 @@ class NExposure(NResultWrapper):
                     "Margin Amt": [_val.marginAmt],
                     "Unrealised PnL": [_val.unrealisedPnL],
                 },
-                headers="keys"
+                headers="keys",
+                tablefmt="pretty"
             )
             return table
         else:
-            return "Returned an invalid result"
+            return f"Returned an invalid result : {self.vser}"
 
 
 
@@ -1091,11 +1079,12 @@ class NOrders(NResultWrapper):
                     "Order ID": [k.orderID for k in _orders],
                     "Client Order ID": [k.clOrdID for k in _orders] 
                 },
-                headers="keys"
+                headers="keys",
+                tablefmt="pretty"
             )
             return table
         else:
-            return "Returned an invalid result"
+            return f"Returned an invalid result : {self.vser}"
 
 
 class NSingleOrder(NResultWrapper):
@@ -1118,11 +1107,12 @@ class NSingleOrder(NResultWrapper):
                     "Order ID": [_order.orderID],
                     "Client Order ID": [_order.clOrdID] 
                 },
-                headers="keys"
+                headers="keys",
+                tablefmt="pretty"
             )
             return table
         else:
-            return "Returned an invalid result"
+            return f"Returned an invalid result : {self.vser}"
 
 #! ============================================================
 #! NEW ORDER (Trading)
