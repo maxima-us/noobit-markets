@@ -136,28 +136,28 @@ nord = asyncio.run(
     post_neworder_binance(
         client=httpx.AsyncClient(),
         # we could also just pass a simple str, but this will satisfy mypy
-        symbol=ntypes.PSymbol("DOT-USDT"),
+        symbol="DOT-USDT",
         # we could also call symbols.result, it would be equivalent
         symbols_resp=sym.value,
-        side="sell",
-        ordType="limit",
+        side="SELL",
+        ordType="LIMIT",
         clOrdID="10101",
         orderQty=Decimal(1),
         price=Decimal(1.0),
-        timeInForce="GTC",
+        timeInForce="GOOD-TIL-CANCEL",
         quoteOrderQty=None,
         stopPrice=None,
     )
 )
 
 # wrapping the result inside custom class to get access to more user friendly representations
-_nord = NSingleOrder(trd)
+_nord = NSingleOrder(nord)
 if _nord.is_err():
     # this is equivalent to calling result.value 
     print(_nord.result)
 else:
     # will print a nicely formatted tabulate table
-    # print(_nord.table)
+    print(_nord.table)
     print("Trading New Order ok")
 
 

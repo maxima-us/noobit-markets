@@ -51,14 +51,14 @@ else:
     trd = asyncio.run(
         post_neworder_kraken(
             client=httpx.AsyncClient(),
-            symbol=ntypes.PSymbol("DOT-USD"),
+            symbol="DOT-USD",
             symbols_resp=sym.value,
             side="BUY",
             ordType="LIMIT",
             clOrdID="1234567",
             orderQty=1.231599,
             price=1.2323,
-            timeInForce="GTC",
+            timeInForce="GOOD-TIL-CANCEL",
             quoteOrderQty=None,
             stopPrice=None,
         )

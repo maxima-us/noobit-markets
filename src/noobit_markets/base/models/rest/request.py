@@ -25,7 +25,7 @@ class NoobitRequestOhlc(FrozenBaseModel):
     @validator("symbol")
     def symbol_validity(cls, v, values):
         if not v in values["symbols_resp"].asset_pairs.keys():
-            raise ValueError("Unknown Symbol")
+            raise ValueError(f"Unknown Symbol : {v}")
 
         return v
 
@@ -45,7 +45,7 @@ class NoobitRequestOrderBook(FrozenBaseModel):
     @validator("symbol")
     def symbol_validity(cls, v, values):
         if not v in values["symbols_resp"].asset_pairs.keys():
-            raise ValueError("Unknown Symbol")
+            raise ValueError(f"Unknown Symbol : {v}")
 
         return v
 
@@ -64,7 +64,7 @@ class NoobitRequestTrades(FrozenBaseModel):
     @validator("symbol")
     def symbol_validity(cls, v, values):
         if not v in values["symbols_resp"].asset_pairs.keys():
-            raise ValueError("Unknown Symbol")
+            raise ValueError(f"Unknown Symbol : {v}")
 
         return v
 
@@ -82,7 +82,7 @@ class NoobitRequestInstrument(FrozenBaseModel):
     @validator("symbol")
     def symbol_validity(cls, v, values):
         if not v in values["symbols_resp"].asset_pairs.keys():
-            raise ValueError("Unknown Symbol")
+            raise ValueError(f"Unknown Symbol : {v}")
 
         return v
 
@@ -103,7 +103,7 @@ class NoobitRequestSpread(FrozenBaseModel):
     @validator("symbol")
     def symbol_validity(cls, v, values):
         if not v in values["symbols_resp"].asset_pairs.keys():
-            raise ValueError("Unknown Symbol")
+            raise ValueError(f"Unknown Symbol : {v}")
 
         return v
 
@@ -145,12 +145,9 @@ class NoobitRequestAddOrder(FrozenBaseModel):
     exchange: ntypes.EXCHANGE
 
     symbols_resp: NoobitResponseSymbols
-    symbol: ntypes.SYMBOL
-
-    # this is irrelevant if symbol_mapping is a callable
-    # symbol_mapping: ntypes.SYMBOL_TO_EXCHANGE
 
     side: ntypes.ORDERSIDE
+    symbol: ntypes.SYMBOL
 
     # From bitmex API doc:
     # Optional execution instructions. Valid options: ParticipateDoNotInitiate, AllOrNone, MarkPrice, IndexPrice, LastPrice, Close, ReduceOnly, Fixed, LastWithinMark. 'AllOrNone' instruction requires displayQty to be 0. 'MarkPrice', 'IndexPrice' or 'LastPrice' instruction valid for 'Stop', 'StopLimit', 'MarketIfTouched', and 'LimitIfTouched' orders. 'LastWithinMark' instruction valid for 'Stop' and 'StopLimit' with instruction 'LastPrice'.
@@ -177,65 +174,37 @@ class NoobitRequestAddOrder(FrozenBaseModel):
     # effectiveTime: typing.Optional[ntypes.TIMESTAMP] = Field(...)
     # expireTime: typing.Optional[ntypes.TIMESTAMP] = Field(...)
 
-    # validation: bool = False
-
     #! params at the end for validaiton purposes (validated in the order htat they are declared)
     ordType: ntypes.ORDERTYPE
 
 
-    # @validator("stopPrice")
-    # def _check_ordertype(cls, v, values):
-    #     if values["ordType"] in ["stop-loss", "stop-loss-limit", "take-profit", "take-profit-limit"]:
-    #         if not v:
-    #             raise ValueError(f"Must set stopPrice for order type: {values['ordType']}")
-    #         return v
-    #     else:
-    #         return None
-
-
-    # @validator("quoteOrderQty")
-    # def _check_type_and_qty(cls, v, values):
-    #     if values["orderType"] == ["market"]:
-    #         if not values["orderQty"]:
-    #             if not v:
-    #                 raise ValueError("Must set one of [orderQty, quoteOrderQty] for a order type: market")
-    #             return v
-    #         if values["orderQty"]:
-    #             if v:
-    #                 raise ValueError("Must set one of [orderQty, quoteOrderQty] for a order type: market")
-    #             return v
-    #     else:
-    #         return None
-
-
-    # @validator("timeInForce")
-    # def _check_limit_order(cls, v, values):
-    #     if values["ordType"] in ["limit", "stop-loss-limit", "take-profit-limit"]:
-    #         if not v:
-    #             raise ValueError(f"Must set timeInForce for order type: {values['ordType']}")
-    #         return v
-    #     else:
-    #         return None
-    @validator("symbol")
-    def symbol_validity(cls, v, values):
+    @validator("symbol", check_fields=True)
+    def _symbol_validity(cls, v, values):
+        
         if not v in values["symbols_resp"].asset_pairs.keys():
-            raise ValueError("Unknown Symbol")
+            raise ValueError(f"Unknown Symbol : {v}")
 
         return v
 
 
     @validator("orderQty")
     def _check_volume(cls, v, values):
-        
         if not v:
             raise ValueError("Missing value for field: orderQty")
 
-        symbol = values["symbol"]
+        #   From pydantic doc:
+        # If validation fails on another field (or that field is missing),
+        # it will not be included in values
+        # == We skip validation if symbol is None as that means there was
+        #    a ValidationError in the previous validator
+        symbol = values.get("symbol")
+        if not symbol:
+            return v
+
         symbol_specs = values["symbols_resp"].asset_pairs[symbol]
 
         if v < symbol_specs.order_min:
             raise ValueError(f"Order Quantity must exceed {symbol_specs.order_min}, got {v}")
-        
         
         given_decs = -1*v.as_tuple().exponent
         if given_decs > symbol_specs.volume_decimals:
@@ -250,7 +219,16 @@ class NoobitRequestAddOrder(FrozenBaseModel):
             return v
 
         given_decs = -1*v.as_tuple().exponent
-        symbol = values["symbol"]
+
+        #   From pydantic doc:
+        # If validation fails on another field (or that field is missing),
+        # it will not be included in values
+        # == We skip validation if symbol is None as that means there was
+        #    a ValidationError in the previous validator
+        symbol = values.get("symbol")
+        if not symbol:
+            return v
+        
         symbol_specs = values["symbols_resp"].asset_pairs[symbol]
         if given_decs > symbol_specs.price_decimals:
             raise ValueError(f"Price Decimals must be less than {symbol_specs.price_decimals}, got {given_decs}")
@@ -260,10 +238,12 @@ class NoobitRequestAddOrder(FrozenBaseModel):
 
     @validator("ordType")
     def _check_mandatory_args(cls, v, values):
+
+
         missing_fields = []
         unexpected_fields = []
 
-        if v == "market":
+        if v == "MARKET":
             # one of orderQty or quoteOrderQty
             if not (values.get("orderQty", None) or values.get("quoteOrderQty", None)):
                 raise ValueError("Must set one of [orderQty, quoteOrderQty]")
@@ -278,7 +258,7 @@ class NoobitRequestAddOrder(FrozenBaseModel):
             if values.get("price", None):
                 raise ValueError("Unexpected field: price")
 
-        if v == "limit":
+        if v == "LIMIT":
             # check mandatory params
             if not values.get("timeInForce", None):
                 missing_fields.append("timeInForce")
@@ -295,7 +275,7 @@ class NoobitRequestAddOrder(FrozenBaseModel):
             if values.get("quoteOrderQty", None):
                 unexpected_fields.append("quoteOrderQty")
 
-        if v in ["stop-loss", "take-profit"]:
+        if v in ["STOP-LOSS", "TAKE-PROFIT"]:
             # mandatory params
             if not values.get("orderQty", None):
                 raise ValueError("Missing value for orderQty")
@@ -312,7 +292,7 @@ class NoobitRequestAddOrder(FrozenBaseModel):
             if values.get("timeInforce", None):
                 raise ValueError("Unexpected field timeInForce")
 
-        if v in ["stop-loss-limit", "take-profit-limit"]:
+        if v in ["STOP-LOSS-LIMIT", "TAKE-PROFIT-LIMIT"]:
             # mandatory params
             if not values.get("orderQty", None):
                 raise ValueError("Missing value for orderQty")
