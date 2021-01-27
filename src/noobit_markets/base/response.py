@@ -1,11 +1,12 @@
 import inspect
 import typing
+import urllib
 
 import pydantic
 import httpx
 
 from noobit_markets.base.models.result import Ok, Err, Result
-from noobit_markets.base.errors import BaseError, BadRequest
+from noobit_markets.base.errors import BaseError, BadRequest, RequestTimeout
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -117,7 +118,12 @@ async def get_req_content(
     else:
         raise NotImplementedError(f"Unsupported method : {method}")
 
-    resp = await client.request(**payload)  #type: ignore
+    # TODO handle timeout (httpx._exceptions.ConnectTimeout)
+    try:
+        resp = await client.request(**payload)  #type: ignore
+    except Exception as e:
+        req_url = urllib.parse.urljoin("url", urllib.parse.urlencode(payload))
+        return Err(RequestTimeout(e, f"<{method} {req_url}>"))
 
     content = await result_or_err(resp)
     if  content.is_err():
