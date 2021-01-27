@@ -197,7 +197,7 @@ def parse_result(
         "cashMargin": "cash",    #? stick to spot for now
         "marginRatio": 1,
         "marginAmt": 0,
-        "ordStatus": "filled" if result_data.type == "MARKET" else "new",
+        "ordStatus": B_ORDERSTATUS_TO_N[result_data.status], 
         "workingIndicator": True,
         "ordRejReason": None,
         "timeInForce": B_TIMEINFORCE_TO_N[result_data.timeInForce],
@@ -215,7 +215,7 @@ def parse_result(
         "leavesQty": result_data.origQty - result_data.executedQty,
         "price": result_data.price,
         "stopPx": None,
-        "avgPx": sum([fill.price*fill.qty for fill in result_data.fills])/sum([fill.qty for fill in result_data.fills]),
+        "avgPx": sum([fill.price*fill.qty for fill in result_data.fills])/sum([fill.qty for fill in result_data.fills]) if result_data.fills else None,
         "fills": result_data.fills,
         "commission": sum([fill.commission for fill in result_data.fills]),
         "targetStrategy": None,

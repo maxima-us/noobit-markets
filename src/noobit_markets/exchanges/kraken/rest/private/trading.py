@@ -261,7 +261,7 @@ async def post_neworder_kraken(
 
     valid_noobit_req = _validate_data(NoobitRequestAddOrder, pmap({
         "exchange": "KRAKEN",
-        "symbol":symbol,
+        "symbol": symbol,
         "symbols_resp": symbols_resp,
         "side":side,
         "ordType":ordType,

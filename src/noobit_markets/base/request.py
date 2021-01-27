@@ -94,6 +94,7 @@ def _validate_data(
         model: typing.Type[BaseModel],
         fields: pyrsistent.PMap     # PRecord sublasses PMap so its also acceptable
     ) -> Result:
+    
     try:
         validated = model(**fields)     #type: ignore
         return Ok(validated)

@@ -244,10 +244,7 @@ ORDERSTATUS = Literal[
 
 
 TIMEINFORCE = Literal[
-    "GTC",
-    "IOC",
-    "FOK",
-    "GOOD-TILL-CANCEL",
+    "GOOD-TIL-CANCEL",
     "IMMEDIATE-OR-CANCEL",
     "FILL-OR-KILL",
 ]

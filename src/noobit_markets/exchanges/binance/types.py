@@ -93,7 +93,7 @@ B_TIMEINFORCE = typing.Optional[Literal["GTC", "IOC", "FOK"]]
 B_TIMEINFORCE_FROM_N = {
     "GOOD-TIL-CANCEL": "GTC",
     "FILL-OR-KILL": "FOK",
-    "IMMEDIATE-OR-CANCEL": "IOC"
+    "IMMEDIATE-OR-CANCEL": "IOC",
 }
 
 B_TIMEINFORCE_TO_N = {v:k for k, v in B_TIMEINFORCE_FROM_N.items()}
