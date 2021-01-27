@@ -14,8 +14,8 @@ from noobit_markets.base.request import (
 
 # Base
 from noobit_markets.base import ntypes
-from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseClosedOrders, NoobitResponseSymbols, T_OrderParsedRes, T_OrderParsedItem
+from noobit_markets.base.models.result import Ok, Result
+from noobit_markets.base.models.rest.response import NoobitResponseClosedOrders,NoobitResponseOpenOrders, NoobitResponseSymbols, T_OrderParsedRes, T_OrderParsedItem
 from noobit_markets.base.models.rest.request import NoobitRequestClosedOrders
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -28,7 +28,8 @@ from noobit_markets.exchanges.binance.types import *
 
 
 __all__ = (
-    "get_closedorders_binance"
+    "get_closedorders_binance",
+    "get_openorders_binance"
 )
 
 
@@ -137,7 +138,7 @@ def _single_order(
         "orderID": item.orderId,
         # TODO return error if symbols dont match
         "symbol": symbol_from_exchange(item.symbol),
-        "currency": symbol_from_exchange(item.symbol).split("-"),
+        "currency": symbol_from_exchange(item.symbol).split("-")[1],
         "side": item.side,
         # "ordType": item.type.replace("_", "-").lower(),
         "ordType": B_ORDERTYPE_TO_N[item.type],
@@ -167,8 +168,8 @@ def _single_order(
         "stopPx": item.stopPrice,
         "avgPx": item.price,
 
-        "marginRatio": None,
-        "marginAmt": None,
+        "marginRatio": 0,
+        "marginAmt": 0,
         "effectiveTime": None,
         "validUntilTime": None,
         "expireTime": None,
@@ -190,8 +191,14 @@ def _single_order(
 # ============================================================
 
 
+
+class _AllOrders(TypedDict):
+    orders: T_OrderParsedRes
+    rawJson: dict
+
+
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
-async def get_closedorders_binance(
+async def _get_all_orders(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbols_resp: NoobitResponseSymbols,
@@ -201,7 +208,7 @@ async def get_closedorders_binance(
         auth=BinanceAuth(),
         base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.private.url,
         endpoint: str = endpoints.BINANCE_ENDPOINTS.private.endpoints.closed_orders
-    ) -> Result[NoobitResponseClosedOrders, ValidationError]:
+    ) -> Result[_AllOrders, ValidationError]:
 
 
     symbol_to_exchange = lambda x: {k: v.exchange_pair for k, v in symbols_resp.asset_pairs.items()}[x]
@@ -242,9 +249,63 @@ async def get_closedorders_binance(
         return valid_result_content
 
     parsed_result = parse_result(valid_result_content.value, symbol_from_exchange)
+    return Ok({"order": parsed_result, "rawJson": result_content.value})
 
-    closed_orders = [item for item in parsed_result if item["ordStatus"] in ["closed", "canceled"]]
 
-    valid_parsed_response_data = _validate_data(NoobitResponseClosedOrders, pmap({"orders": closed_orders, "rawJson": result_content.value, "exchange": "BINANCE"}))
+
+async def get_closedorders_binance(
+        client: ntypes.CLIENT,
+        symbol: ntypes.SYMBOL,
+        symbols_resp: NoobitResponseSymbols,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
+        auth=BinanceAuth(),
+        base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.private.url,
+        endpoint: str = endpoints.BINANCE_ENDPOINTS.private.endpoints.closed_orders
+    ) -> Result[NoobitResponseClosedOrders, ValidationError]:
+
+
+    parsed_result = await _get_all_orders(
+        client,
+        symbol,
+        symbols_resp,
+        logger=logger,
+        auth=auth,
+        base_url=base_url,
+        endpoint=endpoint
+    )
+
+    closed_orders = [item for item in parsed_result.value["order"] if item["ordStatus"] in ["CLOSED", "CANCELED", "EXPIRED", "REJECTED", "PENDING-CANCEL", "FILLED"]]
+
+    valid_parsed_response_data = _validate_data(NoobitResponseClosedOrders, pmap({"orders": closed_orders, "rawJson": parsed_result.value["rawJson"], "exchange": "BINANCE"}))
     return valid_parsed_response_data
 
+
+async def get_openorders_binance(
+        client: ntypes.CLIENT,
+        symbol: ntypes.SYMBOL,
+        symbols_resp: NoobitResponseSymbols,
+        # prevent unintentional passing of following args
+        *,
+        logger: typing.Optional[typing.Callable] = None,
+        auth=BinanceAuth(),
+        base_url: pydantic.AnyHttpUrl = endpoints.BINANCE_ENDPOINTS.private.url,
+        endpoint: str = endpoints.BINANCE_ENDPOINTS.private.endpoints.closed_orders
+    ) -> Result[NoobitResponseOpenOrders, ValidationError]:
+
+
+    parsed_result = await _get_all_orders(
+        client,
+        symbol,
+        symbols_resp,
+        logger=logger,
+        auth=auth,
+        base_url=base_url,
+        endpoint=endpoint
+    )
+
+    closed_orders = [item for item in parsed_result.value["order"] if item["ordStatus"] in ["NEW", "PENDING-NEW", "PARTIALLY-FILLED"]]
+
+    valid_parsed_response_data = _validate_data(NoobitResponseOpenOrders, pmap({"orders": closed_orders, "rawJson": parsed_result.value["rawJson"], "exchange": "BINANCE"}))
+    return valid_parsed_response_data

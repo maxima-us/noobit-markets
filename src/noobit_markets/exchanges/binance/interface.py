@@ -14,7 +14,7 @@ from noobit_markets.exchanges.binance.rest.public.symbols import get_symbols_bin
 from noobit_markets.exchanges.binance.rest.private.balances import get_balances_binance
 from noobit_markets.exchanges.binance.rest.private.exposure import get_exposure_binance
 from noobit_markets.exchanges.binance.rest.private.trades import get_trades_binance
-from noobit_markets.exchanges.binance.rest.private.orders import get_closedorders_binance
+from noobit_markets.exchanges.binance.rest.private.orders import get_closedorders_binance, get_openorders_binance
 from noobit_markets.exchanges.binance.rest.private.trading import post_neworder_binance
 
 # ws
@@ -37,7 +37,7 @@ BINANCE = ExchangeInterface(**{
             "exposure": get_exposure_binance, 
             "trades": get_trades_binance, 
             "open_positions": get_closedorders_binance, 
-            "open_orders": get_closedorders_binance, 
+            "open_orders": get_openorders_binance, 
             "closed_orders": get_closedorders_binance, 
             "new_order": post_neworder_binance, 
         },
