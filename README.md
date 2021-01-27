@@ -61,3 +61,22 @@ When chaining multiple functions, in case of a failure, we immediately return th
 -	For each exchange, an interface maps keys to coroutines or websocket APIs. For an example of Krakens interface see [here](https://github.com/maxima-us/noobit-markets/blob/master/src/noobit_markets/exchanges/kraken/interface.py)
 -	For how to use coroutines and websocket APIs within an async app, examples with annotations and comments are available for each exchange [here](https://github.com/maxima-us/noobit-markets/tree/master/src/noobit_markets/examples)
 -	To start the CLI app, run the `noobit-cli` command. As a prerequisite for subsequent CLI command, run the `symbols` command in the CLI on each startup.
+
+<br/>
+
+### CLI Demo
+
+-   Launching CLI app, caching all symbols and their infos, and displaying the data as a table
+<br/>
+<br/>
+![til](./assets/CLI-Symbols2.gif)
+
+-   Showing how we can set variables and get help on a command using OHLC command as an example
+<br/>
+<br/>
+![til](./assets/CLI-Ohlc.gif)
+
+-   Showing how explicit returned errors are
+<br/>
+<br/>
+![til](./assets/CLI-Orders.gif)
