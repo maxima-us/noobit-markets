@@ -7,21 +7,18 @@ import typing
 import pydantic
 import pyrsistent
 from dotenv import load_dotenv
+
 load_dotenv()
 
-from noobit_markets.base.request import *
-from noobit_markets.base.auth import BaseAuth, make_base
+from noobit_markets.base.auth import make_base
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 
-
-
-#Kraken Private Request Model
-#always needs nonce param to authenticate
+# Kraken Private Request Model
+# always needs nonce param to authenticate
 class KrakenPrivateRequest(FrozenBaseModel):
 
     nonce: pydantic.PositiveInt
-
 
 
 # necessary so we do not share same class attributes/methods across all exchanges
@@ -31,11 +28,8 @@ KrakenBase: typing.Any = make_base("KrakenBase")
 # except if we type it as Any
 # TODO see if we can improve on this
 class KrakenAuth(KrakenBase):
-
-
     def __init__(self):
         super().__init__("KRAKEN")
-
 
     # bug if we return pmap
     def headers(self, endpoint: str, data: pyrsistent.PMap) -> dict:
@@ -44,29 +38,23 @@ class KrakenAuth(KrakenBase):
         auth_headers = {
             "API-Key": self.key,
             #!!!!! needs to be FULL private path (path w/o domain)
-            "API-Sign": self._sign(data, url_wo_domain)
+            "API-Sign": self._sign(data, url_wo_domain),
         }
 
         self.rotate_keys()
 
         return auth_headers
 
-
     def _sign(self, request_args: pyrsistent.PMap, endpoint: str):
-        
+
         postdata = urllib.parse.urlencode(request_args)
 
         # Unicode-objects must be encoded before hashing
         # ! Nonce must be same as self.nonce
-        encoded = (str(request_args['nonce']) + postdata).encode()
+        encoded = (str(request_args["nonce"]) + postdata).encode()
         message = endpoint.encode() + hashlib.sha256(encoded).digest()
 
-        signature = hmac.new(
-            base64.b64decode(self.secret),
-            message,
-            hashlib.sha512
-        )
+        signature = hmac.new(base64.b64decode(self.secret), message, hashlib.sha512)
         sigdigest = base64.b64encode(signature.digest())
 
         return sigdigest.decode()
-

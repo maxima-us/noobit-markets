@@ -4,19 +4,10 @@ import functools
 import httpx
 import pyrsistent
 
-import stackprinter                             #type: ignore
-stackprinter.set_excepthook(style="darkbg2")    #type: ignore
-
 # base
-from noobit_markets.base.response import (
-    resp_json,
-    get_req_content
-)
+from noobit_markets.base.response import resp_json, get_req_content
 from noobit_markets.base.models.result import Ok, Err, Result
-
-# kraken
 from noobit_markets.exchanges.kraken.errors import ERRORS_FROM_EXCHANGE
-
 
 
 async def result_or_err(resp_obj: httpx.Response) -> Result:
@@ -34,14 +25,18 @@ async def result_or_err(resp_obj: httpx.Response) -> Result:
 
 
 def parse_error_content(
-        error_content: dict,    #value returned from result_or_err
-        sent_request: pyrsistent.PMap
-    ) -> typing.Tuple[Exception, ...]:
-    """error_content is value returned from result_or_err
-    """
+    error_content: dict,  # value returned from result_or_err
+    sent_request: pyrsistent.PMap,
+) -> typing.Tuple[Exception, ...]:
+    """error_content is value returned from result_or_err"""
 
-    err_list = [ERRORS_FROM_EXCHANGE[err_key](error_content, sent_request) for err_key, _ in error_content.items()]
+    err_list = [
+        ERRORS_FROM_EXCHANGE[err_key](error_content, sent_request)
+        for err_key, _ in error_content.items()
+    ]
     return tuple(err_list)
 
 
-get_result_content_from_req = functools.partial(get_req_content, result_or_err, parse_error_content)
+get_result_content_from_req = functools.partial(
+    get_req_content, result_or_err, parse_error_content
+)

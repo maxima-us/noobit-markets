@@ -1,5 +1,4 @@
 import typing
-from typing import Any
 from decimal import Decimal
 from urllib.parse import urljoin
 
@@ -8,14 +7,19 @@ from pyrsistent import pmap
 from typing_extensions import Literal
 
 from noobit_markets.base.request import (
-    retry_request,
+    # retry_request,
     _validate_data,
 )
 
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result
-from noobit_markets.base.models.rest.response import NoobitResponseSymbols, NoobitResponseTrades, T_PrivateTradesParsedRes, T_PrivateTradesParsedItem
+from noobit_markets.base.models.rest.response import (
+    NoobitResponseSymbols,
+    NoobitResponseTrades,
+    T_PrivateTradesParsedRes,
+    T_PrivateTradesParsedItem,
+)
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 # Kraken
@@ -25,25 +29,23 @@ from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_re
 from noobit_markets.exchanges.kraken.types import *
 
 
-__all__ = (
-    "get_usertrades_kraken"
-)
+__all__ = "get_usertrades_kraken"
 
 
 # ============================================================
 # KRAKEN REQUEST
 # ============================================================
 
+
 class KrakenRequestUserTrades(KrakenPrivateRequest):
     type: str
     trades: bool
 
 
-
-
-#============================================================
+# ============================================================
 # KRAKEN RESPONSE
-#============================================================
+# ============================================================
+
 
 # EXAMPLE OF KRAKEN RESPONSE
 # {
@@ -92,6 +94,7 @@ class KrakenRequestUserTrades(KrakenPrivateRequest):
 #   }
 # }
 
+
 class SingleTradeInfo(FrozenBaseModel):
     ordertxid: str
     postxid: str
@@ -122,13 +125,11 @@ class KrakenResponseUserTrades(FrozenBaseModel):
     count: pydantic.PositiveInt
 
 
-
-
 def parse_result(
-        result_data: typing.Mapping[str, SingleTradeInfo],
-        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
-        symbol: ntypes.SYMBOL
-    ) -> T_PrivateTradesParsedRes:
+    result_data: typing.Mapping[str, SingleTradeInfo],
+    symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
+    symbol: ntypes.SYMBOL,
+) -> T_PrivateTradesParsedRes:
 
     parsed = [
         _single_trade(key, info, symbol_from_exchange)
@@ -141,10 +142,10 @@ def parse_result(
 
 
 def _single_trade(
-        key: str,
-        info: SingleTradeInfo,
-        symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
-    ) -> T_PrivateTradesParsedItem:
+    key: str,
+    info: SingleTradeInfo,
+    symbol_from_exchange: ntypes.SYMBOL_FROM_EXCHANGE,
+) -> T_PrivateTradesParsedItem:
 
     parsed: T_PrivateTradesParsedItem = {
         "trdMatchID": key,
@@ -159,12 +160,10 @@ def _single_trade(
         "grossTradeAmt": info.cost,
         "commission": info.fee,
         "tickDirection": None,
-        "text": info.misc
+        "text": info.misc,
     }
 
     return parsed
-
-
 
 
 # ============================================================
@@ -174,20 +173,21 @@ def _single_trade(
 
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
 async def get_usertrades_kraken(
-        client: ntypes.CLIENT,
-        symbol: ntypes.SYMBOL,
-        symbols_resp: NoobitResponseSymbols,
-        # prevent unintentional passing of following args
-        *,
-        logger: typing.Optional[typing.Callable] = None,
-        auth=KrakenAuth(),
-        base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
-        endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.trades_history
-    ) -> Result[NoobitResponseTrades, pydantic.ValidationError]:
-    
+    client: ntypes.CLIENT,
+    symbol: ntypes.SYMBOL,
+    symbols_resp: NoobitResponseSymbols,
+    # prevent unintentional passing of following args
+    *,
+    logger: typing.Optional[typing.Callable] = None,
+    auth=KrakenAuth(),
+    base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
+    endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.trades_history,
+) -> Result[NoobitResponseTrades, pydantic.ValidationError]:
 
-    # format: "DOTUSD" or "XETHZUSD" (doc incorrect on this one) 
-    symbol_from_exchange= lambda x: {v.exchange_pair: k for k, v in symbols_resp.asset_pairs.items()}[x]
+    # format: "DOTUSD" or "XETHZUSD" (doc incorrect on this one)
+    symbol_from_exchange = lambda x: {
+        v.exchange_pair: k for k, v in symbols_resp.asset_pairs.items()
+    }[x]
 
     req_url = urljoin(base_url, endpoint)
     method = "POST"
@@ -196,24 +196,39 @@ async def get_usertrades_kraken(
     valid_kraken_req = _validate_data(KrakenRequestUserTrades, pmap(data))
     if valid_kraken_req.is_err():
         return valid_kraken_req
-    
+
     if logger:
         logger(f"User Trades - Parsed Request : {valid_kraken_req.value}")
 
     headers = auth.headers(endpoint, valid_kraken_req.value.dict())
 
-    result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
+    result_content = await get_result_content_from_req(
+        client, method, req_url, valid_kraken_req.value, headers
+    )
     if result_content.is_err():
         return result_content
-    
+
     if logger:
         logger(f"User Trades - Result content : {result_content.value}")
 
-    valid_result_content = _validate_data(KrakenResponseUserTrades, result_content.value)
+    valid_result_content = _validate_data(
+        KrakenResponseUserTrades, result_content.value
+    )
     if valid_result_content.is_err():
         return valid_result_content
-        
-    parsed_result_data = parse_result(valid_result_content.value.trades, symbol_from_exchange, symbol)
 
-    valid_parsed_result_data = _validate_data(NoobitResponseTrades, pmap({"trades": parsed_result_data, "rawJson": result_content.value, "exchange": "KRAKEN"}))
+    parsed_result_data = parse_result(
+        valid_result_content.value.trades, symbol_from_exchange, symbol
+    )
+
+    valid_parsed_result_data = _validate_data(
+        NoobitResponseTrades,
+        pmap(
+            {
+                "trades": parsed_result_data,
+                "rawJson": result_content.value,
+                "exchange": "KRAKEN",
+            }
+        ),
+    )
     return valid_parsed_result_data

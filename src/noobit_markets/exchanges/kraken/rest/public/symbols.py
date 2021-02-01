@@ -1,23 +1,24 @@
 import typing
-from typing import Any
 from decimal import Decimal
 from urllib.parse import urljoin
-from noobit_markets.base.ntypes import PSymbol
 
-# import httpx
 import pydantic
 from pydantic.error_wrappers import ValidationError
 from pyrsistent import pmap
 
 from noobit_markets.base.request import (
-    retry_request,
+    # retry_request,
     _validate_data,
 )
 
 # Base
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result, Ok
-from noobit_markets.base.models.rest.response import NoobitResponseSymbols, T_SymbolParsedPair, T_SymbolParsedRes
+from noobit_markets.base.models.rest.response import (
+    NoobitResponseSymbols,
+    T_SymbolParsedPair,
+    T_SymbolParsedRes,
+)
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
 # Kraken
@@ -25,14 +26,12 @@ from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
 
 
-__all__ = (
-    "get_symbols_kraken"
-)
+__all__ = "get_symbols_kraken"
 
 
-#============================================================
+# ============================================================
 # KRAKEN RESPONSE
-#============================================================
+# ============================================================
 
 # SAMPLE RESPONSE
 # "XXBTZUSD":{
@@ -78,7 +77,6 @@ __all__ = (
 #     }
 
 
-
 class KrakenResponseItemSymbols(FrozenBaseModel):
 
     altname: str
@@ -107,33 +105,33 @@ class KrakenResponseSymbols(FrozenBaseModel):
     symbols: typing.Mapping[str, KrakenResponseItemSymbols]
 
 
-
 def parse_result(
-        result_data: typing.Dict[str, KrakenResponseItemSymbols]
-    ) -> T_SymbolParsedRes:
+    result_data: typing.Dict[str, KrakenResponseItemSymbols]
+) -> T_SymbolParsedRes:
 
     parsed: T_SymbolParsedRes = {
         "asset_pairs": parse_result_data_assetpairs(result_data),
-        "assets": parse_result_data_assets(result_data)
+        "assets": parse_result_data_assets(result_data),
     }
 
     return parsed
 
 
 def parse_result_data_assetpairs(
-        result_data: typing.Dict[str, KrakenResponseItemSymbols],
-    ) -> typing.Dict[ntypes.PSymbol, T_SymbolParsedPair]:
+    result_data: typing.Dict[str, KrakenResponseItemSymbols],
+) -> typing.Dict[ntypes.PSymbol, T_SymbolParsedPair]:
 
-    parsed_assetpairs: typing.Dict[PSymbol, T_SymbolParsedPair] = {
-        ntypes.PSymbol(data.wsname.replace("/", "-")): _single_assetpair(data, exch_pair)
+    parsed_assetpairs: typing.Dict[ntypes.PSymbol, T_SymbolParsedPair] = {
+        ntypes.PSymbol(data.wsname.replace("/", "-")): _single_assetpair(
+            data, exch_pair
+        )
         for exch_pair, data in result_data.items()
     }
     return parsed_assetpairs
 
 
 def _single_assetpair(
-    data: KrakenResponseItemSymbols,
-    exch_pair: str
+    data: KrakenResponseItemSymbols, exch_pair: str
 ) -> T_SymbolParsedPair:
 
     nbase, nquote = data.wsname.split("/")
@@ -149,15 +147,15 @@ def _single_assetpair(
         "volume_decimals": ntypes.PCount(data.lot_decimals),
         "price_decimals": ntypes.PCount(data.pair_decimals),
         "leverage_available": data.leverage_sell,
-        "order_min": data.ordermin
+        "order_min": data.ordermin,
     }
 
     return parsed
 
 
 def parse_result_data_assets(
-        result_data: typing.Dict[str, KrakenResponseItemSymbols]
-    ) -> typing.Dict[ntypes.PAsset, str]:
+    result_data: typing.Dict[str, KrakenResponseItemSymbols]
+) -> typing.Dict[ntypes.PAsset, str]:
 
     asset_to_exchange: typing.Dict[ntypes.PAsset, str] = {}
     for _, v in result_data.items():
@@ -171,27 +169,24 @@ def parse_result_data_assets(
     return asset_to_exchange
 
 
-
-
 # ============================================================
 # FETCH
 # ============================================================
 
 
 def hasnums(s):
-    """check if string s contains any numeric characters
-    """
+    """check if string s contains any numeric characters"""
     return any(i.isdigit() for i in s)
 
 
 async def get_symbols_kraken(
-        client: ntypes.CLIENT,
-        # prevent unintentional passing of following args
-        *,
-        logger: typing.Optional[typing.Callable] = None,
-        base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
-        endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.symbols
-    ) -> Result[NoobitResponseSymbols, ValidationError]:
+    client: ntypes.CLIENT,
+    # prevent unintentional passing of following args
+    *,
+    logger: typing.Optional[typing.Callable] = None,
+    base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.public.url,
+    endpoint: str = endpoints.KRAKEN_ENDPOINTS.public.endpoints.symbols,
+) -> Result[NoobitResponseSymbols, ValidationError]:
 
     req_url = urljoin(base_url, endpoint)
     method = "GET"
@@ -199,24 +194,40 @@ async def get_symbols_kraken(
 
     valid_kraken_req = Ok(FrozenBaseModel())
 
-    result_content = await get_result_content_from_req(client, method, req_url, valid_kraken_req.value, headers)
+    result_content = await get_result_content_from_req(
+        client, method, req_url, valid_kraken_req.value, headers
+    )
     if result_content.is_err():
         return result_content
     else:
         # filter out darkpools and pairs with numerical chars
         # filter out any alphanumeric pair
-        filtered_result = {k: v for k, v in result_content.value.items() if "." not in k and not hasnums(k)}
-    
+        filtered_result = {
+            k: v
+            for k, v in result_content.value.items()
+            if "." not in k and not hasnums(k)
+        }
+
     if logger:
         logger(f"Symbols - Result Content : {result_content.value}")
 
-    valid_result_content = _validate_data(KrakenResponseSymbols, pmap({"symbols": filtered_result}))
+    valid_result_content = _validate_data(
+        KrakenResponseSymbols, pmap({"symbols": filtered_result})
+    )
     if valid_result_content.is_err():
         return valid_result_content
 
     # ? or should we pass in entire model ? (not passing data attribute)
     parsed_result_data = parse_result(valid_result_content.value.symbols)
 
-    valid_parsed_result_data = _validate_data(NoobitResponseSymbols, pmap({**parsed_result_data, "rawJson": result_content.value, "exchange": "KRAKEN"}))
+    valid_parsed_result_data = _validate_data(
+        NoobitResponseSymbols,
+        pmap(
+            {
+                **parsed_result_data,
+                "rawJson": result_content.value,
+                "exchange": "KRAKEN",
+            }
+        ),
+    )
     return valid_parsed_result_data
-
