@@ -1,6 +1,6 @@
 import typing
 
-from pydantic import AnyHttpUrl
+from pydantic import AnyHttpUrl, Field
 
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base import ntypes
@@ -9,13 +9,15 @@ from noobit_markets.base import ntypes
 
 class _PublicEndpoints(FrozenBaseModel):
 
-    time: typing.Optional[str]
-    symbols: str
-    instrument: typing.Optional[str]
     ohlc: str
     orderbook: str
+    symbols: str
     trades: str
-    spread: typing.Optional[str]
+    
+    # optional
+    time: typing.Optional[str] = Field(...)
+    instrument: typing.Optional[str] = Field(...)
+    spread: typing.Optional[str] = Field(...)
 
 
 class _PublicInterface(FrozenBaseModel):
@@ -27,20 +29,22 @@ class _PublicInterface(FrozenBaseModel):
 class _PrivateEndpoints(FrozenBaseModel):
 
     balances: str
-    ledger: typing.Optional[str]
-    ledger_info:typing.Optional[str]
-    exposure: str
-    open_positions: str
     open_orders: str
-    trades_history: str
-    trades_info: str
-    order_info: str
     closed_orders: str
-    closed_positions: str
-    volume: str
+    order_info: str
+    trades_info: str
+    trades_history: str
     new_order: str
     remove_order: str
+
+    # optional 
+    exposure: typing.Optional[str] = Field(...)
+    open_positions: typing.Optional[str] = Field(...)
+    closed_positions: typing.Optional[str] = Field(...)
     ws_token: typing.Optional[str]
+    volume: typing.Optional[str]
+    ledger: typing.Optional[str]
+    ledger_info:typing.Optional[str]
 
 
 class _PrivateInterface(FrozenBaseModel):

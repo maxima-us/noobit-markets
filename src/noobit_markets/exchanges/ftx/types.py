@@ -53,9 +53,15 @@ F_ORDERSTATUS_TO_N = {v: k for k, v in F_ORDERSTATUS_FROM_N.items()}
 
 F_ORDERSIDE = Literal["buy", "sell"]
 
+F_ORDERSIDE_FROM_N = lambda x: x.lower()
+F_ORDERSIDE_TO_N = lambda x: x.upper()
+
 
 # ============================================================
 # ORDERTYPE
 # ============================================================
 
 F_ORDERTYPE = Literal["limit", "market"]
+
+F_ORDERTYPE_FROM_N = lambda x: x.lower()
+F_ORDERTYPE_TO_N = lambda x: x.upper()

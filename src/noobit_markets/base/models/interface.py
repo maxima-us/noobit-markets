@@ -28,7 +28,7 @@ from noobit_markets.base.models.rest.response import (
 class _PublicInterface(FrozenBaseModel):
 
 
-    instrument: typing.Callable[
+    instrument: typing.Optional[typing.Callable[
         #argument types
         [
             ntypes.CLIENT, # client
@@ -40,7 +40,7 @@ class _PublicInterface(FrozenBaseModel):
         ],
         # return type
         Result[NoobitResponseInstrument, Exception]
-    ]
+    ]]
 
 
     ohlc: typing.Callable[
@@ -76,7 +76,7 @@ class _PublicInterface(FrozenBaseModel):
     ]
     
     
-    spread: typing.Callable[
+    spread: typing.Optional[typing.Callable[
         #argument types
         [
             ntypes.CLIENT, # client
@@ -88,7 +88,7 @@ class _PublicInterface(FrozenBaseModel):
         ],
         # return type
         Result[NoobitResponseSpread, Exception]
-    ]
+    ]]
 
 
     symbols: typing.Callable[
@@ -159,7 +159,7 @@ class _PrivateInterface(FrozenBaseModel):
     ]
 
 
-    open_positions: typing.Callable[
+    open_positions: typing.Optional[typing.Callable[
         #argument types
         [
             ntypes.CLIENT, # client
@@ -171,7 +171,7 @@ class _PrivateInterface(FrozenBaseModel):
         ],
         # return type
         Result[NoobitResponseOpenPositions, Exception]
-    ]
+    ]]
 
 
     open_orders: typing.Callable[

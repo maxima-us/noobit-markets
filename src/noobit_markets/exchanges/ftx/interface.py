@@ -4,7 +4,7 @@ from .rest.public import *
 from .rest.private import *
 
 
-KRAKEN = ExchangeInterface(
+FTX = ExchangeInterface(
     **{
         "rest": {
             "public": {
@@ -20,11 +20,13 @@ KRAKEN = ExchangeInterface(
                 "exposure": get_exposure_ftx,
                 "trades": get_usertrades_ftx,
                 "open_positions": None,
+                "closed_positions": None,
                 "open_orders": get_openorders_ftx,
                 "closed_orders": get_closedorders_ftx,
-                "new_order": None,
+                "new_order": post_neworder_ftx,
             },
         },
-        "ws": {"public": None, "private": None},
+        # TODO add websockets
+        "ws": {"public": lambda x: NotImplementedError, "private": None},
     }
 )

@@ -2,6 +2,11 @@ import asyncio
 
 import httpx
 import aiohttp
+
+import stackprinter
+stackprinter.set_excepthook(style="darkbg2")
+
+
 from noobit_markets.base.models.rest.response import NTrades
 
 from noobit_markets.exchanges.ftx.rest.public.ohlc import get_ohlc_ftx
