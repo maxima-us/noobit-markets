@@ -349,7 +349,7 @@ async def post_neworder_kraken(
     # tx_info = await get_usertrades_kraken(client, symbol, lambda x : {"DOTUSD": ntypes.PSymbol("DOT-USD")}, auth)
     # return [trade for trade in tx_info.value.trades if trade.orderID == valid_parsed_response_data.value.txid]
 
-    if ordType == "market":
+    if ordType == "MARKET":
         # FIXME symbol_from_exchange lambda isnt entirely accurate
         # will be ok for most pairs but some have 4/5 letters for base
         cl_ord = await get_closedorders_kraken(
