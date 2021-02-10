@@ -25,13 +25,14 @@ from noobit_markets.ui.layout import (
 )
 from noobit_markets.ui.style import load_style
 from noobit_markets.ui.keybinds import load_key_bindings, safe_ensure_future
-import logging
 
 from noobit_markets.ui.commands import _handle_commands, load_parser
 from noobit_markets.ui import settings
 
-# req for endpoints
 import httpx
+from pydantic.error_wrappers import ValidationError
+
+# base
 from noobit_markets.base.websockets import BaseWsPublic
 from noobit_markets.base import ntypes
 from noobit_markets.base.errors import BaseError
@@ -42,7 +43,7 @@ from noobit_markets.base.models.rest.response import NOrderBook, NResultWrapper
 from noobit_markets.exchanges.kraken.websockets.public.api import KrakenWsPublic
 from noobit_markets.exchanges.kraken.interface import KRAKEN
 from noobit_markets.exchanges.binance.interface import BINANCE
-from pydantic.error_wrappers import ValidationError
+from noobit_markets.exchanges.ftx.interface import FTX
 
 
 # intentionally not typed (better to not type decorators since return types will bevariable) 
@@ -144,7 +145,7 @@ def _handle_exception_patch(self, loop, context):
 setattr(Application, "_handle_exception", _handle_exception_patch)
 
 
-class HummingbotCLI:
+class NoobitCLI:
     def __init__(self,
                 #  input_handler: Callable,
                 #  completer: Completer):
@@ -351,7 +352,7 @@ class HummingbotCLI:
     # == HELP
 
     async def help(
-            self,  #type: HummingbotCLI
+            self,  #type: NoobitCLI
             command: str
             ):
         if command == 'all':
@@ -364,6 +365,13 @@ class HummingbotCLI:
                 subparser = subparsers_action.choices.get(command)
                 if subparser:
                     self.log(subparser.format_help())
+
+    
+    async def list(
+        self
+    ):
+        await self.help("all")
+
 
 
     # ========================================
@@ -401,6 +409,7 @@ class HummingbotCLI:
     async def fetch_symbols(self):
         kraken_symbols = await KRAKEN.rest.public.symbols(self.client)
         binance_symbols = await BINANCE.rest.public.symbols(self.client)
+        ftx_symbols = await FTX.rest.public.symbols(self.client)
 
         if kraken_symbols.is_ok():
             self.symbols["KRAKEN"] = kraken_symbols
@@ -414,6 +423,13 @@ class HummingbotCLI:
         else:
             self.log_field.log("Error fetching binance symbols")
             self.log("Error fetching binance symbols")
+            self.log(binance_symbols.value)
+            
+        if ftx_symbols.is_ok():
+            self.symbols["FTX"] = ftx_symbols
+        else:
+            self.log_field.log("Error fetching ftx symbols")
+            self.log("Error fetching ftx symbols")
             self.log(binance_symbols.value)
 
 
@@ -739,7 +755,7 @@ import click
 import sys
 @click.command()
 def launch():
-    app = HummingbotCLI()
+    app = NoobitCLI()
     logger = Logger(app)
 
     # sys.stdout = CliPrinter(app)
@@ -753,5 +769,5 @@ def launch():
 
 if __name__ == "__main__":
 
-    app = HummingbotCLI()
+    app = NoobitCLI()
     asyncio.run(app.run())

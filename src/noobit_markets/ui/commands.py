@@ -70,17 +70,17 @@ def load_parser(hb):    #hb refers to hummingbot app
     #                             default=False)
     exit_parser.set_defaults(func=hb.exit)
 
-    count_parser = subparsers.add_parser("count", help="Count from given start to given end")
-    count_parser.add_argument("--start", type=int)
-    count_parser.add_argument("--finish", type=int)
-    count_parser.add_argument("--step", type=int)
-    count_parser.set_defaults(func=hb.count)
+   # count_parser = subparsers.add_parser("count")
+    # count_parser.add_argument("--start", type=int)
+    # count_parser.add_argument("--finish", type=int)
+    # count_parser.add_argument("--step", type=int)
+    # count_parser.set_defaults(func=hb.count)
 
-    acount_parser = subparsers.add_parser("acount", help="Count from given start to given end")
-    acount_parser.add_argument("-s", "--start", type=int)
-    acount_parser.add_argument("-f", "--finish", type=int)
-    acount_parser.add_argument("--step", type=int, default=1)
-    acount_parser.set_defaults(func=hb.acount)
+    # acount_parser = subparsers.add_parser("acount", help="Count from given start to given end")
+    # acount_parser.add_argument("-s", "--start", type=int)
+    # acount_parser.add_argument("-f", "--finish", type=int)
+    # acount_parser.add_argument("--step", type=int, default=1)
+    # acount_parser.set_defaults(func=hb.acount)
 
     clear_parser = subparsers.add_parser("clear")
     clear_parser.set_defaults(func=hb.clear)
@@ -89,15 +89,18 @@ def load_parser(hb):    #hb refers to hummingbot app
     #========================================
     # HELP
 
-    help_parser = subparsers.add_parser("help")
+    help_parser = subparsers.add_parser("help", help="Get help on given command")
     help_parser.add_argument("-c", "--command", type=str)
     help_parser.set_defaults(func=hb.help)
+    
+    help_parser = subparsers.add_parser("list", help="Get list of commands")
+    help_parser.set_defaults(func=hb.list)
 
 
     #========================================
     # API KEYS
 
-    addkeys_parser = subparsers.add_parser("add-keys")
+    addkeys_parser = subparsers.add_parser("add-keys", help="Add set of API Key and Secret")
     addkeys_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     addkeys_parser.add_argument("-k", "--key", type=str)
     addkeys_parser.add_argument("-s", "--secret", type=str)
@@ -107,40 +110,40 @@ def load_parser(hb):    #hb refers to hummingbot app
     #========================================
     # FETCH COMMANDS
 
-    ohlc_parser = subparsers.add_parser("ohlc")
+    ohlc_parser = subparsers.add_parser("ohlc", help="Get OHLC")
     ohlc_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     ohlc_parser.add_argument("-s", "--symbol", type=str)
     ohlc_parser.add_argument("-tf", "--timeframe", type=str, required=True)
     ohlc_parser.set_defaults(func=hb.fetch_ohlc)
 
-    symbols_parser = subparsers.add_parser("symbols")
+    symbols_parser = subparsers.add_parser("symbols", help="Get Symbols")
     symbols_parser.set_defaults(func=hb.fetch_symbols)
 
-    book_parser = subparsers.add_parser("book")
+    book_parser = subparsers.add_parser("book", help="Get Orderbook")
     book_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     book_parser.add_argument("-s", "--symbol", type=str)
     book_parser.add_argument("-d", "--depth", type=int)
     book_parser.set_defaults(func=hb.fetch_orderbook)
 
-    trades_parser = subparsers.add_parser("trades")
+    trades_parser = subparsers.add_parser("trades", help="Get Trades")
     trades_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     trades_parser.add_argument("-s", "--symbol", type=str)
     trades_parser.set_defaults(func=hb.fetch_trades)
 
-    balances_parser = subparsers.add_parser("balances")
+    balances_parser = subparsers.add_parser("balances", help="Get User Balances")
     balances_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     balances_parser.set_defaults(func=hb.fetch_balances)
 
-    exposure_parser = subparsers.add_parser("exposure")
+    exposure_parser = subparsers.add_parser("exposure", help="Get User Exposure")
     exposure_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     exposure_parser.set_defaults(func=hb.fetch_exposure)
 
-    usertrades_parser = subparsers.add_parser("usertrades")
+    usertrades_parser = subparsers.add_parser("usertrades", help="Get User Trades")
     usertrades_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     usertrades_parser.add_argument("-s", "--symbol", type=str)
     usertrades_parser.set_defaults(func=hb.fetch_usertrades)
     
-    openorders_parser = subparsers.add_parser("open-orders")
+    openorders_parser = subparsers.add_parser("openorders", help="Get User Open Orders")
     openorders_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     openorders_parser.add_argument("-s", "--symbol", type=str)
     openorders_parser.set_defaults(func=hb.fetch_openorders)
@@ -149,7 +152,7 @@ def load_parser(hb):    #hb refers to hummingbot app
     #=========================================
     # TRADING
 
-    buy_parser = subparsers.add_parser("buy")
+    buy_parser = subparsers.add_parser("buy", help="Post User BUY Order")
     buy_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     buy_parser.add_argument("-s", "--symbol", type=str)
     buy_parser.add_argument("-t", "--ordType", type=str)
@@ -160,7 +163,7 @@ def load_parser(hb):    #hb refers to hummingbot app
     buy_parser.add_argument("-sp", "--stopPrice", type=float)
     buy_parser.set_defaults(func=hb.create_buyorder)
 
-    sell_parser = subparsers.add_parser("sell")
+    sell_parser = subparsers.add_parser("sell", help="Post User SELL Order")
     sell_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     sell_parser.add_argument("-s", "--symbol", type=str)
     sell_parser.add_argument("-t", "--ordType", type=str)
@@ -176,7 +179,7 @@ def load_parser(hb):    #hb refers to hummingbot app
     #========================================
     # STREAM WS COMMANDS
 
-    connect_parser = subparsers.add_parser("connect")
+    connect_parser = subparsers.add_parser("connect", help="Initiate WS connection")
     connect_parser.set_defaults(func=hb.connect)
 
     streambook_parser = subparsers.add_parser("stream-book")
@@ -188,7 +191,7 @@ def load_parser(hb):    #hb refers to hummingbot app
     #========================================
     # SHOW TASK RESULTS
 
-    showsymbols_parser = subparsers.add_parser("show-symbols")
+    showsymbols_parser = subparsers.add_parser("show-symbols", help="Display Symbols table")
     showsymbols_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     showsymbols_parser.set_defaults(func=hb.show_symbols)
 
