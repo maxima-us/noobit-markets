@@ -9,11 +9,11 @@ from noobit_markets.base import ntypes
 from noobit_markets.base.request import _validate_data
 from noobit_markets.base.websockets import subscribe, BaseWsPublic
 from noobit_markets.base.models.result import Result, Ok, Err
-from noobit_markets.base.models.rest.response import NoobitResponseOrderBook, NoobitResponseSpread, NoobitResponseSymbols, NoobitResponseTrades
+from noobit_markets.base.models.rest.response import NoobitResponseOhlc, NoobitResponseOrderBook, NoobitResponseSpread, NoobitResponseSymbols, NoobitResponseTrades
 
 
 # noobit kraken ws
-from noobit_markets.exchanges.kraken.websockets.public import trades, spread, orderbook
+from noobit_markets.exchanges.kraken.websockets.public import ohlc, trades, spread, orderbook
 
 
 
@@ -35,6 +35,26 @@ class KrakenWsPublic(BaseWsPublic):
 
     #========================================
     # ENDPOINTS
+
+    async def ohlc(self, symbols_resp: NoobitResponseSymbols, symbol: ntypes.PSymbol, timeframe: ntypes.TIMEFRAME) -> typing.AsyncIterable[Result[NoobitResponseOhlc, ValidationError]]:
+        super()._ensure_dispatch()
+
+        symbol_to_exchange = lambda x : {k: f"{v.noobit_base}/{v.noobit_quote}" for k, v in symbols_resp.asset_pairs.items()}[x]
+        valid_sub_model = ohlc.validate_sub(symbol_to_exchange, symbol, timeframe)
+        if isinstance(valid_sub_model, Err):
+            yield valid_sub_model
+
+        sub_result = await subscribe(self.client, valid_sub_model.value)
+
+        await asyncio.sleep(1)
+        # verify if we have subd
+        if not symbol_to_exchange(symbol) in self._subd_feeds["ohlc"]:
+            print("No symbol in subd ohlc set")
+            return
+
+        async for msg in self.aiter_ohlc():
+            if self._terminate: break
+            yield msg
 
 
     async def spread(self, symbols_resp: NoobitResponseSymbols, symbol: ntypes.PSymbol) -> typing.AsyncIterable[Result[NoobitResponseSpread, ValidationError]]:

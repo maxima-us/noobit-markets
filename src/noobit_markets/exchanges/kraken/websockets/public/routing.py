@@ -3,6 +3,8 @@ import json
 import time
 import typing
 
+from noobit_markets.exchanges.kraken.websockets.public import ohlc
+
 from . import trades, spread, orderbook
 
 # just for type hints
@@ -41,7 +43,13 @@ async def msg_handler(msg, data_queues: _t_qdict, status_queues: _t_qdict):
             return
 
         if feed.startswith("ohlc"):
-            return
+            parsed_msg = ohlc.parse_msg(msg)
+            valid_parsed_msg = ohlc.validate_parsed(msg, parsed_msg)
+            if valid_parsed_msg.is_ok():
+                await data_queues["ohlc"].put(valid_parsed_msg)
+            else:
+                print("Validation Error", valid_parsed_msg.value)
+                
 
         #! needs to send message to be read by orderbook q
         #! so we can determine the top bid/ask
@@ -55,6 +63,7 @@ async def msg_handler(msg, data_queues: _t_qdict, status_queues: _t_qdict):
             if valid_parsed_msg.is_ok():
                 await data_queues["spread"].put(valid_parsed_msg)
 
+                # we use this to reconstruct orderbook since invalid levels arent deleted
                 await data_queues["spread_copy"].put(valid_parsed_msg)
 
             #TODO else we should log the message ?

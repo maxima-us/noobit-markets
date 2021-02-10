@@ -1,4 +1,5 @@
 import asyncio
+from noobit_markets.base.models.result import Ok
 
 import websockets
 import httpx
@@ -16,6 +17,7 @@ feed_map = {
     "ticker": "instrument",
     "book": "orderbook",
     "spread": "spread",
+    "ohlc": "ohlc"
 }
 
 
@@ -23,6 +25,13 @@ async def main(loop):
 
     async with httpx.AsyncClient() as http_client:
         symbols_resp = await get_symbols_kraken(http_client)
+
+
+    current_open = None
+    current_last = None
+    current_low = None
+    current_high = None
+
 
 
     async with websockets.connect("wss://ws.kraken.com") as client:
@@ -49,14 +58,29 @@ async def main(loop):
                 # async generator also returns a Result object (return type is same as coro)
                 # we can get the value held by the Result with the .value() method
                 for trade in msg.value.trades:
-                    print(
-                        "new trade @ :",
-                        trade.avgPx,
-                        trade.side,
-                        trade.ordType,
-                        trade.cumQty,
-                        trade.symbol,
-                    )
+                    # print(
+                    #     "new trade @ :",
+                    #     trade.avgPx,
+                    #     trade.side,
+                    #     trade.ordType,
+                    #     trade.cumQty,
+                    #     trade.symbol,
+                    # )
+                    current_last = trade.avgPx
+
+
+        async def coro_ohlc():
+
+            async for msg in kws.ohlc(symbols_resp.value, symbol, "1H"):
+                if isinstance(msg, Ok):
+                    candle = msg.value.ohlc[0]
+                    # print("Open", candle.open, "High", candle.high, "Close", candle.close)
+                    current_open = candle.open
+                    current_high = candle.high
+                    current_low = candle.close
+                else:
+                    print(msg)
+
 
         async def coro3():
             #! valid option are 10, 25, 100, 500, 1000
@@ -72,7 +96,12 @@ async def main(loop):
             await asyncio.sleep(10)
             kws.schedule(print_test())
 
-        results = await asyncio.gather(coro1(), coro2(), coro3())
+        async def print_state():
+            print(current_open, current_high, current_low, current_last)
+            await asyncio.sleep(0.1)
+
+
+        results = await asyncio.gather(coro_ohlc(), coro2(), print_state())
         return results
 
 

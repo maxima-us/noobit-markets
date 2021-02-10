@@ -263,7 +263,7 @@ def _single_order(
         "orderPercent": None,
         "cumQty": order.vol_exec,
         "leavesQty": Decimal(order.vol) - Decimal(order.vol_exec),
-        "price": order.descr.price,
+        "price": order.cost / order.vol if order.descr.ordertype == "market" else order.descr.price,
         "stopPx": order.stopprice,
         "avgPx": order.price,
         "fills": None,

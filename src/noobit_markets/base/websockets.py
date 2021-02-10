@@ -16,14 +16,14 @@ from websockets import WebSocketClientProtocol
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result, Ok
 
-from noobit_markets.base.models.rest.response import NoobitResponseInstrument, NoobitResponseOpenOrders, NoobitResponseOrderBook, NoobitResponseSpread, NoobitResponseTrades
+from noobit_markets.base.models.rest.response import NoobitResponseInstrument, NoobitResponseOhlc, NoobitResponseOpenOrders, NoobitResponseOrderBook, NoobitResponseSpread, NoobitResponseTrades
 
 
 
 class SubModel(pydantic.BaseModel):
 
   exchange: str
-  feed: Literal["spread", "orderbook", "trade", "user_trades", "user_orders"]
+  feed: Literal["spread", "orderbook", "trade", "ohlc", "user_trades", "user_orders"]
   msg: pydantic.BaseModel
 
 
@@ -231,6 +231,7 @@ class BaseWsPublic(BaseWsApi):
         # spread copy used to filter out orderbook updates
         "spread_copy": asyncio.Queue(),
         "orderbook": asyncio.Queue(),
+        "ohlc": asyncio.Queue()
     }
 
     _status_queues: _t_qdict = {
@@ -243,6 +244,7 @@ class BaseWsPublic(BaseWsApi):
         "trade": set(),
         "spread": set(),
         "orderbook": set(),
+        "ohlc": set(),
         # TODO not sure if we need the error key
         "error": set()
     }
@@ -321,6 +323,11 @@ class BaseWsPublic(BaseWsApi):
     # mostly needed for mypy (so it knows the type of `msg`)
     async def aiter_spread(self) -> typing.AsyncIterable[Result[NoobitResponseSpread, pydantic.ValidationError]]:
         async for msg in self.iterq(self._data_queues, "spread"):
+            yield msg
+
+    # mostly needed for mypy (so it knows the type of `msg`)
+    async def aiter_ohlc(self) -> typing.AsyncIterable[Result[NoobitResponseOhlc, pydantic.ValidationError]]:
+        async for msg in self.iterq(self._data_queues, "ohlc"):
             yield msg
 
 
