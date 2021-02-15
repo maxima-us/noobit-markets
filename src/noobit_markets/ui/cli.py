@@ -599,7 +599,7 @@ class NoobitCLI:
         clOrdID,
         orderQty: float,
         price: float,
-        timeInForce: str = "GTC",
+        timeInForce: str = "GOOD-TIL-CANCEL",
         quoteOrderQty: typing.Optional[float] = None,
         stopPrice: typing.Optional[float] = None,
         *,
@@ -629,23 +629,24 @@ class NoobitCLI:
             if not settings.ORDQTY: 
                 return Err("Please set or pass <orderQty> argument")
             else: orderQty = settings.ORDQTY
+
+        if not timeInForce and ordType in ["LIMIT", "STOP-LOSS-LIMIT", "TAKE-PROFIT-LIMIT"]:
+            self.log("WARNING : <timeInForce> not provided, defaulting to <GOOD-TIL-CANCEL>")
+            timeInForce = "GOOD-TIL-CANCEL"
+
         
         interface = globals()[exchange]
 
-        self.log_field.log("CHECKPOINT 1")
         if split:
-            self.log_field.log("CHECKPOINT 1A")
-            # only one of delay or step
-            if not any([delay, step]) or all([delay, step]):
-                self.log_field.log("Please set one of <delay> or <step> argument to split orders")
-                return Err("Please set one of <delay> or <step> argument to split orders")
             # step is only for limit orders
             if step:
                 if not ordType in ["LIMIT", "STOP_LIMIT", "TAKE_PROFIT"]:
-                    self.log_field.log(f"ARgument <step>: Ordertype can not be {ordType}")
                     return Err(f"ARgument <step>: Ordertype can not be {ordType}")
-            if True:
-                self.log_field.log("Argumetns are valid")
+            
+            # only one of delay or step
+            if not any([delay, step]) or all([delay, step]):
+                return Err("Please set one of <delay> or <step> argument to split orders")
+            else: 
                 _acc = []
                 acc_price = price
 
@@ -673,8 +674,9 @@ class NoobitCLI:
                     
                     if step:
                         acc_price += step
-                    
-                    await asyncio.sleep(delay if delay else 4)
+                        await asyncio.sleep(4)
+                    else:
+                        await asyncio.sleep(delay)  # avoid rate limiting
 
 
                 # FIXME we need to return a wrapper
@@ -693,7 +695,6 @@ class NoobitCLI:
 
 
         else:
-            self.log_field.log("CHECKPOINT 1B")
 
             if any([delay, step]):
                 self.log_field.log("Argument <delay> or <step> require <split>")    

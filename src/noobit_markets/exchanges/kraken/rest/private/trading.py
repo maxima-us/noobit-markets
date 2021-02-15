@@ -371,7 +371,7 @@ async def post_neworder_kraken(
         )
         if isinstance(op_ord, Ok):
             [order_info] = [
-                order for order in op_ord.value.orders if order.orderID == newOrderID
+                order for order in op_ord.value.orders if order.orderID == newOrderID   #FIXME this causes errors because false sometimes
             ]
         else:
             return op_ord
