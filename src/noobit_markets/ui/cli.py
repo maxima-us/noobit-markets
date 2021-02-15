@@ -36,8 +36,8 @@ from pydantic.error_wrappers import ValidationError
 from noobit_markets.base.websockets import BaseWsPublic
 from noobit_markets.base import ntypes
 from noobit_markets.base.errors import BaseError
-from noobit_markets.base.models.result import Err
-from noobit_markets.base.models.rest.response import NOrderBook, NResultWrapper
+from noobit_markets.base.models.result import Err, Ok
+from noobit_markets.base.models.rest.response import NOrderBook, NOrders, NResultWrapper, NoobitResponseClosedOrders
 
 # endpoints
 from noobit_markets.exchanges.kraken.websockets.public.api import KrakenWsPublic
@@ -75,6 +75,7 @@ def ensure_symbols(f):
                     # model validation error
                     if isinstance(getattr(wrapped_res, "result", None), ValidationError):
                         cli.log(wrapped_res.result)
+                    # noobit exception
                     elif isinstance(getattr(wrapped_res, "result", None), BaseError):
                     # parsed exchange error (exception)
                         cli.log("ERROR")
@@ -600,6 +601,8 @@ class NoobitCLI:
         stopPrice: typing.Optional[float] = None,
         *,
         side: str,
+        split: typing.Optional[int] = None,
+        delay: typing.Optional[int] = None
     ):
         from noobit_markets.base.models.rest.response import NSingleOrder
 
@@ -624,22 +627,69 @@ class NoobitCLI:
             else: orderQty = settings.ORDQTY
         
         interface = globals()[exchange]
-        _res = await interface.rest.private.new_order(
-            client=self.client,
-            symbol=symbol, 
-            symbols_resp=self.symbols[exchange].value, 
-            side=side, 
-            ordType=ordType, 
-            clOrdID=clOrdID, 
-            orderQty=orderQty, 
-            price=price, 
-            timeInForce=timeInForce, 
-            quoteOrderQty=quoteOrderQty, 
-            stopPrice=stopPrice
-            )
-        _nord = NSingleOrder(_res)
+
+        if split:
+            if not delay:
+                return Err("Please set <delay> argument to split orders")
+            else:
+                _acc = []
+
+                for i in range(split):
+                    _res = await interface.rest.private.new_order(
+                        client=self.client,
+                        symbol=symbol, 
+                        symbols_resp=self.symbols[exchange].value, 
+                        side=side, 
+                        ordType=ordType, 
+                        clOrdID=clOrdID, 
+                        # orderQty=round(orderQty/split, self.symbols[exchange].value.asset_pairs[symbol].volume_decimals), # TODO atm we limit to 2 decimal places, could check max decimals for pair, ALSO this can lead to keyerror if symbol is not on exchange
+                        orderQty=round(orderQty/split, 2), # TODO atm we limit to 2 decimal places, could check max decimals for pair, ALSO this can lead to keyerror if symbol is not on exchange
+                        price=price, 
+                        timeInForce=timeInForce, 
+                        quoteOrderQty=quoteOrderQty, 
+                        stopPrice=stopPrice
+                        )
+                    if _res.is_ok():
+                        _acc.append(_res.value)
+                        self.log_field.log(f"Successful order, count {len(_acc)}")
+                    else:
+                        self.log_field.log(f"Failed order")
+                        return _res
+                    
+                    await asyncio.sleep(delay)
+
+                # FIXME we need to return a wrapper
+                try:
+                    _splitorders = NoobitResponseClosedOrders(
+                        exchange="KRAKEN",
+                        rawjson={},
+                        orders=_acc
+                    )
+                    # request coros always return a result
+                    # so we wrap the validated model in an OK container
+                    _nords = NOrders(Ok(_splitorders))
+                    return _nords
+                except ValidationError as e:
+                    return Err(e)
+
+
+        else:
+            _res = await interface.rest.private.new_order(
+                client=self.client,
+                symbol=symbol, 
+                symbols_resp=self.symbols[exchange].value, 
+                side=side, 
+                ordType=ordType, 
+                clOrdID=clOrdID, 
+                orderQty=orderQty, 
+                price=price, 
+                timeInForce=timeInForce, 
+                quoteOrderQty=quoteOrderQty, 
+                stopPrice=stopPrice
+                )
+            _nord = NSingleOrder(_res)
         
-        return _nord
+            return _nord
 
 
     # side argument isnt registered for some reason (in following partials)
@@ -656,10 +706,12 @@ class NoobitCLI:
         orderQty: float,
         price: float,
         timeInForce: str,
-        stopPrice: float
+        stopPrice: float,
+        split: int,
+        delay: int
     ):
 
-        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, side="BUY")
+        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, split=split, delay=delay, side="BUY")
 
 
     async def create_sellorder(
@@ -671,10 +723,12 @@ class NoobitCLI:
         orderQty: float,
         price: float,
         timeInForce: str,
-        stopPrice: float
+        stopPrice: float,
+        split: int,
+        delay: int
     ):
 
-        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, side="SELL")
+        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, split=split, delay=delay, side="SELL")
 
 
 
