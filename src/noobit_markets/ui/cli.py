@@ -7,6 +7,9 @@ import typing
 import asyncio
 import argparse
 
+import stackprinter
+stackprinter.set_excepthook(style="darkbg2")
+
 import psutil   # type: ignore
 from prompt_toolkit.application import Application
 from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
@@ -602,7 +605,8 @@ class NoobitCLI:
         *,
         side: str,
         split: typing.Optional[int] = None,
-        delay: typing.Optional[int] = None
+        delay: typing.Optional[int] = None,
+        step: typing.Optional[float] = None
     ):
         from noobit_markets.base.models.rest.response import NSingleOrder
 
@@ -628,11 +632,22 @@ class NoobitCLI:
         
         interface = globals()[exchange]
 
+        self.log_field.log("CHECKPOINT 1")
         if split:
-            if not delay:
-                return Err("Please set <delay> argument to split orders")
-            else:
+            self.log_field.log("CHECKPOINT 1A")
+            # only one of delay or step
+            if not any([delay, step]) or all([delay, step]):
+                self.log_field.log("Please set one of <delay> or <step> argument to split orders")
+                return Err("Please set one of <delay> or <step> argument to split orders")
+            # step is only for limit orders
+            if step:
+                if not ordType in ["LIMIT", "STOP_LIMIT", "TAKE_PROFIT"]:
+                    self.log_field.log(f"ARgument <step>: Ordertype can not be {ordType}")
+                    return Err(f"ARgument <step>: Ordertype can not be {ordType}")
+            if True:
+                self.log_field.log("Argumetns are valid")
                 _acc = []
+                acc_price = price
 
                 for i in range(split):
                     _res = await interface.rest.private.new_order(
@@ -644,7 +659,7 @@ class NoobitCLI:
                         clOrdID=clOrdID, 
                         # orderQty=round(orderQty/split, self.symbols[exchange].value.asset_pairs[symbol].volume_decimals), # TODO atm we limit to 2 decimal places, could check max decimals for pair, ALSO this can lead to keyerror if symbol is not on exchange
                         orderQty=round(orderQty/split, 2), # TODO atm we limit to 2 decimal places, could check max decimals for pair, ALSO this can lead to keyerror if symbol is not on exchange
-                        price=price, 
+                        price=acc_price, 
                         timeInForce=timeInForce, 
                         quoteOrderQty=quoteOrderQty, 
                         stopPrice=stopPrice
@@ -656,7 +671,11 @@ class NoobitCLI:
                         self.log_field.log(f"Failed order")
                         return _res
                     
-                    await asyncio.sleep(delay)
+                    if step:
+                        acc_price += step
+                    
+                    await asyncio.sleep(delay if delay else 4)
+
 
                 # FIXME we need to return a wrapper
                 try:
@@ -674,6 +693,12 @@ class NoobitCLI:
 
 
         else:
+            self.log_field.log("CHECKPOINT 1B")
+
+            if any([delay, step]):
+                self.log_field.log("Argument <delay> or <step> require <split>")    
+                return Err("Argument <delay> or <step> require <split>")    
+
             _res = await interface.rest.private.new_order(
                 client=self.client,
                 symbol=symbol, 
@@ -708,10 +733,11 @@ class NoobitCLI:
         timeInForce: str,
         stopPrice: float,
         split: int,
-        delay: int
+        delay: int,
+        step: int
     ):
 
-        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, split=split, delay=delay, side="BUY")
+        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, split=split, delay=delay, step=step, side="BUY")
 
 
     async def create_sellorder(
@@ -725,10 +751,11 @@ class NoobitCLI:
         timeInForce: str,
         stopPrice: float,
         split: int,
-        delay: int
+        delay: int,
+        step: int
     ):
 
-        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, split=split, delay=delay, side="SELL")
+        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, split=split, delay=delay, step=step, side="SELL")
 
 
 
@@ -823,5 +850,6 @@ def launch():
 
 if __name__ == "__main__":
 
+    # RUN APP
     app = NoobitCLI()
     asyncio.run(app.run())
