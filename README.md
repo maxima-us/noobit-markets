@@ -69,14 +69,14 @@ When chaining multiple functions, in case of a failure, we immediately return th
 -   Launching CLI app, caching all symbols and their infos, and displaying the data as a table
 <br/>
 <br/>
-![symbols](https://github.com/maxima-us/noobit-markets/blob/master/assets/CLI-Symbols2.gif)
+![symbols](https://github.com/maxima-us/noobit-markets/blob/master/assets/CLI-Symbols2.gif?raw=true)
 
 -   Showing how we can set variables and get help on a command using OHLC command as an example
 <br/>
 <br/>
-![ohlc](https://github.com/maxima-us/noobit-markets/blob/master/assets/CLI-Ohlc.gif)
+![ohlc](https://github.com/maxima-us/noobit-markets/blob/master/assets/CLI-Ohlc.gif?raw=true)
 
 -   Showing how explicit returned errors are
 <br/>
 <br/>
-![orders](https://github.com/maxima-us/noobit-markets/blob/master/assets/CLI-Orders.gif)
+![orders](https://github.com/maxima-us/noobit-markets/blob/master/assets/CLI-Orders.gif?raw=true)
