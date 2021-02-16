@@ -242,6 +242,23 @@ class _PrivateInterface(FrozenBaseModel):
     ]
 
 
+    # TODO remove option when we implemented binance
+    remove_order: typing.Optional[typing.Callable[
+        #argument types
+        [
+            ntypes.CLIENT, # client
+            ntypes.SYMBOL, # symbol
+            NoobitResponseSymbols, # symbols_resp
+            str, # orderID
+            typing.Optional[typing.Callable], # logger
+            BaseAuth, # auth
+            pydantic.AnyHttpUrl, # base_url
+            str, # endpoint
+        ],
+        Result[NoobitResponseClosedOrders, Exception]
+    ]]
+
+
 class RestInterface(FrozenBaseModel):
 
     public: _PublicInterface

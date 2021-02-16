@@ -2,6 +2,7 @@ import asyncio
 from decimal import Decimal
 
 import httpx
+from noobit_markets.exchanges.kraken.rest.private.cancel_open import cancel_openorder_kraken
 import stackprinter #type: ignore
 stackprinter.set_excepthook(style="darkbg2")
 
@@ -41,6 +42,23 @@ if isinstance(sym, Err):
 else:
     print("Symbols Ok")
     symbols = sym.value
+
+
+    # ============================================================
+    # CANCEL OPEN ORDER
+    # ============================================================
+
+
+    cop = asyncio.run(
+        cancel_openorder_kraken(
+            client=httpx.AsyncClient(),
+            symbol="DOT-USD",
+            symbols_resp=sym.value,
+            orderID="ORCYJ3-V37WA-6BWUWQ"
+        )
+    )
+
+    print(cop.value)
 
 
 

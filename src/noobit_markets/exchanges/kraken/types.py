@@ -97,4 +97,10 @@ K_ORDERSTATUS_FROM_N = pmap({
     ""
 })
 
-K_ORDERSTATUS_TO_N = reverse_pmap(K_ORDERSTATUS_FROM_N)
+K_ORDERSTATUS_TO_N = pmap({
+    "pending": "PENDING-NEW",
+    "open": "NEW",
+    "closed": "CLOSED",
+    "canceled": "CANCELED",
+    "expired": "EXPIRED"
+})

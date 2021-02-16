@@ -2,10 +2,10 @@
 from decimal import Decimal
 import datetime
 import functools
-import io
 import typing
 import asyncio
 import argparse
+import re
 
 import stackprinter
 stackprinter.set_excepthook(style="darkbg2")
@@ -62,7 +62,7 @@ def ensure_symbols(f):
                 exchange = settings.EXCHANGE
         else: exchange = exchange.upper()
         
-        cli.log_field.log(f"Requested Exchange : {exchange}")
+        # cli.log_field.log(f"Requested Exchange : {exchange}")
 
         if not cli.symbols.get(exchange, None):
             cli.log("Please run <symbols> command")
@@ -80,10 +80,14 @@ def ensure_symbols(f):
                         cli.log(wrapped_res.result)
                     # noobit exception
                     elif isinstance(getattr(wrapped_res, "result", None), BaseError):
-                    # parsed exchange error (exception)
+                    # parsed exchange error (exception) or RequestTimeout (in that case, not iterable)
                         cli.log("ERROR")
-                        for err in wrapped_res.result:
-                            cli.log(str(err))
+                        # check if its iterable
+                        if hasattr(wrapped_res.result, "__iter__"):
+                            for err in wrapped_res.result:
+                                cli.log(str(err))
+                        else:
+                            cli.log(str(wrapped_res))
                     elif isinstance(getattr(wrapped_res, "result", None), Exception):
                         cli.log(str(wrapped_res.result))
                     elif isinstance(wrapped_res, NResultWrapper):
@@ -92,7 +96,11 @@ def ensure_symbols(f):
                         cli.log(f"Unexpected : {wrapped_res}")
                 else:
                     cli.log("SUCCESS")
-                    cli.log(wrapped_res.table)
+                    if hasattr(wrapped_res, "table"):
+                        cli.log(wrapped_res.table)
+                    else: 
+                        cli.log("WARNING : Wrapped Result has not attribute table\n    Possibly unexpected behavior")
+                        cli.log(wrapped_res)
 
             else:
                 cli.log("Please initialize symbols for this exchange")
@@ -573,7 +581,7 @@ class NoobitCLI:
     async def fetch_openorders(self, exchange: str, symbol: str):
         from noobit_markets.base.models.rest.response import NOrders
     
-        self.log_field.log("CALLED create_neworder") 
+        self.log_field.log("CALLED fetch_openorders") 
         
         if not symbol: 
             if not settings.SYMBOL or settings.SYMBOL.isspace(): 
@@ -673,8 +681,8 @@ class NoobitCLI:
                         return _res
                     
                     if step:
-                        acc_price += step
-                        await asyncio.sleep(4)
+                        acc_price = round(float(acc_price + step), 2) # FIXME this will create decimal place precision errors sometimes, we need to round somehow (use context ??) 
+                        await asyncio.sleep(1)
                     else:
                         await asyncio.sleep(delay)  # avoid rate limiting
 
@@ -757,6 +765,76 @@ class NoobitCLI:
     ):
 
         await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, split=split, delay=delay, step=step, side="SELL")
+
+    @ensure_symbols
+    async def cancel_order(
+        self,
+        exchange: str,
+        symbol: str,
+        position: str,
+        all: bool
+    ):
+        
+        self.log_field.log("CALLED cancel_order") 
+
+        # testlist = [x for x in range(0, 100)]
+        # regex = re.compile(r"^\[[-]?[0-9]+:[-]?[0-9]+\]$")
+        regex = "^\[[-]?[0-9]+:[-]?[0-9]+:[-]?[0-9]\]$"
+        match = re.match(regex, position)
+        
+        if not match:
+            self.log(match)
+            return Err(f"Argument position did not match regex - Given {position}")
+        else:
+            # sliced = eval(f"testlist{position}")
+            # self.log(sliced)
+            # return Ok("SUCCESS")
+        
+            if not symbol: 
+                if not settings.SYMBOL or settings.SYMBOL.isspace(): 
+                    return Err("Please set or pass <symbol> argument")
+                else: symbol = settings.SYMBOL
+            else: symbol=symbol.upper()
+
+            self.log_field.log(f"Requested Symbol : {symbol}")
+            self.log_field.log(f"Requested Exchange : {exchange}")
+            
+            interface = globals()[exchange]
+            _res = await interface.rest.private.open_orders(self.client, symbol, self.symbols[exchange].value)
+
+            if _res.is_err():
+                return _res.value
+            else:
+                _acc = []
+
+                # FIXME: "integer required, got type type"
+                _all_orders = sorted([order for order in _res.value.orders], key=lambda x: getattr(x, "price"), reverse=True)
+                _sliced_orders = eval(f"_all_orders{position}") 
+
+                for _order in _sliced_orders:
+
+                    _ord = await interface.rest.private.remove_order(self.client, symbol, self.symbols[exchange].value, _order.orderID)
+
+                    if _ord.is_ok():
+                        _acc.append(_ord.value)
+                    else:
+                        return _ord
+
+                    await asyncio.sleep(1)
+                
+                try:
+                    _canceled_orders = NoobitResponseClosedOrders(
+                        exchange="KRAKEN",
+                        rawjson={},
+                        orders=_acc
+                    )
+                    # request coros always return a result
+                    # so we wrap the validated model in an OK container
+                    _nords = NOrders(Ok(_canceled_orders))
+                    return _nords
+                except ValidationError as e:
+                    return Err(e)
+
 
 
 

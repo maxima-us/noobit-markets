@@ -32,7 +32,7 @@ from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.exchanges.kraken.rest.auth import KrakenAuth, KrakenPrivateRequest
 from noobit_markets.exchanges.kraken import endpoints
 from noobit_markets.exchanges.kraken.rest.base import get_result_content_from_req
-from noobit_markets.exchanges.kraken.types import K_ORDERTYPE_TO_N, K_ORDERSIDE_TO_N
+from noobit_markets.exchanges.kraken.types import K_ORDERTYPE_TO_N, K_ORDERSIDE_TO_N, K_ORDERSTATUS_TO_N
 
 
 __all__ = ("get_closedorders_kraken", "get_openorders_kraken")
@@ -245,7 +245,7 @@ def _single_order(
         if order.descr.leverage == "none"
         else Decimal(order.cost) / int(order.descr.leverage[0]),
         # TODO orderstatus mapping
-        "ordStatus": "NEW",
+        "ordStatus": K_ORDERSTATUS_TO_N[order.status],
         "workingIndicator": True if (order.status in ["pending", "open"]) else False,
         "ordRejReason": getattr(order, "reason", None),
         "timeInForce": None,
