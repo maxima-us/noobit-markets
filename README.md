@@ -74,7 +74,7 @@ When chaining multiple functions, in case of a failure, we immediately return th
 -   Showing how we can set variables and get help on a command using OHLC command as an example
 <br/>
 <br/>
-<img src ="https://github.com/maxima-us/noobit-markets/blob/master/assets/CLI-Ohlc.gif?raw=true" width="800px">
+<img src ="https://github.com/maxima-us/noobit-markets/blob/master/assets/CLI-Ohlc.gif?raw=true" width="1000px">
 
 -   Showing how explicit returned errors are
 <br/>
