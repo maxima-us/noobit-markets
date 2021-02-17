@@ -65,13 +65,26 @@ def load_key_bindings(hb) -> KeyBindings:
 
     @bindings.add("c-f", filter=to_filter(not is_searching()))
     def do_find(event):
-        start_search(hb.log_field.control)
+        #! we target output field instead of log field
+        start_search(hb.output_field.control)
 
     @bindings.add("c-f", filter=is_searching)
     def do_exit_find(event):
         stop_search()
         get_app().layout.focus(hb.input_field.control)
         get_app().invalidate()
+    
+    @bindings.add("c-l", filter=to_filter(not is_searching()))
+    def do_find(event):
+        #! we target output field instead of log field
+        start_search(hb.log_field.control)
+
+    @bindings.add("c-l", filter=is_searching)
+    def do_exit_find(event):
+        stop_search()
+        get_app().layout.focus(hb.input_field.control)
+        get_app().invalidate()
+
 
     @bindings.add("c-z")
     def do_undo(event):

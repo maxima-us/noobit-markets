@@ -166,15 +166,16 @@ class NoobitCLI:
         completer = None
         self.process_usage = create_process_monitor()
         
-        self.search_field = create_search_field()
+        self.search_log_field = create_search_field("logs")
+        self.search_out_field = create_search_field("ouput")
         self.input_field = create_input_field(completer=completer)
-        self.output_field = create_output_field()
+        self.output_field = create_output_field(self.search_out_field)
 
         # right hand window
-        self.log_field = create_log_field(self.search_field)
+        self.log_field = create_log_field(self.search_log_field)
 
         self.timer = create_timer()
-        self.layout = generate_layout(self.input_field, self.output_field, self.log_field, self.search_field, self.timer, self.process_usage)
+        self.layout = generate_layout(self.input_field, self.output_field, self.log_field, self.search_log_field, self.search_out_field, self.timer, self.process_usage)
         # add self.to_stop_config to know if cancel is triggered
         self.to_stop_config: bool = False
 

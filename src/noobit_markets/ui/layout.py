@@ -93,7 +93,7 @@ def create_input_field(lexer=None, completer: Completer = None):
     )
 
 
-def create_output_field():
+def create_output_field(search_field: SearchToolbar):
     return TextArea(
         style='class:output-field',
         focus_on_click=False,
@@ -101,7 +101,9 @@ def create_output_field():
         scrollbar=True,
         max_line_count=MAXIMUM_OUTPUT_PANE_LINE_COUNT,
         # initial_text=HEADER,
-        initial_text=MAXIMUM_LOG_PANE_LINE_COUNT*'\n'
+        initial_text=MAXIMUM_LOG_PANE_LINE_COUNT*'\n',
+        search_field=search_field,
+        preview_search=False,
     )
 
 
@@ -137,9 +139,9 @@ def create_trade_monitor():
     )
 
 
-def create_search_field() -> SearchToolbar:
+def create_search_field(log_field: str) -> SearchToolbar:
     return SearchToolbar(text_if_not_searching=[('class:primary', "[CTRL + F] to start searching.")],
-                         forward_search_prompt=[('class:primary', "Search logs [Press CTRL + F to hide search] >>> ")],
+                         forward_search_prompt=[('class:primary', f"Search {log_field} [Press CTRL + F to hide search] >>> ")],
                          ignore_case=True)
 
 
@@ -169,7 +171,8 @@ def get_partial_args():
 def generate_layout(input_field: TextArea,
                     output_field: TextArea,
                     log_field: TextArea,
-                    search_field: SearchToolbar,
+                    search_log_field: SearchToolbar,
+                    search_out_field: SearchToolbar,
                     timer: TextArea,
                     process_monitor: TextArea,
                     # trade_monitor: TextArea):
@@ -205,7 +208,8 @@ def generate_layout(input_field: TextArea,
             Window(width=1, char='|', style='class:primary'),
             HSplit([
                 log_field,
-                search_field,
+                search_log_field,
+                search_out_field
             ]),
         ]),
         VSplit([
