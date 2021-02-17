@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import stackprinter
+
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.filters import (
     is_searching,
@@ -26,7 +28,8 @@ async def safe_wrapper(cli, c):
     except Exception as e:
         # TODO tie this to hummingbot to avoid printing outside of console
         # logging.getLogger(__name__).error(f"Unhandled error in background task: {str(e)}", exc_info=True)
-        cli.log(f"Unhandled error in background task: {str(e)}", exc_info=True)
+        msg = stackprinter.format(e)
+        cli.log(f"Unhandled error in background task: {msg}")
 
 def safe_ensure_future(cli, coro, *args, **kwargs) -> asyncio.Task:
     return asyncio.ensure_future(safe_wrapper(cli, coro), *args, **kwargs)
