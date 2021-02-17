@@ -249,7 +249,7 @@ async def _get_all_orders(
         return valid_result_content
 
     parsed_result = parse_result(valid_result_content.value, symbol_from_exchange)
-    return Ok({"order": parsed_result, "rawJson": result_content.value})
+    return Ok({"orders": parsed_result, "rawJson": result_content.value})
 
 
 
@@ -275,11 +275,13 @@ async def get_closedorders_binance(
         base_url=base_url,
         endpoint=endpoint
     )
+    if isinstance(parsed_result, Ok):
+        closed_orders = [item for item in parsed_result.value["orders"] if item["ordStatus"] in ["CLOSED", "CANCELED", "EXPIRED", "REJECTED", "PENDING-CANCEL", "FILLED"]]
 
-    closed_orders = [item for item in parsed_result.value["order"] if item["ordStatus"] in ["CLOSED", "CANCELED", "EXPIRED", "REJECTED", "PENDING-CANCEL", "FILLED"]]
-
-    valid_parsed_response_data = _validate_data(NoobitResponseClosedOrders, pmap({"orders": closed_orders, "rawJson": parsed_result.value["rawJson"], "exchange": "BINANCE"}))
-    return valid_parsed_response_data
+        valid_parsed_response_data = _validate_data(NoobitResponseClosedOrders, pmap({"orders": closed_orders, "rawJson": parsed_result.value["rawJson"], "exchange": "BINANCE"}))
+        return valid_parsed_response_data
+    else:
+        return parsed_result
 
 
 async def get_openorders_binance(
@@ -304,8 +306,10 @@ async def get_openorders_binance(
         base_url=base_url,
         endpoint=endpoint
     )
+    if isinstance(parsed_result, Ok):
+        closed_orders = [item for item in parsed_result.value["orders"] if item["ordStatus"] in ["NEW", "PENDING-NEW", "PARTIALLY-FILLED"]]
 
-    closed_orders = [item for item in parsed_result.value["order"] if item["ordStatus"] in ["NEW", "PENDING-NEW", "PARTIALLY-FILLED"]]
-
-    valid_parsed_response_data = _validate_data(NoobitResponseOpenOrders, pmap({"orders": closed_orders, "rawJson": parsed_result.value["rawJson"], "exchange": "BINANCE"}))
-    return valid_parsed_response_data
+        valid_parsed_response_data = _validate_data(NoobitResponseOpenOrders, pmap({"orders": closed_orders, "rawJson": parsed_result.value["rawJson"], "exchange": "BINANCE"}))
+        return valid_parsed_response_data
+    else:
+        return parsed_result
