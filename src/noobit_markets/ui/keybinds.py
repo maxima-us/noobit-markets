@@ -17,18 +17,19 @@ from prompt_toolkit.search import (
 import asyncio
 import logging
 
-async def safe_wrapper(c):
+
+async def safe_wrapper(cli, c):
     try:
         return await c
     except asyncio.CancelledError:
         raise
     except Exception as e:
         # TODO tie this to hummingbot to avoid printing outside of console
-        logging.getLogger(__name__).error(f"Unhandled error in background task: {str(e)}", exc_info=True)
+        # logging.getLogger(__name__).error(f"Unhandled error in background task: {str(e)}", exc_info=True)
+        cli.log(f"Unhandled error in background task: {str(e)}", exc_info=True)
 
-
-def safe_ensure_future(coro, *args, **kwargs) -> asyncio.Task:
-    return asyncio.ensure_future(safe_wrapper(coro), *args, **kwargs)
+def safe_ensure_future(cli, coro, *args, **kwargs) -> asyncio.Task:
+    return asyncio.ensure_future(safe_wrapper(cli, coro), *args, **kwargs)
 
 
 

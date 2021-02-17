@@ -3,7 +3,6 @@ from typing import List
 import inspect
 import functools
 
-from noobit_markets.ui import settings
 from noobit_markets.ui.keybinds import safe_ensure_future
 from noobit_markets.base.ntypes import EXCHANGE
 
@@ -183,7 +182,7 @@ def load_parser(hb):    #hb refers to hummingbot app
     cancel_parser = subparsers.add_parser("cancel", help="Cancel User Order")
     cancel_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     cancel_parser.add_argument("-s", "--symbol", type=str)
-    cancel_parser.add_argument("-pos", "--position", type=str)
+    cancel_parser.add_argument("-sl", "--slice", type=str)
     cancel_parser.add_argument("--all", type=bool, default=False)
     cancel_parser.set_defaults(func=hb.cancel_order)
 
@@ -212,16 +211,18 @@ def load_parser(hb):    #hb refers to hummingbot app
 
 import asyncio
 
-def _handle_commands(hb, raw_command):
-    args = hb.argparser.parse_args(args=raw_command.split())
+
+def _handle_commands(cli, raw_command):
+    args = cli.argparser.parse_args(args=raw_command.split())
     kwargs = vars(args)
 
+    # should be stream, not functional for now
     if hasattr(args, "loop"):
         f = args.loop
         del kwargs["loop"]
         # task = hb.loop.create_task(f(**kwargs))
-        task = asyncio.ensure_future(f(**kwargs))
-        task.add_done_callback(lambda t: hb.log_field.log(f"Task finished : {task}\n"))
+        task = asyncio.ensure_future(cli, f(**kwargs))
+        task.add_done_callback(lambda t: cli.log_field.log(f"Task finished : {task}\n"))
         return
 
 
@@ -235,9 +236,9 @@ def _handle_commands(hb, raw_command):
         f = f.func
 
     if inspect.iscoroutinefunction(f):
-        hb.log_field.log(f"Task created : {f.__name__}")
-        task = safe_ensure_future(f(**kwargs))
+        cli.log_field.log(f"Task created : {f.__name__}")
+        task = safe_ensure_future(cli, f(**kwargs))
         # task.add_done_callback(lambda t: hb.log_field.log(f"Task finished : {f.__name__}\n"))
-        task.add_done_callback(lambda t: hb.log_field.log(f"Task finished : {task}\n"))
+        task.add_done_callback(lambda t: cli.log_field.log(f"Task finished : {task}\n"))
     else:
         f(**kwargs)

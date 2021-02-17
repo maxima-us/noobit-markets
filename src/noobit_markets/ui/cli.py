@@ -181,8 +181,6 @@ class NoobitCLI:
         self.live_updates = False
         self.bindings = load_key_bindings(self)
 
-        # TODO input handler should be _handle_command function
-        # self.input_handler = lambda x: self.log(x)
         self.input_handler = self._input_handler
         self.input_field.accept_handler = self.accept
         self.app = Application(layout=self.layout, full_screen=True, key_bindings=self.bindings, style=load_style(),
@@ -208,9 +206,6 @@ class NoobitCLI:
         #     "KRAKEN": None,
         #     "BINANCE": None
         # }
-
-        # doesnt seem to work
-        safe_ensure_future(self.fetch_symbols())
 
 
 
@@ -332,7 +327,7 @@ class NoobitCLI:
         # async def _await(start, finish, step):
         #     await enum(start, finish, step)
 
-        safe_ensure_future(enum(start, finish, step))
+        safe_ensure_future(self, enum(start, finish, step))
 
     
     async def acount(self, start: int, finish: int, step: int):
@@ -687,7 +682,6 @@ class NoobitCLI:
                         await asyncio.sleep(delay)  # avoid rate limiting
 
 
-                # FIXME we need to return a wrapper
                 try:
                     _splitorders = NoobitResponseClosedOrders(
                         exchange="KRAKEN",
@@ -771,7 +765,7 @@ class NoobitCLI:
         self,
         exchange: str,
         symbol: str,
-        position: str,
+        slice: str,
         all: bool
     ):
         
@@ -780,11 +774,11 @@ class NoobitCLI:
         # testlist = [x for x in range(0, 100)]
         # regex = re.compile(r"^\[[-]?[0-9]+:[-]?[0-9]+\]$")
         regex = "^\[[-]?[0-9]+:[-]?[0-9]+:[-]?[0-9]\]$"
-        match = re.match(regex, position)
+        match = re.match(regex, slice)
         
         if not match:
             self.log(match)
-            return Err(f"Argument position did not match regex - Given {position}")
+            return Err(f"Argument position did not match regex - Given {slice}")
         else:
             # sliced = eval(f"testlist{position}")
             # self.log(sliced)
@@ -807,9 +801,8 @@ class NoobitCLI:
             else:
                 _acc = []
 
-                # FIXME: "integer required, got type type"
-                _all_orders = sorted([order for order in _res.value.orders], key=lambda x: getattr(x, "price"), reverse=True)
-                _sliced_orders = eval(f"_all_orders{position}") 
+                _all_orders = sorted([order for order in _res.value.orders], key=lambda x: getattr(x, "price"), reverse=False)
+                _sliced_orders = eval(f"_all_orders{slice}") 
 
                 for _order in _sliced_orders:
 
