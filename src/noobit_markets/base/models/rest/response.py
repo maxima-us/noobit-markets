@@ -8,8 +8,6 @@ from abc import ABC, abstractproperty
 import typing
 from decimal import Decimal
 
-from colorama import Back, Fore, init
-init(autoreset=True, wrap=True)
 from typing_extensions import Literal, TypedDict
 from pydantic import PositiveInt, Field, ValidationError
 

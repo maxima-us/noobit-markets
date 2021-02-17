@@ -123,7 +123,7 @@ async def get_req_content(
         resp = await client.request(**payload)  #type: ignore
     except Exception as e:
         req_url = urllib.parse.urljoin("url", urllib.parse.urlencode(payload))
-        return Err(RequestTimeout(e, f"<{method} {req_url}>"))
+        return Err(RequestTimeout(str(e), f"<{method} {req_url}>"))
 
     content = await result_or_err(resp)
     if  content.is_err():

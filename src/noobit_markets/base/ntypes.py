@@ -184,12 +184,13 @@ ASSET_TO_EXCHANGE = typing.Callable[[PAsset], str]
 #! ftx limits to 100 ==> https://docs.ftx.com/?python#get-orderbook
 DEPTH = Literal[10, 25, 100]
 
-# counter means only last value for a given key will be taken
-# ASK = BID = ASKS = BIDS = typing.Mapping[float, float]
-ASKS = typing.Mapping[Decimal, Decimal]
-BIDS = typing.Mapping[Decimal, Decimal]
-ASK = typing.Mapping[Decimal, Decimal]
-BID = typing.Mapping[Decimal, Decimal]
+# FIXME we updated from Mapping to Dict (correct decision ?)
+# we use `update` method in websocket client to update the 
+# asks and bids dynamically
+ASKS = typing.Dict[Decimal, Decimal]
+BIDS = typing.Dict[Decimal, Decimal]
+ASK = typing.Dict[Decimal, Decimal]
+BID = typing.Dict[Decimal, Decimal]
 
 # tuple of <best bid>, <best ask>, <timestamp>
 # ? should this stay a tuple or do we only want last value

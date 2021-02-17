@@ -43,8 +43,8 @@ class KrakenWsPublic(BaseWsPublic):
         valid_sub_model = ohlc.validate_sub(symbol_to_exchange, symbol, timeframe)
         if isinstance(valid_sub_model, Err):
             yield valid_sub_model
-
-        sub_result = await subscribe(self.client, valid_sub_model.value)
+        else:
+            sub_result = await subscribe(self.client, valid_sub_model.value)
 
         await asyncio.sleep(1)
         # verify if we have subd

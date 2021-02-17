@@ -14,7 +14,7 @@ from noobit_markets.base.request import (
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result, Ok, Err
 from noobit_markets.base.models.rest.response import (
-    NoobitResponseClosedOrders, NoobitResponseSymbols,
+    NoobitResponseClosedOrders, NoobitResponseItemOrder, NoobitResponseSymbols,
 )
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -72,7 +72,7 @@ async def cancel_openorder_kraken(
     auth=KrakenAuth(),
     base_url: pydantic.AnyHttpUrl = endpoints.KRAKEN_ENDPOINTS.private.url,
     endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.remove_order,
-) -> Result[NoobitResponseClosedOrders, Exception]:
+) -> Result[NoobitResponseItemOrder, Exception]:
 
     symbol_to_exchange = lambda x: {
         k: v.exchange_pair for k, v in symbols_resp.asset_pairs.items()

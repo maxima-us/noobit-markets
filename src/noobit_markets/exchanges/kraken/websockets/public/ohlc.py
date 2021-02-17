@@ -34,8 +34,6 @@ def validate_sub(symbol_to_exchange: SYMBOL_TO_EXCHANGE, symbol: SYMBOL, timefra
     except ValidationError as e:
         return Err(e)
 
-    except Exception as e:
-        return e
 
 
 def validate_parsed(msg, parsed_msg):

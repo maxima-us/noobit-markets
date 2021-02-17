@@ -202,7 +202,7 @@ async def get_ohlc_kraken(
 
     parsed_req = parse_request(valid_noobit_req.value, symbol_to_exchange)
 
-    valid_kraken_req = _validate_data(KrakenRequestOhlc, parsed_req)
+    valid_kraken_req = _validate_data(KrakenRequestOhlc, pmap(parsed_req))
     if valid_kraken_req.is_err():
         return valid_kraken_req
 

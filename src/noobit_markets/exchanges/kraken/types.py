@@ -1,4 +1,4 @@
-from pyrsistent import pmap
+from pyrsistent import pmap, PMap
 
 
 __all__ = (
@@ -13,7 +13,7 @@ __all__ = (
 )
 
 # TODO type properly
-def reverse_pmap(persistent_dict: dict, exclude: list=[]):
+def reverse_pmap(persistent_dict: PMap, exclude: list=[]):
     if not exclude:
         return pmap({v:k for k, v in persistent_dict.items()})
     else:
