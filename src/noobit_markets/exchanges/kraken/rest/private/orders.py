@@ -244,14 +244,13 @@ def _single_order(
         "marginAmt": 0
         if order.descr.leverage == "none"
         else Decimal(order.cost) / int(order.descr.leverage[0]),
-        # TODO orderstatus mapping
         "ordStatus": K_ORDERSTATUS_TO_N[order.status],
         "workingIndicator": True if (order.status in ["pending", "open"]) else False,
         "ordRejReason": getattr(order, "reason", None),
         "timeInForce": None,
         # "transactTime": order.closetm*10**9 if "closetm" in order else None,
         # TODO fix below (Mypy)
-        "transactTime": None if not hasattr(order, "closetm") else order.closetm * 10 ** 9,  # type: ignore
+        "transactTime": None if not hasattr(order, "closetm") else order.closetm * 10 ** 9,
         "sendingTime": None,
         "effectiveTime": order.opentm * 10 ** 9,
         "validUntilTime": None,

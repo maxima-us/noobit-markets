@@ -13,9 +13,10 @@ from noobit_markets.exchanges.binance.rest.public.symbols import get_symbols_bin
 # private endpoints
 from noobit_markets.exchanges.binance.rest.private.balances import get_balances_binance
 from noobit_markets.exchanges.binance.rest.private.exposure import get_exposure_binance
-from noobit_markets.exchanges.binance.rest.private.trades import get_trades_binance
+from noobit_markets.exchanges.binance.rest.private.trades import get_usertrades_binance
 from noobit_markets.exchanges.binance.rest.private.orders import get_closedorders_binance, get_openorders_binance
 from noobit_markets.exchanges.binance.rest.private.trading import post_neworder_binance
+from noobit_markets.exchanges.binance.rest.private.cancel_open import cancel_openorder_binance
 
 # ws
 from noobit_markets.exchanges.binance.websockets.public.api import BinanceWsPublic
@@ -35,11 +36,12 @@ BINANCE = ExchangeInterface(**{
         "private": {
             "balances": get_balances_binance, 
             "exposure": get_exposure_binance, 
-            "trades": get_trades_binance, 
+            "trades": get_usertrades_binance, 
             "open_positions": get_closedorders_binance, 
             "open_orders": get_openorders_binance, 
             "closed_orders": get_closedorders_binance, 
-            "new_order": post_neworder_binance, 
+            "new_order": post_neworder_binance,
+            "remove_order": cancel_openorder_binance
         },
     },
     "ws":{

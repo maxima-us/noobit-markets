@@ -109,10 +109,10 @@ async def get_req_content(
 
     query = valid_req.dict(exclude_none=True)
 
-    if method == "GET":
+    if method in ["GET"]:
         payload["params"] = query
 
-    elif method == "POST":
+    elif method in ["POST", "DELETE"]:
         payload["data"] = query
 
     else:

@@ -14,7 +14,7 @@ from noobit_markets.base.request import (
 from noobit_markets.base import ntypes
 from noobit_markets.base.models.result import Result, Ok, Err
 from noobit_markets.base.models.rest.response import (
-    NoobitResponseClosedOrders, NoobitResponseItemOrder, NoobitResponseSymbols,
+    NoobitResponseItemOrder, NoobitResponseSymbols,
 )
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 
@@ -65,7 +65,7 @@ async def cancel_openorder_kraken(
     client: ntypes.CLIENT,
     symbol: ntypes.SYMBOL,
     symbols_resp: NoobitResponseSymbols,
-    orderID: typing.Optional[str],
+    orderID: str,
     # prevent unintentional passing of following args
     *,
     logger: typing.Optional[typing.Callable] = None,

@@ -156,7 +156,7 @@ def _single_order(
 
 
 # @retry_request(retries=10, logger= lambda *args: print("===x=x=x=x@ : ", *args))
-async def get_trades_binance(
+async def get_usertrades_binance(
         client: ntypes.CLIENT,
         symbol: ntypes.SYMBOL,
         symbols_resp: NoobitResponseSymbols,

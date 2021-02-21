@@ -160,7 +160,6 @@ async def get_openpositions_kraken(
     endpoint: str = endpoints.KRAKEN_ENDPOINTS.private.endpoints.open_positions,
 ) -> Result[NoobitResponseOpenPositions, typing.Type[Exception]]:
 
-    # TODO we dont really know the format here
     symbol_from_exchange = lambda x: {
         v.exchange_pair: k for k, v in symbols_resp.asset_pairs.items()
     }[x]

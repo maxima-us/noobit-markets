@@ -316,3 +316,30 @@ class NoobitRequestAddOrder(FrozenBaseModel):
             raise ValueError("Unexpected fields :", *unexpected_fields)
         
         return v
+
+
+
+# ============================================================
+# Cancel Order
+# ============================================================
+
+
+class NoobitRequestCancelOpenOrder(FrozenBaseModel):
+
+    exchange: ntypes.EXCHANGE
+
+    symbols_resp: NoobitResponseSymbols
+
+    symbol: ntypes.SYMBOL
+
+    orderID: str
+    clOrdID: typing.Optional[str]
+
+
+    @validator("symbol", check_fields=True, allow_reuse=True)
+    def _symbol_validity(cls, v, values):
+        
+        if not v in values["symbols_resp"].asset_pairs.keys():
+            raise ValueError(f"Unknown Symbol : {v}")
+
+        return v
