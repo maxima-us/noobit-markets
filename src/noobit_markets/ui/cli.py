@@ -610,7 +610,7 @@ class NoobitCLI:
         side: str,
         split: typing.Optional[int] = None,
         delay: typing.Optional[int] = None,
-        step: typing.Optional[float] = None
+        step: typing.Optional[float] = None,
     ):
         from noobit_markets.base.models.rest.response import NSingleOrder
 
@@ -645,7 +645,7 @@ class NoobitCLI:
             # step is only for limit orders
             if step:
                 if not ordType in ["LIMIT", "STOP_LIMIT", "TAKE_PROFIT"]:
-                    return Err(f"ARgument <step>: Ordertype can not be {ordType}")
+                    return Err(f"Argument <step>: Ordertype can not be {ordType}")
             
             # only one of delay or step
             if not any([delay, step]) or all([delay, step]):
@@ -761,6 +761,8 @@ class NoobitCLI:
 
         await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, split=split, delay=delay, step=step, side="SELL")
 
+
+    # TODO add remove_order to binance interface
     @ensure_symbols
     async def cancel_order(
         self,

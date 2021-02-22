@@ -182,7 +182,7 @@ def load_parser(hb):    #hb refers to hummingbot app
     cancel_parser = subparsers.add_parser("cancel", help="Cancel User Order")
     cancel_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     cancel_parser.add_argument("-s", "--symbol", type=str)
-    cancel_parser.add_argument("-sl", "--slice", type=str)
+    cancel_parser.add_argument("-sl", "--slice", type=str, help="Python slicing syntax. List is sorted in ascending price order. e.g: --slice [0:2:1] will cancel orders with lowest 2 prices")
     cancel_parser.add_argument("--all", type=bool, default=False)
     cancel_parser.set_defaults(func=hb.cancel_order)
 
