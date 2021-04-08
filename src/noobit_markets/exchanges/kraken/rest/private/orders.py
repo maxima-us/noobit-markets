@@ -185,7 +185,7 @@ class KrakenResponseOpenOrders(FrozenBaseModel):
 
 class KrakenResponseClosedOrders(FrozenBaseModel):
     closed: typing.Mapping[str, SingleClosedOrder]
-    count: pydantic.PositiveInt
+    count: ntypes.COUNT
 
 
 def parse_result_openorders(

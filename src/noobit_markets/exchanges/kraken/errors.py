@@ -54,6 +54,8 @@ ERRORS_FROM_EXCHANGE: typing.Mapping[str, typing.Type[Exception]] = {
         # 'EFunding:Invalid amount': InsufficientFunds,
         # 'EDatabase:Internal error': ExchangeNotAvailable,
         'EQuery:Unknown asset': BadSymbol,
+
+        "EOrder:Unknown order": InvalidOrder,
 }
 
 # in https://www.kraken.com/features/api#add-standard-order

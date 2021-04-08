@@ -44,21 +44,6 @@ else:
     symbols = sym.value
 
 
-    # ============================================================
-    # CANCEL OPEN ORDER
-    # ============================================================
-
-
-    cop = asyncio.run(
-        cancel_openorder_kraken(
-            client=httpx.AsyncClient(),
-            symbol="DOT-USD",
-            symbols_resp=sym.value,
-            orderID="ORCYJ3-V37WA-6BWUWQ"
-        )
-    )
-
-    print(cop.value)
 
 
 
@@ -91,8 +76,24 @@ else:
     else:
         # will print a nicely formatted tabulate table
         # print(_nord.table)
-        print("Trading New Order ok")
+        print("Trading New Order ok, new order ID", trd.value.orderID)
 
+
+    # ============================================================
+    # CANCEL OPEN ORDER
+    # ============================================================
+
+
+    cop = asyncio.run(
+        cancel_openorder_kraken(
+            client=httpx.AsyncClient(),
+            symbol="DOT-USD",
+            symbols_resp=sym.value,
+            orderID=trd.value.orderID
+        )
+    )
+
+    print(cop.value)
 
 
     # ============================================================
