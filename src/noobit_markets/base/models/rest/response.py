@@ -9,7 +9,7 @@ import typing
 from decimal import Decimal
 
 from typing_extensions import Literal, TypedDict
-from pydantic import PositiveInt, Field, ValidationError
+from pydantic import BaseModel, PositiveInt, Field, ValidationError
 
 from noobit_markets.base.models.frozenbase import FrozenBaseModel
 from noobit_markets.base.models.result import Result
@@ -717,7 +717,9 @@ class T_PositionsParsedRes(TypedDict):
 #! see: https://www.onixs.biz/fix-dictionary/4.4/tagNum_336.html
 
 
-class NoobitResponseItemOrder(FrozenBaseModel):
+#! subclass BaseModel instead of FrozenBaseModel, so we can change Price to None 
+#! if we pass buy --blind True command
+class NoobitResponseItemOrder(BaseModel):
 
 
     # ================================================================================
@@ -1057,7 +1059,6 @@ class T_OrderParsedItem(TypedDict):
 T_OrderParsedRes = typing.Tuple[T_OrderParsedItem, ...]
 
 class NOrders(NResultWrapper):
-
 
     @property
     def table(self):

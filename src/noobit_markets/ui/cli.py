@@ -608,6 +608,7 @@ class NoobitCLI:
         stopPrice: typing.Optional[float] = None,
         *,
         side: str,
+        blind: bool,
         split: typing.Optional[int] = None,
         delay: typing.Optional[int] = None,
         step: typing.Optional[float] = None,
@@ -649,7 +650,7 @@ class NoobitCLI:
             
             # only one of delay or step
             if not any([delay, step]) or all([delay, step]):
-                return Err("Please set one of <delay> or <step> argument to split orders")
+                return Err("Please set only one of <delay> or <step> argument to split orders")
             else: 
                 _acc = []
                 acc_price = price
@@ -670,6 +671,8 @@ class NoobitCLI:
                         stopPrice=stopPrice
                         )
                     if _res.is_ok():
+                        if blind:
+                            _res.value.price = None
                         _acc.append(_res.value)
                         self.log_field.log(f"Successful order, count {len(_acc)}")
                     else:
@@ -684,6 +687,10 @@ class NoobitCLI:
 
 
                 try:
+                    
+                    if blind:
+                        self.log("Argument <blind>: Setting Order Price to <None>")
+                    
                     _splitorders = NoobitResponseClosedOrders(
                         exchange="KRAKEN",
                         rawjson={},
@@ -691,6 +698,7 @@ class NoobitCLI:
                     )
                     # request coros always return a result
                     # so we wrap the validated model in an OK container
+                    
                     _nords = NOrders(Ok(_splitorders))
                     return _nords
                 except ValidationError as e:
@@ -716,6 +724,12 @@ class NoobitCLI:
                 quoteOrderQty=quoteOrderQty, 
                 stopPrice=stopPrice
                 )
+
+            if blind:
+                self.log("Argument <blind>: Setting Order Price to <None>")
+                if _res.is_ok():
+                    _res.value.price = None
+
             _nord = NSingleOrder(_res)
         
             return _nord
@@ -736,12 +750,13 @@ class NoobitCLI:
         price: float,
         timeInForce: str,
         stopPrice: float,
+        blind: bool,
         split: int,
         delay: int,
         step: int
     ):
 
-        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, split=split, delay=delay, step=step, side="BUY")
+        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, blind=blind, split=split, delay=delay, step=step, side="BUY")
 
 
     async def create_sellorder(
@@ -754,12 +769,13 @@ class NoobitCLI:
         price: float,
         timeInForce: str,
         stopPrice: float,
+        blind: bool,
         split: int,
         delay: int,
         step: int
     ):
 
-        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, split=split, delay=delay, step=step, side="SELL")
+        await self.create_neworder(exchange, symbol, ordType, clOrdID, orderQty, price, timeInForce, stopPrice, blind=blind, split=split, delay=delay, step=step, side="SELL")
 
 
     # TODO add remove_order to binance interface

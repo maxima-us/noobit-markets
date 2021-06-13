@@ -163,6 +163,7 @@ def load_parser(hb):    #hb refers to hummingbot app
     buy_parser.add_argument("--split", type=int)
     buy_parser.add_argument("--delay", type=int)
     buy_parser.add_argument("--step", type=float)
+    buy_parser.add_argument("--blind", type=bool, default=False)
     buy_parser.set_defaults(func=hb.create_buyorder)
 
     sell_parser = subparsers.add_parser("sell", help="Post User SELL Order")
@@ -177,6 +178,7 @@ def load_parser(hb):    #hb refers to hummingbot app
     sell_parser.add_argument("--split", type=int)
     sell_parser.add_argument("--delay", type=int)
     sell_parser.add_argument("--step", type=float)
+    sell_parser.add_argument("--blind", type=bool, default=False)
     sell_parser.set_defaults(func=hb.create_sellorder)
 
     cancel_parser = subparsers.add_parser("cancel", help="Cancel User Order")
