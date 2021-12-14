@@ -41,7 +41,7 @@ from noobit_markets.exchanges.binance.rest.private.orders import get_closedorder
 from noobit_markets.exchanges.kraken.rest.private.orders import get_closedorders_kraken
 
 #private trades
-from noobit_markets.exchanges.binance.rest.private.trades import get_trades_binance as get_usertrades_binance
+from noobit_markets.exchanges.binance.rest.private.trades import get_usertrades_binance
 from noobit_markets.exchanges.kraken.rest.private.trades import get_usertrades_kraken
 
 
