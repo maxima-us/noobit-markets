@@ -438,7 +438,7 @@ class NoobitCLI:
         else:
             self.log_field.log("Error fetching ftx symbols")
             self.log("Error fetching ftx symbols")
-            self.log(binance_symbols.value)
+            self.log(ftx_symbols.value)
 
 
 

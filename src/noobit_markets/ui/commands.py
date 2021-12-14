@@ -108,15 +108,20 @@ def load_parser(hb):    #hb refers to hummingbot app
 
     #========================================
     # FETCH COMMANDS
+    
+    
+    symbols_parser = subparsers.add_parser("symbols", help="Get Symbols")
+    symbols_parser.set_defaults(func=hb.fetch_symbols)
+
+    # Alt command name, clearer than previous one  
+    symbols_parser = subparsers.add_parser("init", help="Load Symbols")
+    symbols_parser.set_defaults(func=hb.fetch_symbols)
 
     ohlc_parser = subparsers.add_parser("ohlc", help="Get OHLC")
     ohlc_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
     ohlc_parser.add_argument("-s", "--symbol", type=str)
     ohlc_parser.add_argument("-tf", "--timeframe", type=str, required=True)
     ohlc_parser.set_defaults(func=hb.fetch_ohlc)
-
-    symbols_parser = subparsers.add_parser("symbols", help="Get Symbols")
-    symbols_parser.set_defaults(func=hb.fetch_symbols)
 
     book_parser = subparsers.add_parser("book", help="Get Orderbook")
     book_parser.add_argument("-e", "--exchange", type=str, choices=exchange_list)
