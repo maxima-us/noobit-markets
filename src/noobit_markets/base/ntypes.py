@@ -155,7 +155,7 @@ class PSymbol(Nstr):
 #   type will only be checked upon validation of a 
 #   pydantic model which has a field of the present type
 class PAsset(Nstr):
-    regex=re.compile(r'^[A-Z0-9]{2,10}$')
+    regex=re.compile(r'^[A-Z0-9]{1,10}$')
     strict=True
 
 

@@ -26,7 +26,7 @@ from noobit_markets.exchanges.binance.rest.base import get_result_content_from_r
 
 
 __all__ = (
-    "get_trades_binance"
+    "get_usertrades_binance"
 )
 
 
